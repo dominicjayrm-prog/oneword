@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../src/hooks/useAuth';
 import { useGame } from '../src/hooks/useGame';
@@ -17,7 +17,7 @@ export default function VoteScreen() {
   const router = useRouter();
   const { colors } = useTheme();
   const { session } = useAuth();
-  const { todayWord, getVotePair, submitVote } = useGame(session?.user?.id);
+  const { todayWord, getVotePair, submitVote, reportDescription } = useGame(session?.user?.id);
 
   const [pair, setPair] = useState<VotePair | null>(null);
   const [voteCount, setVoteCount] = useState(0);
@@ -49,6 +49,25 @@ export default function VoteScreen() {
     }
 
     loadPair();
+  }
+
+  async function handleReport(descriptionId: string) {
+    Alert.alert(
+      'Report Description',
+      'Flag this description as inappropriate?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Report',
+          style: 'destructive',
+          onPress: async () => {
+            await reportDescription(descriptionId);
+            Alert.alert('Reported', 'Thanks for helping keep OneWord clean.');
+            loadPair();
+          },
+        },
+      ]
+    );
   }
 
   if (loading) {
@@ -104,11 +123,13 @@ export default function VoteScreen() {
         <VoteCard
           description={pair.desc1_text}
           onPress={() => handleVote(pair.desc1_id, pair.desc2_id)}
+          onReport={() => handleReport(pair.desc1_id)}
         />
         <Text style={[styles.vs, { color: colors.textMuted }]}>VS</Text>
         <VoteCard
           description={pair.desc2_text}
           onPress={() => handleVote(pair.desc2_id, pair.desc1_id)}
+          onReport={() => handleReport(pair.desc2_id)}
         />
       </View>
     </View>

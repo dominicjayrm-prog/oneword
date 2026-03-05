@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
+import { checkProfanity } from '../lib/profanityFilter';
 import type { DailyWord, VotePair, LeaderboardEntry } from '../types/database';
 
 export function useGame(userId: string | undefined) {
@@ -35,6 +36,12 @@ export function useGame(userId: string | undefined) {
 
   async function submitDescription(description: string) {
     if (!todayWord || !userId) return { error: new Error('Not ready') };
+
+    // Profanity check
+    const profanityCheck = checkProfanity(description);
+    if (!profanityCheck.clean) {
+      return { error: new Error('Your description contains inappropriate language. Please try again.') };
+    }
 
     const { error } = await supabase.from('descriptions').insert({
       user_id: userId,
@@ -87,6 +94,16 @@ export function useGame(userId: string | undefined) {
     return data ?? [];
   }
 
+  async function reportDescription(descriptionId: string) {
+    if (!todayWord || !userId) return { error: new Error('Not ready') };
+    const { error } = await supabase.rpc('submit_report', {
+      p_reporter_id: userId,
+      p_description_id: descriptionId,
+      p_word_id: todayWord.id,
+    });
+    return { error };
+  }
+
   return {
     todayWord,
     hasSubmitted,
@@ -96,6 +113,7 @@ export function useGame(userId: string | undefined) {
     getVotePair,
     submitVote,
     getLeaderboard,
+    reportDescription,
     refresh: fetchTodayWord,
   };
 }

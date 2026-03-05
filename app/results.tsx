@@ -3,14 +3,17 @@ import { View, Text, StyleSheet, ActivityIndicator, FlatList } from 'react-nativ
 import { useRouter } from 'expo-router';
 import { useAuth } from '../src/hooks/useAuth';
 import { useGame } from '../src/hooks/useGame';
+import { useTheme } from '../src/contexts/ThemeContext';
 import { WordDisplay } from '../src/components/WordDisplay';
 import { LeaderboardRow } from '../src/components/LeaderboardRow';
 import { Button } from '../src/components/Button';
-import { colors, fontSize, spacing } from '../src/constants/theme';
+import { ThemeToggle } from '../src/components/ThemeToggle';
+import { fontSize, spacing } from '../src/constants/theme';
 import type { LeaderboardEntry } from '../src/types/database';
 
 export default function ResultsScreen() {
   const router = useRouter();
+  const { colors } = useTheme();
   const { session, profile } = useAuth();
   const { todayWord, getLeaderboard } = useGame(session?.user?.id);
 
@@ -28,21 +31,22 @@ export default function ResultsScreen() {
 
   if (loading) {
     return (
-      <View style={styles.center}>
+      <View style={[styles.center, { backgroundColor: colors.background }]}>
         <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <ThemeToggle />
       {todayWord && <WordDisplay word={todayWord.word} category={todayWord.category} />}
-      <Text style={styles.title}>LEADERBOARD</Text>
+      <Text style={[styles.title, { color: colors.textMuted }]}>LEADERBOARD</Text>
 
       {leaderboard.length === 0 ? (
-        <View style={styles.center}>
-          <Text style={styles.empty}>No results yet.</Text>
-          <Text style={styles.emptySub}>Vote more to see rankings!</Text>
+        <View style={[styles.center, { backgroundColor: colors.background }]}>
+          <Text style={[styles.empty, { color: colors.text }]}>No results yet.</Text>
+          <Text style={[styles.emptySub, { color: colors.textSecondary }]}>Vote more to see rankings!</Text>
         </View>
       ) : (
         <FlatList
@@ -72,7 +76,6 @@ export default function ResultsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.xxl + spacing.lg,
   },
@@ -80,11 +83,9 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: colors.background,
   },
   title: {
     fontSize: fontSize.xs,
-    color: colors.textMuted,
     letterSpacing: 4,
     textAlign: 'center',
     marginBottom: spacing.lg,
@@ -94,12 +95,10 @@ const styles = StyleSheet.create({
   },
   empty: {
     fontSize: fontSize.lg,
-    color: colors.text,
     fontWeight: '600',
   },
   emptySub: {
     fontSize: fontSize.md,
-    color: colors.textSecondary,
     marginTop: spacing.sm,
   },
   actions: {

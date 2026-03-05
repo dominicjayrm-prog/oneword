@@ -1,11 +1,14 @@
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { colors } from '../src/constants/theme';
+import { ThemeProvider, useTheme } from '../src/contexts/ThemeContext';
+import { MobileContainer } from '../src/components/MobileContainer';
 
-export default function RootLayout() {
+function InnerLayout() {
+  const { colors, mode } = useTheme();
+
   return (
-    <>
-      <StatusBar style="light" />
+    <MobileContainer>
+      <StatusBar style={mode === 'light' ? 'dark' : 'light'} />
       <Stack
         screenOptions={{
           headerShown: false,
@@ -13,6 +16,14 @@ export default function RootLayout() {
           animation: 'fade',
         }}
       />
-    </>
+    </MobileContainer>
+  );
+}
+
+export default function RootLayout() {
+  return (
+    <ThemeProvider>
+      <InnerLayout />
+    </ThemeProvider>
   );
 }

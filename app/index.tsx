@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import {
   View,
   Text,
@@ -13,13 +13,16 @@ import {
 import { useRouter } from 'expo-router';
 import { useAuth } from '../src/hooks/useAuth';
 import { useGame } from '../src/hooks/useGame';
+import { useTheme } from '../src/contexts/ThemeContext';
 import { WordDisplay } from '../src/components/WordDisplay';
 import { WordCounter } from '../src/components/WordCounter';
 import { Button } from '../src/components/Button';
-import { colors, fontSize, spacing, borderRadius } from '../src/constants/theme';
+import { ThemeToggle } from '../src/components/ThemeToggle';
+import { fontSize, spacing, borderRadius } from '../src/constants/theme';
 
 export default function HomeScreen() {
   const router = useRouter();
+  const { colors } = useTheme();
   const { session, profile, loading: authLoading, signIn, signUp, signOut } = useAuth();
   const { todayWord, hasSubmitted, userDescription, loading: gameLoading, submitDescription } = useGame(session?.user?.id);
 
@@ -62,7 +65,7 @@ export default function HomeScreen() {
 
   if (loading) {
     return (
-      <View style={styles.center}>
+      <View style={[styles.center, { backgroundColor: colors.background }]}>
         <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
@@ -71,18 +74,19 @@ export default function HomeScreen() {
   if (!session || showAuth) {
     return (
       <KeyboardAvoidingView
-        style={styles.container}
+        style={[styles.container, { backgroundColor: colors.background }]}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
+        <ThemeToggle />
         <ScrollView contentContainerStyle={styles.authContainer} keyboardShouldPersistTaps="handled">
-          <Text style={styles.logo}>ONE</Text>
-          <Text style={styles.logoWord}>WORD</Text>
-          <Text style={styles.tagline}>5 words. 1 winner. Every day.</Text>
+          <Text style={[styles.logo, { color: colors.text }]}>ONE</Text>
+          <Text style={[styles.logoWord, { color: colors.primary }]}>WORD</Text>
+          <Text style={[styles.tagline, { color: colors.textSecondary }]}>5 words. 1 winner. Every day.</Text>
 
           <View style={styles.authForm}>
             {authMode === 'signup' && (
               <TextInput
-                style={styles.input}
+                style={[styles.input, { backgroundColor: colors.surface, color: colors.text, borderColor: colors.border }]}
                 placeholder="Username"
                 placeholderTextColor={colors.textMuted}
                 value={username}
@@ -91,7 +95,7 @@ export default function HomeScreen() {
               />
             )}
             <TextInput
-              style={styles.input}
+              style={[styles.input, { backgroundColor: colors.surface, color: colors.text, borderColor: colors.border }]}
               placeholder="Email"
               placeholderTextColor={colors.textMuted}
               value={email}
@@ -100,7 +104,7 @@ export default function HomeScreen() {
               keyboardType="email-address"
             />
             <TextInput
-              style={styles.input}
+              style={[styles.input, { backgroundColor: colors.surface, color: colors.text, borderColor: colors.border }]}
               placeholder="Password"
               placeholderTextColor={colors.textMuted}
               value={password}
@@ -108,7 +112,7 @@ export default function HomeScreen() {
               secureTextEntry
             />
 
-            {authError ? <Text style={styles.error}>{authError}</Text> : null}
+            {authError ? <Text style={[styles.error, { color: colors.error }]}>{authError}</Text> : null}
 
             <Button
               title={authMode === 'signin' ? 'Sign In' : 'Create Account'}
@@ -127,31 +131,33 @@ export default function HomeScreen() {
 
   if (!todayWord) {
     return (
-      <View style={styles.center}>
-        <Text style={styles.noWord}>No word for today yet.</Text>
-        <Text style={styles.noWordSub}>Check back soon!</Text>
+      <View style={[styles.center, { backgroundColor: colors.background }]}>
+        <ThemeToggle />
+        <Text style={[styles.noWord, { color: colors.text }]}>No word for today yet.</Text>
+        <Text style={[styles.noWordSub, { color: colors.textSecondary }]}>Check back soon!</Text>
       </View>
     );
   }
 
   if (hasSubmitted) {
     return (
-      <View style={styles.container}>
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <ThemeToggle />
         <View style={styles.header}>
-          <Text style={styles.greeting}>Hi, {profile?.username ?? 'player'}</Text>
-          {profile && (
-            <Text style={styles.streak}>
-              {profile.current_streak > 0 ? `${profile.current_streak} day streak` : ''}
+          <Text style={[styles.greeting, { color: colors.textSecondary }]}>Hi, {profile?.username ?? 'player'}</Text>
+          {profile && profile.current_streak > 0 && (
+            <Text style={[styles.streak, { color: colors.primary }]}>
+              {profile.current_streak} day streak
             </Text>
           )}
         </View>
 
-        <View style={styles.center}>
+        <View style={[styles.center, { backgroundColor: colors.background }]}>
           <WordDisplay word={todayWord.word} category={todayWord.category} />
-          <Text style={styles.submittedLabel}>YOUR DESCRIPTION</Text>
-          <Text style={styles.submittedText}>{userDescription}</Text>
-          <View style={styles.submittedCheck}>
-            <Text style={styles.checkmark}>Locked in</Text>
+          <Text style={[styles.submittedLabel, { color: colors.textMuted }]}>YOUR DESCRIPTION</Text>
+          <Text style={[styles.submittedText, { color: colors.text }]}>{userDescription}</Text>
+          <View style={[styles.submittedCheck, { backgroundColor: colors.success + '20' }]}>
+            <Text style={[styles.checkmark, { color: colors.success }]}>Locked in</Text>
           </View>
         </View>
 
@@ -165,22 +171,23 @@ export default function HomeScreen() {
 
   return (
     <KeyboardAvoidingView
-      style={styles.container}
+      style={[styles.container, { backgroundColor: colors.background }]}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
+      <ThemeToggle />
       <View style={styles.header}>
-        <Text style={styles.greeting}>Hi, {profile?.username ?? 'player'}</Text>
-        <Text style={styles.todayLabel}>TODAY'S WORD</Text>
+        <Text style={[styles.greeting, { color: colors.textSecondary }]}>Hi, {profile?.username ?? 'player'}</Text>
+        <Text style={[styles.todayLabel, { color: colors.textMuted }]}>TODAY'S WORD</Text>
       </View>
 
-      <View style={styles.center}>
+      <View style={[styles.center, { backgroundColor: colors.background }]}>
         <WordDisplay word={todayWord.word} category={todayWord.category} />
       </View>
 
       <View style={styles.inputSection}>
-        <Text style={styles.prompt}>Describe it in exactly 5 words</Text>
+        <Text style={[styles.prompt, { color: colors.textSecondary }]}>Describe it in exactly 5 words</Text>
         <TextInput
-          style={styles.descriptionInput}
+          style={[styles.descriptionInput, { backgroundColor: colors.surface, color: colors.text, borderColor: colors.border }]}
           placeholder="Type your five words..."
           placeholderTextColor={colors.textMuted}
           value={input}
@@ -204,7 +211,6 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.xxl + spacing.lg,
   },
@@ -212,7 +218,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: colors.background,
   },
   header: {
     alignItems: 'center',
@@ -220,24 +225,20 @@ const styles = StyleSheet.create({
   },
   greeting: {
     fontSize: fontSize.sm,
-    color: colors.textSecondary,
     marginBottom: spacing.xs,
   },
   streak: {
     fontSize: fontSize.xs,
-    color: colors.accent,
     fontWeight: '600',
   },
   todayLabel: {
     fontSize: fontSize.xs,
-    color: colors.textMuted,
     letterSpacing: 3,
     marginTop: spacing.sm,
   },
   logo: {
     fontSize: 64,
     fontWeight: '200',
-    color: colors.text,
     letterSpacing: 12,
     textAlign: 'center',
     marginTop: spacing.xxl,
@@ -245,14 +246,12 @@ const styles = StyleSheet.create({
   logoWord: {
     fontSize: 64,
     fontWeight: '900',
-    color: colors.primary,
     letterSpacing: 12,
     textAlign: 'center',
     marginTop: -10,
   },
   tagline: {
     fontSize: fontSize.md,
-    color: colors.textSecondary,
     textAlign: 'center',
     marginTop: spacing.md,
     marginBottom: spacing.xl,
@@ -266,16 +265,12 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   input: {
-    backgroundColor: colors.surface,
     borderRadius: borderRadius.md,
     padding: spacing.md,
     fontSize: fontSize.md,
-    color: colors.text,
     borderWidth: 1,
-    borderColor: colors.border,
   },
   error: {
-    color: colors.error,
     fontSize: fontSize.sm,
     textAlign: 'center',
   },
@@ -285,29 +280,23 @@ const styles = StyleSheet.create({
   },
   prompt: {
     fontSize: fontSize.md,
-    color: colors.textSecondary,
     textAlign: 'center',
   },
   descriptionInput: {
-    backgroundColor: colors.surface,
     borderRadius: borderRadius.lg,
     padding: spacing.lg,
     fontSize: fontSize.xl,
-    color: colors.text,
     textAlign: 'center',
     minHeight: 80,
     borderWidth: 1,
-    borderColor: colors.border,
   },
   submittedLabel: {
     fontSize: fontSize.xs,
-    color: colors.textMuted,
     letterSpacing: 3,
     marginTop: spacing.xl,
   },
   submittedText: {
     fontSize: fontSize.xl,
-    color: colors.text,
     textAlign: 'center',
     fontWeight: '600',
     marginTop: spacing.md,
@@ -315,13 +304,11 @@ const styles = StyleSheet.create({
   },
   submittedCheck: {
     marginTop: spacing.lg,
-    backgroundColor: colors.success + '20',
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.lg,
     borderRadius: borderRadius.full,
   },
   checkmark: {
-    color: colors.success,
     fontSize: fontSize.sm,
     fontWeight: '700',
   },
@@ -331,12 +318,10 @@ const styles = StyleSheet.create({
   },
   noWord: {
     fontSize: fontSize.xl,
-    color: colors.text,
     fontWeight: '600',
   },
   noWordSub: {
     fontSize: fontSize.md,
-    color: colors.textSecondary,
     marginTop: spacing.sm,
   },
 });

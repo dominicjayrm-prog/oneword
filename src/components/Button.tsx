@@ -1,5 +1,6 @@
 import { TouchableOpacity, Text, StyleSheet, ActivityIndicator } from 'react-native';
-import { colors, fontSize, spacing, borderRadius } from '../constants/theme';
+import { useTheme } from '../contexts/ThemeContext';
+import { fontSize, spacing, borderRadius } from '../constants/theme';
 
 interface ButtonProps {
   title: string;
@@ -10,12 +11,15 @@ interface ButtonProps {
 }
 
 export function Button({ title, onPress, variant = 'primary', disabled, loading }: ButtonProps) {
+  const { colors } = useTheme();
+
   return (
     <TouchableOpacity
       style={[
         styles.button,
-        variant === 'secondary' && styles.secondary,
-        variant === 'outline' && styles.outline,
+        { backgroundColor: colors.primary },
+        variant === 'secondary' && { backgroundColor: colors.secondary },
+        variant === 'outline' && { backgroundColor: 'transparent', borderWidth: 2, borderColor: colors.primary },
         disabled && styles.disabled,
       ]}
       onPress={onPress}
@@ -23,13 +27,14 @@ export function Button({ title, onPress, variant = 'primary', disabled, loading 
       activeOpacity={0.8}
     >
       {loading ? (
-        <ActivityIndicator color={colors.text} />
+        <ActivityIndicator color={variant === 'outline' ? colors.primary : '#FFFFFF'} />
       ) : (
         <Text
           style={[
             styles.text,
-            variant === 'outline' && styles.outlineText,
-            disabled && styles.disabledText,
+            variant === 'outline' && { color: colors.primary },
+            variant !== 'outline' && { color: '#FFFFFF' },
+            disabled && { color: colors.textSecondary },
           ]}
         >
           {title}
@@ -41,7 +46,6 @@ export function Button({ title, onPress, variant = 'primary', disabled, loading 
 
 const styles = StyleSheet.create({
   button: {
-    backgroundColor: colors.primary,
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.xl,
     borderRadius: borderRadius.lg,
@@ -49,27 +53,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     minHeight: 56,
   },
-  secondary: {
-    backgroundColor: colors.secondary,
-  },
-  outline: {
-    backgroundColor: 'transparent',
-    borderWidth: 2,
-    borderColor: colors.primary,
-  },
   disabled: {
     opacity: 0.4,
   },
   text: {
-    color: colors.text,
     fontSize: fontSize.md,
     fontWeight: '700',
     letterSpacing: 1,
-  },
-  outlineText: {
-    color: colors.primary,
-  },
-  disabledText: {
-    color: colors.textSecondary,
   },
 });

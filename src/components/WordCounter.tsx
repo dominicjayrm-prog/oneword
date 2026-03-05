@@ -1,5 +1,6 @@
 import { View, Text, StyleSheet } from 'react-native';
-import { colors, fontSize, spacing, borderRadius } from '../constants/theme';
+import { useTheme } from '../contexts/ThemeContext';
+import { fontSize, spacing, borderRadius } from '../constants/theme';
 
 interface WordCounterProps {
   count: number;
@@ -7,6 +8,7 @@ interface WordCounterProps {
 }
 
 export function WordCounter({ count, max }: WordCounterProps) {
+  const { colors } = useTheme();
   const isComplete = count === max;
   const isOver = count > max;
 
@@ -17,16 +19,18 @@ export function WordCounter({ count, max }: WordCounterProps) {
           key={i}
           style={[
             styles.dot,
-            i < count && styles.dotFilled,
-            isOver && styles.dotError,
+            { backgroundColor: colors.surfaceLight },
+            i < count && { backgroundColor: colors.primary },
+            isOver && i < count && { backgroundColor: colors.error },
           ]}
         />
       ))}
       <Text
         style={[
           styles.text,
-          isComplete && styles.textComplete,
-          isOver && styles.textError,
+          { color: colors.textSecondary },
+          isComplete && { color: colors.success },
+          isOver && { color: colors.error },
         ]}
       >
         {count}/{max}
@@ -47,24 +51,10 @@ const styles = StyleSheet.create({
     width: 10,
     height: 10,
     borderRadius: borderRadius.full,
-    backgroundColor: colors.surfaceLight,
-  },
-  dotFilled: {
-    backgroundColor: colors.primary,
-  },
-  dotError: {
-    backgroundColor: colors.error,
   },
   text: {
     fontSize: fontSize.sm,
-    color: colors.textSecondary,
     marginLeft: spacing.sm,
     fontWeight: '600',
-  },
-  textComplete: {
-    color: colors.success,
-  },
-  textError: {
-    color: colors.error,
   },
 });

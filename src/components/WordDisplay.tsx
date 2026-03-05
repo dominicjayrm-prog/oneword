@@ -1,5 +1,6 @@
 import { View, Text, StyleSheet } from 'react-native';
-import { colors, fontSize, spacing } from '../constants/theme';
+import { useTheme } from '../contexts/ThemeContext';
+import { fontSize, spacing } from '../constants/theme';
 
 interface WordDisplayProps {
   word: string;
@@ -7,13 +8,15 @@ interface WordDisplayProps {
 }
 
 export function WordDisplay({ word, category }: WordDisplayProps) {
+  const { colors } = useTheme();
+
   return (
     <View style={styles.container}>
       {category && (
-        <Text style={styles.category}>{category.toUpperCase()}</Text>
+        <Text style={[styles.category, { color: colors.primary }]}>{category.toUpperCase()}</Text>
       )}
-      <Text style={styles.word}>{word}</Text>
-      <View style={styles.underline} />
+      <Text style={[styles.word, { color: colors.text }]}>{word}</Text>
+      <View style={[styles.underline, { backgroundColor: colors.primary }]} />
     </View>
   );
 }
@@ -25,7 +28,6 @@ const styles = StyleSheet.create({
   },
   category: {
     fontSize: fontSize.xs,
-    color: colors.primary,
     letterSpacing: 4,
     marginBottom: spacing.sm,
     fontWeight: '600',
@@ -33,13 +35,11 @@ const styles = StyleSheet.create({
   word: {
     fontSize: fontSize.hero,
     fontWeight: '800',
-    color: colors.text,
     letterSpacing: 6,
   },
   underline: {
     width: 60,
     height: 4,
-    backgroundColor: colors.primary,
     borderRadius: 2,
     marginTop: spacing.md,
   },

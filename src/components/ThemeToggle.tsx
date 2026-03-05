@@ -1,0 +1,35 @@
+import { TouchableOpacity, Text, StyleSheet } from 'react-native';
+import { useTheme } from '../contexts/ThemeContext';
+import { fontSize } from '../constants/theme';
+
+export function ThemeToggle() {
+  const { mode, toggleTheme, colors } = useTheme();
+
+  return (
+    <TouchableOpacity
+      onPress={toggleTheme}
+      style={[styles.toggle, { backgroundColor: colors.surface, borderColor: colors.border }]}
+      activeOpacity={0.7}
+    >
+      <Text style={styles.icon}>{mode === 'light' ? '\u263E' : '\u2600'}</Text>
+    </TouchableOpacity>
+  );
+}
+
+const styles = StyleSheet.create({
+  toggle: {
+    position: 'absolute',
+    top: 16,
+    right: 16,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 10,
+  },
+  icon: {
+    fontSize: fontSize.lg,
+  },
+});

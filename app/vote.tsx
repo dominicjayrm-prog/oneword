@@ -3,16 +3,19 @@ import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../src/hooks/useAuth';
 import { useGame } from '../src/hooks/useGame';
+import { useTheme } from '../src/contexts/ThemeContext';
 import { WordDisplay } from '../src/components/WordDisplay';
 import { VoteCard } from '../src/components/VoteCard';
 import { Button } from '../src/components/Button';
-import { colors, fontSize, spacing } from '../src/constants/theme';
+import { ThemeToggle } from '../src/components/ThemeToggle';
+import { fontSize, spacing } from '../src/constants/theme';
 import type { VotePair } from '../src/types/database';
 
 const MAX_VOTES = 15;
 
 export default function VoteScreen() {
   const router = useRouter();
+  const { colors } = useTheme();
   const { session } = useAuth();
   const { todayWord, getVotePair, submitVote } = useGame(session?.user?.id);
 
@@ -50,7 +53,7 @@ export default function VoteScreen() {
 
   if (loading) {
     return (
-      <View style={styles.center}>
+      <View style={[styles.center, { backgroundColor: colors.background }]}>
         <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
@@ -58,12 +61,13 @@ export default function VoteScreen() {
 
   if (noMorePairs || voteCount >= MAX_VOTES) {
     return (
-      <View style={styles.container}>
-        <View style={styles.center}>
-          <Text style={styles.doneTitle}>
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <ThemeToggle />
+        <View style={[styles.center, { backgroundColor: colors.background }]}>
+          <Text style={[styles.doneTitle, { color: colors.text }]}>
             {voteCount >= MAX_VOTES ? 'Voting Complete!' : 'No More Pairs'}
           </Text>
-          <Text style={styles.doneSubtitle}>
+          <Text style={[styles.doneSubtitle, { color: colors.textSecondary }]}>
             You voted on {voteCount} pair{voteCount !== 1 ? 's' : ''}
           </Text>
         </View>
@@ -77,21 +81,23 @@ export default function VoteScreen() {
 
   if (!pair) {
     return (
-      <View style={styles.center}>
-        <Text style={styles.doneTitle}>No pairs available yet</Text>
+      <View style={[styles.center, { backgroundColor: colors.background }]}>
+        <ThemeToggle />
+        <Text style={[styles.doneTitle, { color: colors.text }]}>No pairs available yet</Text>
         <Button title="BACK HOME" onPress={() => router.replace('/')} variant="outline" />
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <ThemeToggle />
       <View style={styles.header}>
         {todayWord && <WordDisplay word={todayWord.word} category={todayWord.category} />}
-        <Text style={styles.progress}>
+        <Text style={[styles.progress, { color: colors.textSecondary }]}>
           {voteCount + 1} of {MAX_VOTES}
         </Text>
-        <Text style={styles.instruction}>Tap the one you prefer</Text>
+        <Text style={[styles.instruction, { color: colors.textMuted }]}>Tap the one you prefer</Text>
       </View>
 
       <View style={styles.pairContainer}>
@@ -99,7 +105,7 @@ export default function VoteScreen() {
           description={pair.desc1_text}
           onPress={() => handleVote(pair.desc1_id, pair.desc2_id)}
         />
-        <Text style={styles.vs}>VS</Text>
+        <Text style={[styles.vs, { color: colors.textMuted }]}>VS</Text>
         <VoteCard
           description={pair.desc2_text}
           onPress={() => handleVote(pair.desc2_id, pair.desc1_id)}
@@ -112,7 +118,6 @@ export default function VoteScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.xxl + spacing.lg,
   },
@@ -120,19 +125,16 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: colors.background,
   },
   header: {
     alignItems: 'center',
   },
   progress: {
     fontSize: fontSize.sm,
-    color: colors.textSecondary,
     marginTop: spacing.sm,
   },
   instruction: {
     fontSize: fontSize.md,
-    color: colors.textMuted,
     marginTop: spacing.xs,
   },
   pairContainer: {
@@ -144,18 +146,15 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: fontSize.lg,
     fontWeight: '800',
-    color: colors.textMuted,
     letterSpacing: 4,
   },
   doneTitle: {
     fontSize: fontSize.xl,
     fontWeight: '700',
-    color: colors.text,
     marginBottom: spacing.sm,
   },
   doneSubtitle: {
     fontSize: fontSize.md,
-    color: colors.textSecondary,
   },
   actions: {
     gap: spacing.md,

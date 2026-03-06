@@ -18,7 +18,10 @@ import {
   DMMono_500Medium,
 } from '@expo-google-fonts/dm-mono';
 import '../src/lib/i18n';
+import { initSentry } from '../src/lib/sentry';
 import { ThemeProvider, useTheme } from '../src/contexts/ThemeContext';
+
+initSentry();
 import { AuthProvider } from '../src/contexts/AuthContext';
 import { GameProvider } from '../src/contexts/GameContext';
 import { MobileContainer } from '../src/components/MobileContainer';

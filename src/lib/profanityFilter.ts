@@ -1,13 +1,13 @@
-// Common profanity/slur list. Covers major English profanity.
+// Profanity/slur list for App Store compliance.
+// Blocks hard profanity, slurs, and explicit sexual content.
+// Mild words (hell, damn, crap, etc.) are allowed — Apple does not flag these.
 // Words are checked as whole words (not substrings) to avoid false positives.
 const BLOCKED_WORDS = new Set([
-  // Major profanity
+  // Hard profanity
   'fuck', 'fucking', 'fucked', 'fucker', 'fuckers', 'fucks', 'fuk', 'fuking',
   'shit', 'shitting', 'shitty', 'shits', 'bullshit',
-  'ass', 'asses', 'asshole', 'assholes',
+  'asshole', 'assholes',
   'bitch', 'bitches', 'bitching', 'bitchy',
-  'damn', 'damned', 'dammit', 'goddamn', 'goddamnit',
-  'hell',
   'dick', 'dicks', 'dickhead', 'dickheads',
   'cock', 'cocks', 'cocksucker',
   'cunt', 'cunts',
@@ -15,14 +15,11 @@ const BLOCKED_WORDS = new Set([
   'bastard', 'bastards',
   'whore', 'whores',
   'slut', 'sluts', 'slutty',
-  'piss', 'pissed', 'pissing',
-  'crap', 'crappy',
   'tits', 'titties', 'boobs', 'boobies',
-  'penis', 'vagina', 'dildo',
   'wank', 'wanker', 'wankers',
   'twat', 'twats',
   'bollocks',
-  'arse', 'arsehole',
+  'arsehole',
   'prick', 'pricks',
 
   // Slurs (racial, ethnic, homophobic, etc.)
@@ -36,7 +33,6 @@ const BLOCKED_WORDS = new Set([
   'wetback', 'wetbacks',
   'beaner', 'beaners',
   'tranny', 'trannies',
-  'negro', 'negros',
   'coon', 'coons',
   'gook', 'gooks',
   'raghead', 'ragheads',
@@ -47,26 +43,21 @@ const BLOCKED_WORDS = new Set([
   'cum', 'cumming', 'cumshot',
   'jizz', 'ejaculate',
   'masturbate', 'masturbating',
-  'orgasm', 'orgasms',
-  'anal', 'anus',
-  'erection', 'boner',
-  'horny', 'sexy',
+  'dildo',
   'porn', 'porno', 'pornography',
   'hentai',
-  'nude', 'nudes', 'naked',
+  'horny',
 
   // Violence / harmful
-  'kill', 'killing', 'murder', 'rape', 'raping', 'rapist',
+  'rape', 'raping', 'rapist',
   'suicide', 'suicidal',
-  'terrorist', 'terrorism',
   'pedophile', 'pedo', 'paedophile',
   'molest', 'molester',
   'genocide',
 
   // Common evasions
-  'fck', 'fcking', 'fking', 'wtf', 'stfu', 'gtfo', 'lmfao',
+  'fck', 'fcking', 'fking', 'wtf', 'stfu', 'gtfo',
   'sh1t', 'f*ck', 'b1tch', 'a$$',
-  'peeing', 'pee',
 ]);
 
 /**

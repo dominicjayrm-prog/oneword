@@ -1,11 +1,23 @@
 import { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, ScrollView, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuthContext } from '../src/contexts/AuthContext';
 import { useTheme } from '../src/contexts/ThemeContext';
 import { Button } from '../src/components/Button';
 import { ThemeToggle } from '../src/components/ThemeToggle';
 import { fontSize, spacing, borderRadius } from '../src/constants/theme';
+
+function confirm(title: string, message: string): Promise<boolean> {
+  if (Platform.OS === 'web') {
+    return Promise.resolve(window.confirm(`${title}\n\n${message}`));
+  }
+  return new Promise((resolve) => {
+    Alert.alert(title, message, [
+      { text: 'Cancel', style: 'cancel', onPress: () => resolve(false) },
+      { text: 'OK', onPress: () => resolve(true) },
+    ]);
+  });
+}
 
 const AVATARS = ['🎭', '🦊', '🐙', '🌟', '🎨', '🔥', '💎', '🌙', '🦄', '🍕', '🎯', '🧊', '🪐', '🎸', '🌊', '🦅'];
 
@@ -36,53 +48,30 @@ export default function ProfileScreen() {
     setShowAvatarPicker(false);
   }
 
-  function handleLogout() {
-    Alert.alert('Log Out', 'Are you sure you want to log out?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Log Out',
-        onPress: () => {
-          signOut();
-        },
-      },
-    ]);
+  async function handleLogout() {
+    const ok = await confirm('Log Out', 'Are you sure you want to log out?');
+    if (ok) {
+      signOut();
+    }
   }
 
-  function handleDeleteAccount() {
-    Alert.alert(
-      'Delete Account',
-      'This will permanently delete your account and all your data. This cannot be undone.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: () => {
-            Alert.alert(
-              'Are you absolutely sure?',
-              'All your descriptions, votes, and stats will be gone forever.',
-              [
-                { text: 'Cancel', style: 'cancel' },
-                {
-                  text: 'Yes, Delete Everything',
-                  style: 'destructive',
-                  onPress: async () => {
-                    setDeleting(true);
-                    const { error } = await deleteAccount();
-                    if (error) {
-                      Alert.alert('Error', 'Failed to delete account. Please try again.');
-                      setDeleting(false);
-                    } else {
-                      router.replace('/');
-                    }
-                  },
-                },
-              ]
-            );
-          },
-        },
-      ]
-    );
+  async function handleDeleteAccount() {
+    const ok = await confirm('Delete Account', 'This will permanently delete your account and all your data. This cannot be undone.');
+    if (!ok) return;
+
+    const really = await confirm('Are you absolutely sure?', 'All your descriptions, votes, and stats will be gone forever.');
+    if (!really) return;
+
+    setDeleting(true);
+    const { error } = await deleteAccount();
+    if (error) {
+      if (Platform.OS === 'web') {
+        window.alert('Failed to delete account. Please try again.');
+      } else {
+        Alert.alert('Error', 'Failed to delete account. Please try again.');
+      }
+      setDeleting(false);
+    }
   }
 
   const stats = [

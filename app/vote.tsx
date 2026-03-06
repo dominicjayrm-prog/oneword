@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, Alert, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuthContext } from '../src/contexts/AuthContext';
 import { useGameContext } from '../src/contexts/GameContext';
@@ -52,22 +52,24 @@ export default function VoteScreen() {
   }
 
   async function handleReport(descriptionId: string) {
-    Alert.alert(
-      'Report Description',
-      'Flag this description as inappropriate?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Report',
-          style: 'destructive',
-          onPress: async () => {
-            await reportDescription(descriptionId);
-            Alert.alert('Reported', 'Thanks for helping keep OneWord clean.');
-            loadPair();
-          },
-        },
-      ]
-    );
+    const ok = Platform.OS === 'web'
+      ? window.confirm('Report Description\n\nFlag this description as inappropriate?')
+      : await new Promise<boolean>((resolve) => {
+          Alert.alert('Report Description', 'Flag this description as inappropriate?', [
+            { text: 'Cancel', style: 'cancel', onPress: () => resolve(false) },
+            { text: 'Report', style: 'destructive', onPress: () => resolve(true) },
+          ]);
+        });
+
+    if (ok) {
+      await reportDescription(descriptionId);
+      if (Platform.OS === 'web') {
+        window.alert('Thanks for helping keep OneWord clean.');
+      } else {
+        Alert.alert('Reported', 'Thanks for helping keep OneWord clean.');
+      }
+      loadPair();
+    }
   }
 
   if (noMorePairs || voteCount >= MAX_VOTES) {

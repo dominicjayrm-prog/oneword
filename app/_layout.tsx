@@ -34,7 +34,7 @@ function InnerLayout() {
       setHasSeenOnboarding(value === 'true');
       setOnboardingChecked(true);
     });
-  }, [segments]);
+  }, []);
 
   useEffect(() => {
     if (!onboardingChecked) return;
@@ -46,7 +46,7 @@ function InnerLayout() {
     } else if (hasSeenOnboarding && inOnboarding) {
       router.replace('/');
     }
-  }, [onboardingChecked, hasSeenOnboarding, segments]);
+  }, [onboardingChecked, hasSeenOnboarding]);
 
   if (!onboardingChecked) {
     return (

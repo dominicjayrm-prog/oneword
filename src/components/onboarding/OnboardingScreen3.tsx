@@ -7,8 +7,8 @@ interface Props {
 
 const ENTRIES = [
   { emoji: '🥇', desc: '"Where fish pay no rent"', user: '@sara', votes: 847, gold: true },
-  { emoji: '🥈', desc: '"God\'s pool, no lifeguard"', user: '@mike', votes: 723, gold: false },
-  { emoji: '🥉', desc: '"Big salty infinity bath"', user: '@luna', votes: 694, gold: false },
+  { emoji: '🥈', desc: '"God\'s swimming pool, no lifeguard"', user: '@mike', votes: 723, gold: false },
+  { emoji: '🥉', desc: '"Big salty infinity bath time"', user: '@luna', votes: 694, gold: false },
 ];
 
 const STATS = [

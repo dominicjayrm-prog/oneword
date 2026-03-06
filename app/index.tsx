@@ -9,6 +9,7 @@ import {
   Platform,
   ScrollView,
   Alert,
+  TouchableOpacity,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuthContext } from '../src/contexts/AuthContext';
@@ -143,14 +144,17 @@ export default function HomeScreen() {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <ThemeToggle />
-        <View style={styles.header}>
+        <TouchableOpacity style={styles.header} onPress={() => router.push('/profile')} activeOpacity={0.7}>
+          <View style={[styles.avatarSmall, { backgroundColor: colors.primaryFaded, borderColor: colors.primary }]}>
+            <Text style={styles.avatarSmallText}>{profile?.avatar_url || '🎭'}</Text>
+          </View>
           <Text style={[styles.greeting, { color: colors.textSecondary }]}>Hi, {profile?.username ?? 'player'}</Text>
           {profile && profile.current_streak > 0 && (
             <Text style={[styles.streak, { color: colors.primary }]}>
               {profile.current_streak} day streak
             </Text>
           )}
-        </View>
+        </TouchableOpacity>
 
         <View style={[styles.center, { backgroundColor: colors.background }]}>
           <WordDisplay word={todayWord.word} category={todayWord.category} />
@@ -175,10 +179,13 @@ export default function HomeScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <ThemeToggle />
-      <View style={styles.header}>
+      <TouchableOpacity style={styles.header} onPress={() => router.push('/profile')} activeOpacity={0.7}>
+        <View style={[styles.avatarSmall, { backgroundColor: colors.primaryFaded, borderColor: colors.primary }]}>
+          <Text style={styles.avatarSmallText}>{profile?.avatar_url || '🎭'}</Text>
+        </View>
         <Text style={[styles.greeting, { color: colors.textSecondary }]}>Hi, {profile?.username ?? 'player'}</Text>
-        <Text style={[styles.todayLabel, { color: colors.textMuted }]}>TODAY'S WORD</Text>
-      </View>
+        <Text style={[styles.todayLabel, { color: colors.textMuted }]}>TODAY&apos;S WORD</Text>
+      </TouchableOpacity>
 
       <View style={[styles.center, { backgroundColor: colors.background }]}>
         <WordDisplay word={todayWord.word} category={todayWord.category} />
@@ -222,6 +229,18 @@ const styles = StyleSheet.create({
   header: {
     alignItems: 'center',
     marginBottom: spacing.md,
+  },
+  avatarSmall: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: spacing.xs,
+  },
+  avatarSmallText: {
+    fontSize: 22,
   },
   greeting: {
     fontSize: fontSize.sm,

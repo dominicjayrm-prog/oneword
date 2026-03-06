@@ -221,7 +221,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingHorizontal: spacing.lg,
-    paddingTop: spacing.xxl + spacing.lg,
+    paddingTop: spacing.xxl,
   },
   center: {
     flex: 1,
@@ -233,16 +233,16 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   avatarSmall: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     borderWidth: 2,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: spacing.xs,
   },
   avatarSmallText: {
-    fontSize: 22,
+    fontSize: 18,
   },
   greeting: {
     fontSize: fontSize.sm,
@@ -313,19 +313,19 @@ const styles = StyleSheet.create({
   submittedLabel: {
     fontSize: fontSize.xs,
     letterSpacing: 3,
-    marginTop: spacing.xl,
+    marginTop: spacing.md,
   },
   submittedText: {
-    fontSize: fontSize.xl,
+    fontSize: fontSize.lg,
     textAlign: 'center',
     fontWeight: '600',
-    marginTop: spacing.md,
-    paddingHorizontal: spacing.lg,
+    marginTop: spacing.sm,
+    paddingHorizontal: spacing.md,
   },
   submittedCheck: {
-    marginTop: spacing.lg,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.lg,
+    marginTop: spacing.md,
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.md,
     borderRadius: borderRadius.full,
   },
   checkmark: {
@@ -333,8 +333,8 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   actions: {
-    gap: spacing.md,
-    paddingBottom: spacing.xl,
+    gap: spacing.sm,
+    paddingBottom: spacing.lg,
   },
   noWord: {
     fontSize: fontSize.xl,

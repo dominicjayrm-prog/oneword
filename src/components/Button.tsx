@@ -46,12 +46,12 @@ export function Button({ title, onPress, variant = 'primary', disabled, loading 
 
 const styles = StyleSheet.create({
   button: {
-    paddingVertical: spacing.md,
+    paddingVertical: spacing.md - 2,
     paddingHorizontal: spacing.xl,
-    borderRadius: borderRadius.lg,
+    borderRadius: borderRadius.md,
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 56,
+    minHeight: 48,
   },
   disabled: {
     opacity: 0.4,

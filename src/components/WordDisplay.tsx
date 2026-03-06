@@ -24,7 +24,7 @@ export function WordDisplay({ word, category }: WordDisplayProps) {
 const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
-    paddingVertical: spacing.xl,
+    paddingVertical: spacing.md,
   },
   category: {
     fontSize: fontSize.xs,

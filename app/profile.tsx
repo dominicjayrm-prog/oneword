@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuthContext } from '../src/contexts/AuthContext';
@@ -16,8 +16,13 @@ export default function ProfileScreen() {
   const [showAvatarPicker, setShowAvatarPicker] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
+  useEffect(() => {
+    if (!profile) {
+      router.replace('/');
+    }
+  }, [profile]);
+
   if (!profile) {
-    router.replace('/');
     return null;
   }
 
@@ -36,9 +41,8 @@ export default function ProfileScreen() {
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Log Out',
-        onPress: async () => {
-          await signOut();
-          router.replace('/');
+        onPress: () => {
+          signOut();
         },
       },
     ]);
@@ -166,7 +170,7 @@ const styles = StyleSheet.create({
   },
   container: {
     paddingHorizontal: spacing.lg,
-    paddingTop: spacing.xxl + spacing.lg,
+    paddingTop: spacing.xxl,
     paddingBottom: spacing.xxl,
   },
   profileHeader: {

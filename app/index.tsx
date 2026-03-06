@@ -46,7 +46,11 @@ export default function HomeScreen() {
     setSubmitting(true);
     const { error } = await submitDescription(input);
     if (error) {
-      Alert.alert('Error', error.message);
+      if (Platform.OS === 'web') {
+        window.alert(error.message);
+      } else {
+        Alert.alert('Error', error.message);
+      }
     }
     setSubmitting(false);
   }

@@ -37,7 +37,7 @@ export function LeaderboardRow({ rank, username, description, votes, isCurrentUs
       </View>
       <View style={styles.votesContainer}>
         <Text style={[styles.votes, { color: colors.primary }]}>{votes}</Text>
-        <Text style={[styles.votesLabel, { color: colors.textMuted }]}>wins</Text>
+        <Text style={[styles.votesLabel, { color: colors.textMuted }]}>votes</Text>
       </View>
     </View>
   );

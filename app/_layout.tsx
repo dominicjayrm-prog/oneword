@@ -1,6 +1,8 @@
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { ThemeProvider, useTheme } from '../src/contexts/ThemeContext';
+import { AuthProvider } from '../src/contexts/AuthContext';
+import { GameProvider } from '../src/contexts/GameContext';
 import { MobileContainer } from '../src/components/MobileContainer';
 
 function InnerLayout() {
@@ -23,7 +25,11 @@ function InnerLayout() {
 export default function RootLayout() {
   return (
     <ThemeProvider>
-      <InnerLayout />
+      <AuthProvider>
+        <GameProvider>
+          <InnerLayout />
+        </GameProvider>
+      </AuthProvider>
     </ThemeProvider>
   );
 }

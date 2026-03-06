@@ -1,8 +1,8 @@
 import { useEffect, useState, useCallback } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useAuth } from '../src/hooks/useAuth';
-import { useGame } from '../src/hooks/useGame';
+import { useAuthContext } from '../src/contexts/AuthContext';
+import { useGameContext } from '../src/contexts/GameContext';
 import { useTheme } from '../src/contexts/ThemeContext';
 import { WordDisplay } from '../src/components/WordDisplay';
 import { VoteCard } from '../src/components/VoteCard';
@@ -16,8 +16,8 @@ const MAX_VOTES = 15;
 export default function VoteScreen() {
   const router = useRouter();
   const { colors } = useTheme();
-  const { session } = useAuth();
-  const { todayWord, getVotePair, submitVote, reportDescription } = useGame(session?.user?.id);
+  const { session } = useAuthContext();
+  const { todayWord, getVotePair, submitVote, reportDescription } = useGameContext();
 
   const [pair, setPair] = useState<VotePair | null>(null);
   const [voteCount, setVoteCount] = useState(0);
@@ -70,14 +70,6 @@ export default function VoteScreen() {
     );
   }
 
-  if (loading) {
-    return (
-      <View style={[styles.center, { backgroundColor: colors.background }]}>
-        <ActivityIndicator size="large" color={colors.primary} />
-      </View>
-    );
-  }
-
   if (noMorePairs || voteCount >= MAX_VOTES) {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -98,16 +90,6 @@ export default function VoteScreen() {
     );
   }
 
-  if (!pair) {
-    return (
-      <View style={[styles.center, { backgroundColor: colors.background }]}>
-        <ThemeToggle />
-        <Text style={[styles.doneTitle, { color: colors.text }]}>No pairs available yet</Text>
-        <Button title="BACK HOME" onPress={() => router.replace('/')} variant="outline" />
-      </View>
-    );
-  }
-
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <ThemeToggle />
@@ -120,17 +102,28 @@ export default function VoteScreen() {
       </View>
 
       <View style={styles.pairContainer}>
-        <VoteCard
-          description={pair.desc1_text}
-          onPress={() => handleVote(pair.desc1_id, pair.desc2_id)}
-          onReport={() => handleReport(pair.desc1_id)}
-        />
-        <Text style={[styles.vs, { color: colors.textMuted }]}>VS</Text>
-        <VoteCard
-          description={pair.desc2_text}
-          onPress={() => handleVote(pair.desc2_id, pair.desc1_id)}
-          onReport={() => handleReport(pair.desc2_id)}
-        />
+        {loading ? (
+          <ActivityIndicator size="large" color={colors.primary} />
+        ) : !pair ? (
+          <View style={styles.noPairs}>
+            <Text style={[styles.doneTitle, { color: colors.text }]}>No pairs available yet</Text>
+            <Button title="BACK HOME" onPress={() => router.replace('/')} variant="outline" />
+          </View>
+        ) : (
+          <>
+            <VoteCard
+              description={pair.desc1_text}
+              onPress={() => handleVote(pair.desc1_id, pair.desc2_id)}
+              onReport={() => handleReport(pair.desc1_id)}
+            />
+            <Text style={[styles.vs, { color: colors.textMuted }]}>VS</Text>
+            <VoteCard
+              description={pair.desc2_text}
+              onPress={() => handleVote(pair.desc2_id, pair.desc1_id)}
+              onReport={() => handleReport(pair.desc2_id)}
+            />
+          </>
+        )}
       </View>
     </View>
   );
@@ -168,6 +161,10 @@ const styles = StyleSheet.create({
     fontSize: fontSize.lg,
     fontWeight: '800',
     letterSpacing: 4,
+  },
+  noPairs: {
+    alignItems: 'center',
+    gap: spacing.lg,
   },
   doneTitle: {
     fontSize: fontSize.xl,

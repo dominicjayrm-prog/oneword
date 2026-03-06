@@ -80,8 +80,10 @@ export default function HomeScreen() {
       >
         <ThemeToggle />
         <ScrollView contentContainerStyle={styles.authContainer} keyboardShouldPersistTaps="handled">
-          <Text style={[styles.logo, { color: colors.text }]}>ONE</Text>
-          <Text style={[styles.logoWord, { color: colors.primary }]}>WORD</Text>
+          <View style={styles.logoRow}>
+            <Text style={[styles.logo, { color: colors.text }]}>one</Text>
+            <Text style={[styles.logoWord, { color: colors.primary }]}>word</Text>
+          </View>
           <Text style={[styles.tagline, { color: colors.textSecondary }]}>5 words. 1 winner. Every day.</Text>
 
           <View style={styles.authForm}>
@@ -255,19 +257,18 @@ const styles = StyleSheet.create({
     letterSpacing: 3,
     marginTop: spacing.sm,
   },
-  logo: {
-    fontSize: 64,
-    fontWeight: '200',
-    letterSpacing: 12,
-    textAlign: 'center',
+  logoRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
     marginTop: spacing.xxl,
   },
+  logo: {
+    fontSize: 48,
+    fontFamily: 'PlayfairDisplay_700Bold',
+  },
   logoWord: {
-    fontSize: 64,
-    fontWeight: '900',
-    letterSpacing: 12,
-    textAlign: 'center',
-    marginTop: -10,
+    fontSize: 48,
+    fontFamily: 'PlayfairDisplay_700Bold',
   },
   tagline: {
     fontSize: fontSize.md,

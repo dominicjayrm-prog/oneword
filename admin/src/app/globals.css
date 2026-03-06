@@ -1,19 +1,19 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --bg: #0c0a14;
-  --surface: #16132a;
-  --surface-2: #1e1a36;
-  --border: #2d2754;
-  --text: #f5f3ff;
-  --text-muted: #8b83b0;
-  --accent: #8b5cf6;
-  --accent-hover: #7c3aed;
-  --accent-glow: #8b5cf620;
-  --success: #22c55e;
+  --bg: #141218;
+  --surface: #1E1C24;
+  --surface-2: #2A2832;
+  --border: #3A3744;
+  --text: #F5F0E8;
+  --text-muted: #A9A3B3;
+  --accent: #FF6B4A;
+  --accent-hover: #FF5533;
+  --accent-glow: #FF6B4A20;
+  --success: #2ECC71;
   --warning: #f59e0b;
   --danger: #ef4444;
-  --orange: #a78bfa;
+  --orange: #FF8066;
 }
 
 body {
@@ -84,7 +84,7 @@ tr:hover { background: var(--surface-2); }
   font-size: 12px;
   font-weight: 600;
 }
-.badge-success { background: #22c55e22; color: var(--success); }
+.badge-success { background: #2ECC7122; color: var(--success); }
 .badge-warning { background: #f59e0b22; color: var(--warning); }
 .badge-muted { background: #88888822; color: var(--text-muted); }
 
@@ -148,7 +148,7 @@ tr:hover { background: var(--surface-2); }
   transition: all 0.15s;
 }
 .calendar-day:hover { border-color: var(--accent); }
-.calendar-day.has-word { background: #22c55e22; border-color: #22c55e44; }
+.calendar-day.has-word { background: #2ECC7122; border-color: #2ECC7144; }
 .calendar-day.no-word { background: var(--surface-2); }
 .calendar-day.today { border-color: var(--accent); box-shadow: 0 0 8px var(--accent-glow); }
 .calendar-day .day-num { font-weight: 600; }

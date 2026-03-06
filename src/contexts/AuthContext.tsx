@@ -11,6 +11,8 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
+  updateAvatar: (avatarUrl: string) => Promise<{ error: Error | null }>;
+  deleteAccount: () => Promise<{ error: Error | null }>;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -21,6 +23,8 @@ const AuthContext = createContext<AuthContextType>({
   signIn: async () => ({ error: null }),
   signOut: async () => {},
   refreshProfile: async () => {},
+  updateAvatar: async () => ({ error: null }),
+  deleteAccount: async () => ({ error: null }),
 });
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -77,12 +81,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error };
   }
 
+  async function updateAvatar(avatarUrl: string) {
+    if (!session?.user) return { error: new Error('Not signed in') };
+    const { error } = await supabase
+      .from('profiles')
+      .update({ avatar_url: avatarUrl, updated_at: new Date().toISOString() })
+      .eq('id', session.user.id);
+    if (!error) {
+      setProfile((prev) => prev ? { ...prev, avatar_url: avatarUrl } : prev);
+    }
+    return { error };
+  }
+
+  async function deleteAccount() {
+    if (!session?.user) return { error: new Error('Not signed in') };
+    const { error } = await supabase.rpc('delete_own_account');
+    if (!error) {
+      await supabase.auth.signOut();
+    }
+    return { error };
+  }
+
   async function signOut() {
     await supabase.auth.signOut();
   }
 
   return (
-    <AuthContext.Provider value={{ session, profile, loading, signUp, signIn, signOut, refreshProfile }}>
+    <AuthContext.Provider value={{ session, profile, loading, signUp, signIn, signOut, refreshProfile, updateAvatar, deleteAccount }}>
       {children}
     </AuthContext.Provider>
   );

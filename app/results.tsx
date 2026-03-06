@@ -73,7 +73,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingHorizontal: spacing.lg,
-    paddingTop: spacing.xxl + spacing.lg,
+    paddingTop: spacing.xxl,
   },
   center: {
     flex: 1,

@@ -36,7 +36,7 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.lg,
     padding: spacing.lg,
     borderWidth: 1,
-    minHeight: 120,
+    minHeight: 100,
     justifyContent: 'center',
     alignItems: 'center',
   },

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, FlatList } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, FlatList, Share } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuthContext } from '../src/contexts/AuthContext';
 import { useGameContext } from '../src/contexts/GameContext';
@@ -15,7 +15,7 @@ export default function ResultsScreen() {
   const router = useRouter();
   const { colors } = useTheme();
   const { profile } = useAuthContext();
-  const { todayWord, getLeaderboard } = useGameContext();
+  const { todayWord, userDescription, getLeaderboard } = useGameContext();
 
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -28,6 +28,24 @@ export default function ResultsScreen() {
     }
     load();
   }, []);
+
+  const handleShare = async () => {
+    const myEntry = leaderboard.find((e) => e.username === profile?.username);
+    const word = todayWord?.word ?? '???';
+    const lines = [`OneWord - ${word}`];
+    if (userDescription) {
+      lines.push(`"${userDescription}"`);
+    }
+    if (myEntry) {
+      lines.push(`#${myEntry.rank} with ${myEntry.votes} votes`);
+    }
+    lines.push('', 'Play OneWord daily!');
+    try {
+      await Share.share({ message: lines.join('\n') });
+    } catch {
+      // user cancelled
+    }
+  };
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -63,6 +81,8 @@ export default function ResultsScreen() {
       )}
 
       <View style={styles.actions}>
+        <Button title="SHARE RESULTS" onPress={handleShare} variant="primary" />
+        <View style={{ height: spacing.sm }} />
         <Button title="BACK HOME" onPress={() => router.replace('/')} variant="outline" />
       </View>
     </View>

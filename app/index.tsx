@@ -11,8 +11,8 @@ import {
   Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useAuth } from '../src/hooks/useAuth';
-import { useGame } from '../src/hooks/useGame';
+import { useAuthContext } from '../src/contexts/AuthContext';
+import { useGameContext } from '../src/contexts/GameContext';
 import { useTheme } from '../src/contexts/ThemeContext';
 import { WordDisplay } from '../src/components/WordDisplay';
 import { WordCounter } from '../src/components/WordCounter';
@@ -23,8 +23,8 @@ import { fontSize, spacing, borderRadius } from '../src/constants/theme';
 export default function HomeScreen() {
   const router = useRouter();
   const { colors } = useTheme();
-  const { session, profile, loading: authLoading, signIn, signUp, signOut } = useAuth();
-  const { todayWord, hasSubmitted, userDescription, loading: gameLoading, submitDescription } = useGame(session?.user?.id);
+  const { session, profile, loading: authLoading, signIn, signUp, signOut } = useAuthContext();
+  const { todayWord, hasSubmitted, userDescription, loading: gameLoading, submitDescription } = useGameContext();
 
   const [input, setInput] = useState('');
   const [submitting, setSubmitting] = useState(false);

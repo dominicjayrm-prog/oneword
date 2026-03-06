@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, FlatList } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useAuth } from '../src/hooks/useAuth';
-import { useGame } from '../src/hooks/useGame';
+import { useAuthContext } from '../src/contexts/AuthContext';
+import { useGameContext } from '../src/contexts/GameContext';
 import { useTheme } from '../src/contexts/ThemeContext';
 import { WordDisplay } from '../src/components/WordDisplay';
 import { LeaderboardRow } from '../src/components/LeaderboardRow';
@@ -14,8 +14,8 @@ import type { LeaderboardEntry } from '../src/types/database';
 export default function ResultsScreen() {
   const router = useRouter();
   const { colors } = useTheme();
-  const { session, profile } = useAuth();
-  const { todayWord, getLeaderboard } = useGame(session?.user?.id);
+  const { profile } = useAuthContext();
+  const { todayWord, getLeaderboard } = useGameContext();
 
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -29,21 +29,17 @@ export default function ResultsScreen() {
     load();
   }, []);
 
-  if (loading) {
-    return (
-      <View style={[styles.center, { backgroundColor: colors.background }]}>
-        <ActivityIndicator size="large" color={colors.primary} />
-      </View>
-    );
-  }
-
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <ThemeToggle />
       {todayWord && <WordDisplay word={todayWord.word} category={todayWord.category} />}
       <Text style={[styles.title, { color: colors.textMuted }]}>LEADERBOARD</Text>
 
-      {leaderboard.length === 0 ? (
+      {loading ? (
+        <View style={[styles.center, { backgroundColor: colors.background }]}>
+          <ActivityIndicator size="large" color={colors.primary} />
+        </View>
+      ) : leaderboard.length === 0 ? (
         <View style={[styles.center, { backgroundColor: colors.background }]}>
           <Text style={[styles.empty, { color: colors.text }]}>No results yet.</Text>
           <Text style={[styles.emptySub, { color: colors.textSecondary }]}>Vote more to see rankings!</Text>

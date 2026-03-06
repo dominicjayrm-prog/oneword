@@ -1,96 +1,101 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  Dimensions,
   TouchableOpacity,
-  FlatList,
-  type ViewToken,
+  ScrollView,
+  type NativeSyntheticEvent,
+  type NativeScrollEvent,
+  type LayoutChangeEvent,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import Animated, {
-  FadeIn,
-} from 'react-native-reanimated';
 
 import { OnboardingScreen1 } from '../../src/components/onboarding/OnboardingScreen1';
 import { OnboardingScreen2 } from '../../src/components/onboarding/OnboardingScreen2';
 import { OnboardingScreen3 } from '../../src/components/onboarding/OnboardingScreen3';
 import { DotIndicator } from '../../src/components/onboarding/DotIndicator';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-
-const SCREENS = [
-  { key: '1', Component: OnboardingScreen1 },
-  { key: '2', Component: OnboardingScreen2 },
-  { key: '3', Component: OnboardingScreen3 },
-];
-
 export default function OnboardingScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [currentIndex, setCurrentIndex] = useState(0);
-  const flatListRef = useRef<FlatList>(null);
+  const [containerWidth, setContainerWidth] = useState(0);
+  const scrollRef = useRef<ScrollView>(null);
 
-  const onViewableItemsChanged = useRef(
-    ({ viewableItems }: { viewableItems: ViewToken[] }) => {
-      if (viewableItems.length > 0 && viewableItems[0].index != null) {
-        setCurrentIndex(viewableItems[0].index);
-      }
+  const onLayout = (e: LayoutChangeEvent) => {
+    setContainerWidth(e.nativeEvent.layout.width);
+  };
+
+  const onMomentumScrollEnd = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    if (!containerWidth) return;
+    const x = e.nativeEvent.contentOffset.x;
+    const index = Math.round(x / containerWidth);
+    if (index !== currentIndex) {
+      setCurrentIndex(index);
     }
-  ).current;
+  };
 
-  const viewabilityConfig = useRef({ viewAreaCoveragePercentThreshold: 50 }).current;
-
-  const goNext = useCallback(() => {
-    if (currentIndex < SCREENS.length - 1) {
-      flatListRef.current?.scrollToIndex({ index: currentIndex + 1, animated: true });
+  const goNext = () => {
+    if (currentIndex < 2 && containerWidth) {
+      const next = currentIndex + 1;
+      scrollRef.current?.scrollTo({ x: next * containerWidth, animated: true });
+      setCurrentIndex(next);
     }
-  }, [currentIndex]);
+  };
 
-  const goBack = useCallback(() => {
-    if (currentIndex > 0) {
-      flatListRef.current?.scrollToIndex({ index: currentIndex - 1, animated: true });
+  const goBack = () => {
+    if (currentIndex > 0 && containerWidth) {
+      const prev = currentIndex - 1;
+      scrollRef.current?.scrollTo({ x: prev * containerWidth, animated: true });
+      setCurrentIndex(prev);
     }
-  }, [currentIndex]);
+  };
 
-  const handleFinish = useCallback(async () => {
+  const handleFinish = async () => {
     await AsyncStorage.setItem('hasSeenOnboarding', 'true');
     router.replace('/');
-  }, [router]);
+  };
 
-  const isLast = currentIndex === SCREENS.length - 1;
+  const isLast = currentIndex === 2;
 
   return (
     <View style={[styles.root, { paddingTop: insets.top + 16, paddingBottom: insets.bottom + 16 }]}>
       {/* Logo */}
-      <Animated.View entering={FadeIn.duration(600)} style={styles.logoContainer}>
+      <View style={styles.logoContainer}>
         <Text style={styles.logoOne}>one</Text>
         <Text style={styles.logoWord}>word</Text>
-      </Animated.View>
+      </View>
 
       {/* Screens */}
-      <FlatList
-        ref={flatListRef}
-        data={SCREENS}
-        horizontal
-        pagingEnabled
-        showsHorizontalScrollIndicator={false}
-        keyExtractor={(item) => item.key}
-        onViewableItemsChanged={onViewableItemsChanged}
-        viewabilityConfig={viewabilityConfig}
-        renderItem={({ item, index }) => (
-          <View style={styles.screenContainer}>
-            <item.Component isActive={currentIndex === index} />
-          </View>
+      <View style={styles.scrollWrapper} onLayout={onLayout}>
+        {containerWidth > 0 && (
+          <ScrollView
+            ref={scrollRef}
+            horizontal
+            pagingEnabled
+            showsHorizontalScrollIndicator={false}
+            onMomentumScrollEnd={onMomentumScrollEnd}
+            scrollEventThrottle={16}
+          >
+            <View style={{ width: containerWidth, flex: 1 }}>
+              <OnboardingScreen1 isActive={currentIndex === 0} />
+            </View>
+            <View style={{ width: containerWidth, flex: 1 }}>
+              <OnboardingScreen2 isActive={currentIndex === 1} />
+            </View>
+            <View style={{ width: containerWidth, flex: 1 }}>
+              <OnboardingScreen3 isActive={currentIndex === 2} />
+            </View>
+          </ScrollView>
         )}
-      />
+      </View>
 
       {/* Bottom section */}
       <View style={styles.bottom}>
-        <DotIndicator total={SCREENS.length} current={currentIndex} />
+        <DotIndicator total={3} current={currentIndex} />
 
         <View style={styles.buttons}>
           {currentIndex > 0 ? (
@@ -131,6 +136,7 @@ const styles = StyleSheet.create({
   },
   logoContainer: {
     flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 12,
   },
@@ -144,8 +150,7 @@ const styles = StyleSheet.create({
     fontFamily: 'PlayfairDisplay_700Bold',
     color: '#FF6B4A',
   },
-  screenContainer: {
-    width: SCREEN_WIDTH,
+  scrollWrapper: {
     flex: 1,
   },
   bottom: {

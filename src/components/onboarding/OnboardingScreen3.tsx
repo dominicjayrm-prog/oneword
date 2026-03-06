@@ -1,13 +1,5 @@
-import { useEffect } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withDelay,
-  withTiming,
-  withSpring,
-  type SharedValue,
-} from 'react-native-reanimated';
+import { useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, Animated } from 'react-native';
 
 interface Props {
   isActive: boolean;
@@ -26,85 +18,110 @@ const STATS = [
 ];
 
 export function OnboardingScreen3({ isActive }: Props) {
-  const labelOpacity = useSharedValue(0);
-  const titleOpacity = useSharedValue(0);
-  const subtitleOpacity = useSharedValue(0);
+  const labelOpacity = useRef(new Animated.Value(0)).current;
+  const titleOpacity = useRef(new Animated.Value(0)).current;
+  const subtitleOpacity = useRef(new Animated.Value(0)).current;
 
-  const entry0 = useSharedValue(0);
-  const entry1 = useSharedValue(0);
-  const entry2 = useSharedValue(0);
-  const entryTranslate0 = useSharedValue(30);
-  const entryTranslate1 = useSharedValue(30);
-  const entryTranslate2 = useSharedValue(30);
+  const entryOpacities = useRef(ENTRIES.map(() => new Animated.Value(0))).current;
+  const entryTranslateYs = useRef(ENTRIES.map(() => new Animated.Value(30))).current;
 
-  const statsOpacity = useSharedValue(0);
-  const statsTranslateY = useSharedValue(20);
-
-  const entryOpacities = [entry0, entry1, entry2];
-  const entryTranslates = [entryTranslate0, entryTranslate1, entryTranslate2];
+  const statsOpacity = useRef(new Animated.Value(0)).current;
+  const statsTranslateY = useRef(new Animated.Value(20)).current;
 
   useEffect(() => {
     if (isActive) {
       // Reset
-      labelOpacity.value = 0;
-      titleOpacity.value = 0;
-      subtitleOpacity.value = 0;
-      entryOpacities.forEach((o) => { o.value = 0; });
-      entryTranslates.forEach((t) => { t.value = 30; });
-      statsOpacity.value = 0;
-      statsTranslateY.value = 20;
+      labelOpacity.setValue(0);
+      titleOpacity.setValue(0);
+      subtitleOpacity.setValue(0);
+      entryOpacities.forEach((v) => v.setValue(0));
+      entryTranslateYs.forEach((v) => v.setValue(30));
+      statsOpacity.setValue(0);
+      statsTranslateY.setValue(20);
 
-      // Animate in
-      labelOpacity.value = withTiming(1, { duration: 400 });
-      titleOpacity.value = withDelay(200, withTiming(1, { duration: 400 }));
-      subtitleOpacity.value = withDelay(300, withTiming(1, { duration: 400 }));
+      const entryAnimations = ENTRIES.map((_, i) =>
+        Animated.parallel([
+          Animated.timing(entryOpacities[i], { toValue: 1, duration: 400, useNativeDriver: true }),
+          Animated.spring(entryTranslateYs[i], { toValue: 0, damping: 14, stiffness: 120, useNativeDriver: true }),
+        ])
+      );
 
-      // Leaderboard entries cascade at 400, 900, 1400
-      const delays = [400, 900, 1400];
-      delays.forEach((d, i) => {
-        entryOpacities[i].value = withDelay(d, withTiming(1, { duration: 400 }));
-        entryTranslates[i].value = withDelay(d, withSpring(0, { damping: 14, stiffness: 120 }));
-      });
+      Animated.sequence([
+        // Header
+        Animated.parallel([
+          Animated.timing(labelOpacity, { toValue: 1, duration: 400, useNativeDriver: true }),
+          Animated.timing(titleOpacity, { toValue: 1, duration: 400, delay: 100, useNativeDriver: true }),
+          Animated.timing(subtitleOpacity, { toValue: 1, duration: 400, delay: 200, useNativeDriver: true }),
+        ]),
 
-      // Stats at 2000ms
-      statsOpacity.value = withDelay(2000, withTiming(1, { duration: 500 }));
-      statsTranslateY.value = withDelay(2000, withSpring(0, { damping: 14, stiffness: 120 }));
+        // Leaderboard entries cascade
+        Animated.delay(100),
+        Animated.stagger(500, entryAnimations),
+
+        // Stats
+        Animated.delay(300),
+        Animated.parallel([
+          Animated.timing(statsOpacity, { toValue: 1, duration: 500, useNativeDriver: true }),
+          Animated.spring(statsTranslateY, { toValue: 0, damping: 14, stiffness: 120, useNativeDriver: true }),
+        ]),
+      ]).start();
     } else {
-      labelOpacity.value = 0;
-      titleOpacity.value = 0;
-      subtitleOpacity.value = 0;
-      entryOpacities.forEach((o) => { o.value = 0; });
-      entryTranslates.forEach((t) => { t.value = 30; });
-      statsOpacity.value = 0;
-      statsTranslateY.value = 20;
+      labelOpacity.setValue(0);
+      titleOpacity.setValue(0);
+      subtitleOpacity.setValue(0);
+      entryOpacities.forEach((v) => v.setValue(0));
+      entryTranslateYs.forEach((v) => v.setValue(30));
+      statsOpacity.setValue(0);
+      statsTranslateY.setValue(20);
     }
   }, [isActive]);
 
-  const labelStyle = useAnimatedStyle(() => ({ opacity: labelOpacity.value }));
-  const titleStyle = useAnimatedStyle(() => ({ opacity: titleOpacity.value }));
-  const subtitleStyle_ = useAnimatedStyle(() => ({ opacity: subtitleOpacity.value }));
-  const statsStyle = useAnimatedStyle(() => ({
-    opacity: statsOpacity.value,
-    transform: [{ translateY: statsTranslateY.value }],
-  }));
-
   return (
     <View style={styles.container}>
-      <Animated.Text style={[styles.label, labelStyle]}>CLIMB THE RANKS</Animated.Text>
-      <Animated.Text style={[styles.title, titleStyle]}>Compete globally</Animated.Text>
-      <Animated.Text style={[styles.subtitle, subtitleStyle_]}>
+      <Animated.Text style={[styles.label, { opacity: labelOpacity }]}>
+        CLIMB THE RANKS
+      </Animated.Text>
+      <Animated.Text style={[styles.title, { opacity: titleOpacity }]}>
+        Compete globally
+      </Animated.Text>
+      <Animated.Text style={[styles.subtitle, { opacity: subtitleOpacity }]}>
         Build streaks. Top the leaderboard. Share your best.
       </Animated.Text>
 
       {/* Leaderboard */}
       <View style={styles.leaderboard}>
         {ENTRIES.map((entry, i) => (
-          <LeaderboardEntry key={i} entry={entry} opacity={entryOpacities[i]} translateY={entryTranslates[i]} />
+          <Animated.View
+            key={i}
+            style={[
+              styles.entry,
+              entry.gold && styles.entryGold,
+              {
+                opacity: entryOpacities[i],
+                transform: [{ translateY: entryTranslateYs[i] }],
+              },
+            ]}
+          >
+            <Text style={styles.entryEmoji}>{entry.emoji}</Text>
+            <View style={styles.entryInfo}>
+              <Text style={styles.entryDesc}>{entry.desc}</Text>
+              <Text style={styles.entryUser}>{entry.user}</Text>
+            </View>
+            <Text style={styles.entryVotes}>{entry.votes}</Text>
+          </Animated.View>
         ))}
       </View>
 
       {/* Stats row */}
-      <Animated.View style={[styles.statsRow, statsStyle]}>
+      <Animated.View
+        style={[
+          styles.statsRow,
+          {
+            opacity: statsOpacity,
+            transform: [{ translateY: statsTranslateY }],
+          },
+        ]}
+      >
         {STATS.map((stat, i) => (
           <View key={stat.label} style={[styles.statItem, i < STATS.length - 1 && styles.statBorder]}>
             <Text style={styles.statEmoji}>{stat.emoji}</Text>
@@ -114,38 +131,6 @@ export function OnboardingScreen3({ isActive }: Props) {
         ))}
       </Animated.View>
     </View>
-  );
-}
-
-function LeaderboardEntry({
-  entry,
-  opacity,
-  translateY,
-}: {
-  entry: (typeof ENTRIES)[0];
-  opacity: SharedValue<number>;
-  translateY: SharedValue<number>;
-}) {
-  const style = useAnimatedStyle(() => ({
-    opacity: opacity.value,
-    transform: [{ translateY: translateY.value }],
-  }));
-
-  return (
-    <Animated.View
-      style={[
-        styles.entry,
-        entry.gold && styles.entryGold,
-        style,
-      ]}
-    >
-      <Text style={styles.entryEmoji}>{entry.emoji}</Text>
-      <View style={styles.entryInfo}>
-        <Text style={styles.entryDesc}>{entry.desc}</Text>
-        <Text style={styles.entryUser}>{entry.user}</Text>
-      </View>
-      <Text style={styles.entryVotes}>{entry.votes}</Text>
-    </Animated.View>
   );
 }
 
@@ -160,7 +145,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     letterSpacing: 3,
     color: '#8B8697',
-    textTransform: 'uppercase',
     marginBottom: 12,
   },
   title: {

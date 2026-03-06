@@ -3,6 +3,7 @@ export interface DailyWord {
   word: string;
   date: string;
   category: string;
+  language: string;
   created_at: string;
 }
 
@@ -10,6 +11,7 @@ export interface Profile {
   id: string;
   username: string;
   avatar_url: string | null;
+  language: string;
   current_streak: number;
   longest_streak: number;
   total_plays: number;

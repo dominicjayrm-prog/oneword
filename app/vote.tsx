@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, Alert, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { useAuthContext } from '../src/contexts/AuthContext';
 import { useGameContext } from '../src/contexts/GameContext';
 import { useTheme } from '../src/contexts/ThemeContext';
@@ -15,6 +16,7 @@ const MAX_VOTES = 15;
 
 export default function VoteScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const { colors } = useTheme();
   const { session } = useAuthContext();
   const { todayWord, getVotePair, submitVote, reportDescription } = useGameContext();
@@ -53,40 +55,43 @@ export default function VoteScreen() {
 
   async function handleReport(descriptionId: string) {
     const ok = Platform.OS === 'web'
-      ? window.confirm('Report Description\n\nFlag this description as inappropriate?')
+      ? window.confirm(`${t('vote.report_title')}\n\n${t('vote.report_message')}`)
       : await new Promise<boolean>((resolve) => {
-          Alert.alert('Report Description', 'Flag this description as inappropriate?', [
-            { text: 'Cancel', style: 'cancel', onPress: () => resolve(false) },
-            { text: 'Report', style: 'destructive', onPress: () => resolve(true) },
+          Alert.alert(t('vote.report_title'), t('vote.report_message'), [
+            { text: t('vote.report_cancel'), style: 'cancel', onPress: () => resolve(false) },
+            { text: t('vote.report_confirm'), style: 'destructive', onPress: () => resolve(true) },
           ]);
         });
 
     if (ok) {
       await reportDescription(descriptionId);
       if (Platform.OS === 'web') {
-        window.alert('Thanks for helping keep OneWord clean.');
+        window.alert(t('vote.reported_message'));
       } else {
-        Alert.alert('Reported', 'Thanks for helping keep OneWord clean.');
+        Alert.alert(t('vote.reported'), t('vote.reported_message'));
       }
       loadPair();
     }
   }
 
   if (noMorePairs || voteCount >= MAX_VOTES) {
+    const votedText = voteCount === 1
+      ? t('vote.voted_on', { count: voteCount })
+      : t('vote.voted_on_plural', { count: voteCount });
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <ThemeToggle />
         <View style={[styles.center, { backgroundColor: colors.background }]}>
           <Text style={[styles.doneTitle, { color: colors.text }]}>
-            {voteCount >= MAX_VOTES ? 'Voting Complete!' : 'No More Pairs'}
+            {voteCount >= MAX_VOTES ? t('vote.done_title') : t('vote.no_more')}
           </Text>
           <Text style={[styles.doneSubtitle, { color: colors.textSecondary }]}>
-            You voted on {voteCount} pair{voteCount !== 1 ? 's' : ''}
+            {votedText}
           </Text>
         </View>
         <View style={styles.actions}>
-          <Button title="SEE RESULTS" onPress={() => router.replace('/results')} />
-          <Button title="BACK HOME" onPress={() => router.replace('/')} variant="outline" />
+          <Button title={t('vote.see_results')} onPress={() => router.replace('/results')} />
+          <Button title={t('vote.back_home')} onPress={() => router.replace('/')} variant="outline" />
         </View>
       </View>
     );
@@ -98,9 +103,9 @@ export default function VoteScreen() {
       <View style={styles.header}>
         {todayWord && <WordDisplay word={todayWord.word} category={todayWord.category} />}
         <Text style={[styles.progress, { color: colors.textSecondary }]}>
-          {voteCount + 1} of {MAX_VOTES}
+          {t('vote.of', { current: voteCount + 1, total: MAX_VOTES })}
         </Text>
-        <Text style={[styles.instruction, { color: colors.textMuted }]}>Tap the one you prefer</Text>
+        <Text style={[styles.instruction, { color: colors.textMuted }]}>{t('vote.tap_prefer')}</Text>
       </View>
 
       <View style={styles.pairContainer}>
@@ -108,8 +113,8 @@ export default function VoteScreen() {
           <ActivityIndicator size="large" color={colors.primary} />
         ) : !pair ? (
           <View style={styles.noPairs}>
-            <Text style={[styles.doneTitle, { color: colors.text }]}>No pairs available yet</Text>
-            <Button title="BACK HOME" onPress={() => router.replace('/')} variant="outline" />
+            <Text style={[styles.doneTitle, { color: colors.text }]}>{t('vote.no_pairs')}</Text>
+            <Button title={t('vote.back_home')} onPress={() => router.replace('/')} variant="outline" />
           </View>
         ) : (
           <>

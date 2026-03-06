@@ -13,6 +13,7 @@ import {
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useTranslation } from 'react-i18next';
 
 import { OnboardingScreen1 } from '../../src/components/onboarding/OnboardingScreen1';
 import { OnboardingScreen2 } from '../../src/components/onboarding/OnboardingScreen2';
@@ -21,6 +22,7 @@ import { DotIndicator } from '../../src/components/onboarding/DotIndicator';
 
 export default function OnboardingScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [containerWidth, setContainerWidth] = useState(0);
@@ -105,7 +107,7 @@ export default function OnboardingScreen() {
         <View style={styles.buttons}>
           {currentIndex > 0 && (
             <TouchableOpacity style={styles.backButton} onPress={goBack} activeOpacity={0.7}>
-              <Text style={styles.backButtonText}>Back</Text>
+              <Text style={styles.backButtonText}>{t('nav_back')}</Text>
             </TouchableOpacity>
           )}
 
@@ -115,7 +117,7 @@ export default function OnboardingScreen() {
               onPress={handleFinish}
               activeOpacity={0.8}
             >
-              <Text style={styles.finishButtonText}>Let&apos;s play →</Text>
+              <Text style={styles.finishButtonText}>{t('nav_letsplay')}</Text>
             </TouchableOpacity>
           ) : (
             <TouchableOpacity
@@ -123,7 +125,7 @@ export default function OnboardingScreen() {
               onPress={goNext}
               activeOpacity={0.8}
             >
-              <Text style={styles.nextButtonText}>Next</Text>
+              <Text style={styles.nextButtonText}>{t('nav_next')}</Text>
             </TouchableOpacity>
           )}
         </View>

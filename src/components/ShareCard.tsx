@@ -1,5 +1,6 @@
 import { forwardRef } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 interface ShareCardProps {
   word: string;
@@ -11,6 +12,7 @@ interface ShareCardProps {
 
 export const ShareCard = forwardRef<View, ShareCardProps>(
   ({ word, description, rank, votes, streak }, ref) => {
+    const { t } = useTranslation();
     const rankEmoji = rank === 1 ? '\u{1F947}' : rank === 2 ? '\u{1F948}' : rank === 3 ? '\u{1F949}' : '\u{1F4CA}';
 
     return (
@@ -26,7 +28,7 @@ export const ShareCard = forwardRef<View, ShareCardProps>(
         </View>
 
         {/* Today's word label */}
-        <Text style={styles.label}>TODAY&apos;S WORD</Text>
+        <Text style={styles.label}>{t('share.todays_word')}</Text>
 
         {/* Hero word */}
         <Text style={styles.heroWord}>{word}</Text>
@@ -48,14 +50,14 @@ export const ShareCard = forwardRef<View, ShareCardProps>(
           <View style={styles.stat}>
             <Text style={styles.statEmoji}>{rankEmoji}</Text>
             <Text style={styles.statNumber}>{rank ?? '-'}</Text>
-            <Text style={styles.statLabel}>RANK</Text>
+            <Text style={styles.statLabel}>{t('share.rank')}</Text>
           </View>
 
           <View style={styles.statDivider} />
 
           <View style={styles.stat}>
             <Text style={styles.statNumber}>{votes ?? 0}</Text>
-            <Text style={styles.statLabel}>VOTES</Text>
+            <Text style={styles.statLabel}>{t('share.votes')}</Text>
           </View>
 
           <View style={styles.statDivider} />
@@ -63,12 +65,12 @@ export const ShareCard = forwardRef<View, ShareCardProps>(
           <View style={styles.stat}>
             <Text style={styles.statEmoji}>{'\u{1F525}'}</Text>
             <Text style={styles.statNumber}>{streak}</Text>
-            <Text style={styles.statLabel}>STREAK</Text>
+            <Text style={styles.statLabel}>{t('share.streak')}</Text>
           </View>
         </View>
 
         {/* Footer */}
-        <Text style={styles.footer}>Play OneWord daily</Text>
+        <Text style={styles.footer}>{t('share.play_daily')}</Text>
       </View>
     );
   }

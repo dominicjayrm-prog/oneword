@@ -8,12 +8,15 @@ interface Word {
   word: string;
   date: string;
   category: string;
+  language: string;
 }
 
 const CATEGORIES = ['general', 'nature', 'life', 'abstract', 'food', 'emotion', 'objects', 'modern', 'science', 'people', 'places', 'action', 'animal', 'body', 'weather', 'music', 'sports', 'technology'];
+const CATEGORIES_ES = ['general', 'naturaleza', 'vida', 'abstracto', 'comida', 'emoci\u00F3n', 'objetos', 'moderno', 'ciencia', 'personas', 'lugares', 'acci\u00F3n', 'animal', 'cuerpo', 'clima', 'm\u00FAsica', 'deportes', 'tecnolog\u00EDa'];
 
 export function WordsClient({ words }: { words: Word[] }) {
   const [view, setView] = useState<'calendar' | 'list' | 'bulk'>('calendar');
+  const [lang, setLang] = useState<'en' | 'es'>('en');
   const [editingWord, setEditingWord] = useState<Word | null>(null);
   const [showAdd, setShowAdd] = useState(false);
   const [selectedDate, setSelectedDate] = useState('');
@@ -24,7 +27,8 @@ export function WordsClient({ words }: { words: Word[] }) {
   const [bulkResult, setBulkResult] = useState('');
   const [error, setError] = useState('');
 
-  const wordsByDate = new Map(words.map((w) => [w.date, w]));
+  const filteredWords = words.filter((w) => (w.language || 'en') === lang);
+  const wordsByDate = new Map(filteredWords.map((w) => [w.date, w]));
 
   // Calendar helpers
   const daysInMonth = new Date(calMonth.year, calMonth.month + 1, 0).getDate();
@@ -36,8 +40,8 @@ export function WordsClient({ words }: { words: Word[] }) {
   const nextMonth = () => setCalMonth((p) => p.month === 11 ? { year: p.year + 1, month: 0 } : { ...p, month: p.month + 1 });
 
   // Count stats
-  const futureWords = words.filter((w) => w.date >= today).length;
-  const totalWords = words.length;
+  const futureWords = filteredWords.filter((w) => w.date >= today).length;
+  const totalWords = filteredWords.length;
   const gapDays = (() => {
     let gaps = 0;
     const d = new Date(today);
@@ -48,6 +52,8 @@ export function WordsClient({ words }: { words: Word[] }) {
     }
     return gaps;
   })();
+
+  const categories = lang === 'es' ? CATEGORIES_ES : CATEGORIES;
 
   async function handleBulk(formData: FormData) {
     setError('');
@@ -97,6 +103,23 @@ export function WordsClient({ words }: { words: Word[] }) {
       <div className="flex-between mb-6">
         <h1 style={{ fontSize: 28, fontWeight: 700 }}>Words</h1>
         <div className="flex gap-2">
+          {/* Language toggle */}
+          <div style={{ display: 'flex', gap: 4, background: 'var(--surface-2)', borderRadius: 8, padding: 2 }}>
+            <button
+              className={`btn ${lang === 'en' ? 'btn-primary' : 'btn-outline'}`}
+              style={{ padding: '4px 12px', fontSize: 13 }}
+              onClick={() => setLang('en')}
+            >
+              English
+            </button>
+            <button
+              className={`btn ${lang === 'es' ? 'btn-primary' : 'btn-outline'}`}
+              style={{ padding: '4px 12px', fontSize: 13 }}
+              onClick={() => setLang('es')}
+            >
+              Espa&ntilde;ol
+            </button>
+          </div>
           <button className={`btn ${view === 'calendar' ? 'btn-primary' : 'btn-outline'}`} onClick={() => setView('calendar')}>Calendar</button>
           <button className={`btn ${view === 'list' ? 'btn-primary' : 'btn-outline'}`} onClick={() => setView('list')}>List</button>
           <button className={`btn ${view === 'bulk' ? 'btn-primary' : 'btn-outline'}`} onClick={() => setView('bulk')}>Bulk Upload</button>
@@ -106,7 +129,7 @@ export function WordsClient({ words }: { words: Word[] }) {
 
       <div className="stat-grid mb-4">
         <div className="stat-card">
-          <div className="label">Total Words</div>
+          <div className="label">Total Words ({lang.toUpperCase()})</div>
           <div className="value">{totalWords}</div>
         </div>
         <div className="stat-card">
@@ -129,6 +152,7 @@ export function WordsClient({ words }: { words: Word[] }) {
             <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 20 }}>{editingWord ? 'Edit Word' : 'Add Word'}</h2>
             <form action={editingWord ? handleUpdate : handleAdd}>
               {editingWord && <input type="hidden" name="id" value={editingWord.id} />}
+              <input type="hidden" name="language" value={editingWord?.language || lang} />
               <div className="form-group">
                 <label>Word</label>
                 <input name="word" defaultValue={editingWord?.word || ''} placeholder="e.g. SUNSET" required autoFocus />
@@ -140,7 +164,14 @@ export function WordsClient({ words }: { words: Word[] }) {
               <div className="form-group">
                 <label>Category</label>
                 <select name="category" defaultValue={editingWord?.category || 'general'}>
-                  {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                  {categories.map((c) => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
+              <div className="form-group">
+                <label>Language</label>
+                <select name="language" defaultValue={editingWord?.language || lang}>
+                  <option value="en">English</option>
+                  <option value="es">Espa&ntilde;ol</option>
                 </select>
               </div>
               <div className="flex gap-2">
@@ -208,21 +239,22 @@ export function WordsClient({ words }: { words: Word[] }) {
         <div className="card">
           <table>
             <thead>
-              <tr><th>Date</th><th>Word</th><th>Category</th><th>Actions</th></tr>
+              <tr><th>Date</th><th>Word</th><th>Category</th><th>Lang</th><th>Actions</th></tr>
             </thead>
             <tbody>
-              {words.map((w) => (
+              {filteredWords.map((w) => (
                 <tr key={w.id}>
                   <td>{new Date(w.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}</td>
                   <td style={{ fontWeight: 700, letterSpacing: 2 }}>{w.word}</td>
                   <td><span className="badge badge-muted">{w.category}</span></td>
+                  <td><span className="badge badge-muted">{(w.language || 'en').toUpperCase()}</span></td>
                   <td>
                     <button className="btn btn-outline" style={{ padding: '4px 12px', fontSize: 12 }} onClick={() => setEditingWord(w)}>Edit</button>
                   </td>
                 </tr>
               ))}
-              {words.length === 0 && (
-                <tr><td colSpan={4} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: 40 }}>No words yet. Add some!</td></tr>
+              {filteredWords.length === 0 && (
+                <tr><td colSpan={5} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: 40 }}>No words yet. Add some!</td></tr>
               )}
             </tbody>
           </table>
@@ -234,8 +266,8 @@ export function WordsClient({ words }: { words: Word[] }) {
         <div className="card">
           <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 8 }}>Bulk Upload Words</h2>
           <p style={{ color: 'var(--text-muted)', marginBottom: 20, fontSize: 14 }}>
-            Paste a JSON array of words. Each entry needs &quot;word&quot;, &quot;date&quot; (YYYY-MM-DD), and optionally &quot;category&quot;.
-            Existing dates will be updated (upsert).
+            Paste a JSON array of words. Each entry needs &quot;word&quot;, &quot;date&quot; (YYYY-MM-DD), optionally &quot;category&quot; and &quot;language&quot; (en/es).
+            Existing date+language pairs will be updated (upsert).
           </p>
           <form action={handleBulk}>
             <div className="form-group">
@@ -243,7 +275,7 @@ export function WordsClient({ words }: { words: Word[] }) {
               <textarea
                 name="words"
                 rows={16}
-                placeholder={`[\n  { "word": "SUNSET", "date": "2026-03-06", "category": "nature" },\n  { "word": "PIZZA", "date": "2026-03-07", "category": "food" }\n]`}
+                placeholder={`[\n  { "word": "SUNSET", "date": "2026-03-06", "category": "nature", "language": "en" },\n  { "word": "ATARDECER", "date": "2026-03-06", "category": "naturaleza", "language": "es" }\n]`}
                 style={{ fontFamily: 'monospace', fontSize: 13 }}
                 required
               />
@@ -253,16 +285,16 @@ export function WordsClient({ words }: { words: Word[] }) {
           {bulkResult && <div style={{ marginTop: 16, background: '#22c55e22', color: 'var(--success)', padding: '10px 14px', borderRadius: 8, fontSize: 14 }}>{bulkResult}</div>}
 
           <div style={{ marginTop: 32, borderTop: '1px solid var(--border)', paddingTop: 24 }}>
-            <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 8 }}>Generate a Year of Words</h3>
+            <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 8 }}>Generate a Year of Words (EN + ES)</h3>
             <p style={{ color: 'var(--text-muted)', marginBottom: 16, fontSize: 14 }}>
-              Click below to generate 365 pre-made words starting from tomorrow. Copy the output and paste it into the box above.
+              Click below to generate 365 bilingual word pairs starting from tomorrow. Each date gets one English word and one thematically matched Spanish word. Copy the output and paste it into the box above.
             </p>
             <button type="button" className="btn btn-outline" onClick={() => {
-              const wordBank = generateWordBank();
+              const wordBank = generateBilingualWordBank();
               const textarea = document.querySelector('textarea[name="words"]') as HTMLTextAreaElement;
               if (textarea) textarea.value = JSON.stringify(wordBank, null, 2);
             }}>
-              Generate 365 Words
+              Generate 365 Bilingual Word Pairs
             </button>
           </div>
         </div>
@@ -271,46 +303,53 @@ export function WordsClient({ words }: { words: Word[] }) {
   );
 }
 
-function generateWordBank() {
-  const wordsByCategory: Record<string, string[]> = {
-    nature: ['SUNSET', 'OCEAN', 'MOUNTAIN', 'FOREST', 'RIVER', 'STORM', 'THUNDER', 'RAINBOW', 'DESERT', 'VOLCANO', 'WATERFALL', 'MEADOW', 'GLACIER', 'CANYON', 'AURORA', 'BREEZE', 'DAWN', 'DUSK', 'FROST', 'BLOSSOM', 'PEBBLE', 'CORAL', 'TIDE', 'MIST', 'FOG', 'SNOW', 'ISLAND', 'JUNGLE', 'SWAMP', 'CAVE'],
-    emotion: ['JEALOUSY', 'NOSTALGIA', 'REGRET', 'HOPE', 'ANGER', 'JOY', 'FEAR', 'LOVE', 'GRIEF', 'PRIDE', 'SHAME', 'ENVY', 'BLISS', 'ANXIETY', 'PEACE', 'COURAGE', 'LONGING', 'WONDER', 'GUILT', 'DESIRE', 'PATIENCE', 'PANIC', 'RELIEF', 'SORROW', 'TRUST', 'DOUBT', 'AWE', 'BOREDOM', 'EMPATHY', 'FURY'],
-    abstract: ['SILENCE', 'CHILDHOOD', 'HOME', 'FREEDOM', 'TIME', 'TRUTH', 'JUSTICE', 'FATE', 'LUCK', 'CHAOS', 'DREAM', 'MEMORY', 'POWER', 'BEAUTY', 'DEATH', 'LIFE', 'WISDOM', 'CHANGE', 'DESTINY', 'SOUL', 'SHADOW', 'LIGHT', 'VOID', 'ETERNITY', 'BALANCE', 'KARMA', 'LEGACY', 'PURPOSE', 'RISK', 'MAGIC'],
-    food: ['PIZZA', 'COFFEE', 'CHOCOLATE', 'SUSHI', 'BREAD', 'CHEESE', 'BACON', 'TACO', 'PASTA', 'BURGER', 'HONEY', 'AVOCADO', 'MANGO', 'POPCORN', 'STEAK', 'SOUP', 'CAKE', 'BUTTER', 'TOAST', 'RAMEN', 'PICKLE', 'WAFFLE', 'DONUT', 'PRETZEL', 'SALAD', 'GARLIC', 'LEMON', 'SPICE', 'CANDY', 'COOKIE'],
-    life: ['MONDAY', 'FRIDAY', 'MORNING', 'WEDDING', 'BIRTHDAY', 'VACATION', 'SCHOOL', 'WORK', 'MONEY', 'TRAFFIC', 'SLEEP', 'FAMILY', 'DATING', 'MOVING', 'COOKING', 'SHOPPING', 'MEETING', 'WAITING', 'COMMUTE', 'LAUNDRY', 'HOMEWORK', 'BEDTIME', 'WEEKEND', 'PAYCHECK', 'ALARM', 'DEADLINE', 'PARTY', 'GOSSIP', 'NEIGHBOR', 'ROOMMATE'],
-    objects: ['KEYS', 'MIRROR', 'PHONE', 'PILLOW', 'UMBRELLA', 'WALLET', 'CLOCK', 'DOOR', 'WINDOW', 'STAIRS', 'CANDLE', 'BOOK', 'PEN', 'LADDER', 'BRIDGE', 'FENCE', 'ROPE', 'CHAIN', 'WHEEL', 'COIN', 'MASK', 'CROWN', 'SWORD', 'SHIELD', 'BELL', 'FLAG', 'LAMP', 'THRONE', 'TROPHY', 'BALLOON'],
-    modern: ['WIFI', 'PASSWORD', 'SELFIE', 'EMOJI', 'STREAMING', 'ALGORITHM', 'INFLUENCER', 'PODCAST', 'MEME', 'BITCOIN', 'TIKTOK', 'AIRPODS', 'UBER', 'NETFLIX', 'GOOGLE', 'TWEET', 'STARTUP', 'DRONE', 'ROBOT', 'AVATAR', 'FILTER', 'VIRAL', 'TRENDING', 'CANCEL', 'GAMING', 'HACKER', 'CRYPTO', 'VLOG', 'PLAYLIST', 'NOTIFICATION'],
-    science: ['GRAVITY', 'ATOM', 'DNA', 'GALAXY', 'EVOLUTION', 'QUANTUM', 'OXYGEN', 'ECLIPSE', 'COMET', 'VIRUS', 'MAGNET', 'LASER', 'FOSSIL', 'NEURON', 'ORBIT', 'PLASMA', 'CARBON', 'CRYSTAL', 'SPECTRUM', 'VACCINE', 'ENZYME', 'PHOTON', 'GENOME', 'ASTEROID', 'BACTERIA', 'ELECTRON', 'HABITAT', 'MOLECULE', 'PARASITE', 'TELESCOPE'],
-    animal: ['DOG', 'CAT', 'SHARK', 'EAGLE', 'SNAKE', 'DOLPHIN', 'LION', 'WOLF', 'BEAR', 'OWL', 'SPIDER', 'WHALE', 'PENGUIN', 'TIGER', 'MONKEY', 'ELEPHANT', 'PARROT', 'RABBIT', 'TURTLE', 'DRAGON', 'UNICORN', 'BUTTERFLY', 'SCORPION', 'OCTOPUS', 'CROW', 'HAWK', 'PANTHER', 'COBRA', 'FIREFLY', 'PIGEON'],
-    people: ['TEACHER', 'STRANGER', 'VILLAIN', 'HERO', 'GENIUS', 'LEADER', 'REBEL', 'ARTIST', 'SOLDIER', 'DOCTOR', 'LEGEND', 'GHOST', 'CLOWN', 'KING', 'QUEEN', 'WARRIOR', 'NINJA', 'PIRATE', 'WIZARD', 'THIEF', 'FRIEND', 'ENEMY', 'BABY', 'BOSS', 'CHEF', 'JUDGE', 'PROPHET', 'SPY', 'TOURIST', 'MENTOR'],
-    places: ['AIRPORT', 'LIBRARY', 'HOSPITAL', 'PRISON', 'CHURCH', 'STADIUM', 'CASINO', 'MUSEUM', 'BEACH', 'ROOFTOP', 'BASEMENT', 'BATHROOM', 'KITCHEN', 'ELEVATOR', 'HIGHWAY', 'GRAVEYARD', 'PLAYGROUND', 'GARDEN', 'TEMPLE', 'DUNGEON', 'ALLEY', 'MARKET', 'HARBOR', 'CABIN', 'ATTIC', 'GARAGE', 'TUNNEL', 'LOBBY', 'BALCONY', 'DINER'],
-    action: ['RUNNING', 'FALLING', 'LAUGHING', 'CRYING', 'DANCING', 'FIGHTING', 'FLYING', 'HIDING', 'LYING', 'STEALING', 'KISSING', 'SCREAMING', 'SLEEPING', 'BURNING', 'BREAKING', 'BUILDING', 'CLIMBING', 'DIVING', 'CHASING', 'ESCAPING', 'MELTING', 'SPINNING', 'SINKING', 'FLOATING', 'WHISPERING', 'PRAYING', 'GAMBLING', 'HUNTING', 'PAINTING', 'SINGING'],
-  };
+function generateBilingualWordBank() {
+  // Each entry: [english word, spanish word, en category, es category]
+  const wordPairs: Array<[string, string, string, string]> = [
+    // nature / naturaleza
+    ['SUNSET', 'ATARDECER', 'nature', 'naturaleza'], ['OCEAN', 'OC\u00C9ANO', 'nature', 'naturaleza'], ['MOUNTAIN', 'MONTA\u00D1A', 'nature', 'naturaleza'], ['FOREST', 'BOSQUE', 'nature', 'naturaleza'], ['RIVER', 'R\u00CDO', 'nature', 'naturaleza'], ['STORM', 'TORMENTA', 'nature', 'naturaleza'], ['THUNDER', 'TRUENO', 'nature', 'naturaleza'], ['RAINBOW', 'ARCO\u00CDRIS', 'nature', 'naturaleza'], ['DESERT', 'DESIERTO', 'nature', 'naturaleza'], ['VOLCANO', 'VOLC\u00C1N', 'nature', 'naturaleza'], ['WATERFALL', 'CASCADA', 'nature', 'naturaleza'], ['MEADOW', 'PRADERA', 'nature', 'naturaleza'], ['GLACIER', 'GLACIAR', 'nature', 'naturaleza'], ['CANYON', 'CA\u00D1\u00D3N', 'nature', 'naturaleza'], ['AURORA', 'AURORA', 'nature', 'naturaleza'], ['BREEZE', 'BRISA', 'nature', 'naturaleza'], ['DAWN', 'AMANECER', 'nature', 'naturaleza'], ['DUSK', 'CREP\u00DASCULO', 'nature', 'naturaleza'], ['FROST', 'ESCARCHA', 'nature', 'naturaleza'], ['BLOSSOM', 'FLOR', 'nature', 'naturaleza'], ['CORAL', 'CORAL', 'nature', 'naturaleza'], ['TIDE', 'MAREA', 'nature', 'naturaleza'], ['MIST', 'NIEBLA', 'nature', 'naturaleza'], ['SNOW', 'NIEVE', 'nature', 'naturaleza'], ['ISLAND', 'ISLA', 'nature', 'naturaleza'], ['JUNGLE', 'SELVA', 'nature', 'naturaleza'], ['CAVE', 'CUEVA', 'nature', 'naturaleza'],
+    // emotion / emoci\u00F3n
+    ['JEALOUSY', 'CELOS', 'emotion', 'emoci\u00F3n'], ['NOSTALGIA', 'NOSTALGIA', 'emotion', 'emoci\u00F3n'], ['REGRET', 'ARREPENTIMIENTO', 'emotion', 'emoci\u00F3n'], ['HOPE', 'ESPERANZA', 'emotion', 'emoci\u00F3n'], ['ANGER', 'IRA', 'emotion', 'emoci\u00F3n'], ['JOY', 'ALEGR\u00CDA', 'emotion', 'emoci\u00F3n'], ['FEAR', 'MIEDO', 'emotion', 'emoci\u00F3n'], ['LOVE', 'AMOR', 'emotion', 'emoci\u00F3n'], ['GRIEF', 'DUELO', 'emotion', 'emoci\u00F3n'], ['PRIDE', 'ORGULLO', 'emotion', 'emoci\u00F3n'], ['SHAME', 'VERG\u00DCENZA', 'emotion', 'emoci\u00F3n'], ['BLISS', 'DICHA', 'emotion', 'emoci\u00F3n'], ['ANXIETY', 'ANSIEDAD', 'emotion', 'emoci\u00F3n'], ['PEACE', 'PAZ', 'emotion', 'emoci\u00F3n'], ['COURAGE', 'CORAJE', 'emotion', 'emoci\u00F3n'], ['LONGING', 'A\u00D1ORANZA', 'emotion', 'emoci\u00F3n'], ['WONDER', 'ASOMBRO', 'emotion', 'emoci\u00F3n'], ['GUILT', 'CULPA', 'emotion', 'emoci\u00F3n'], ['DESIRE', 'DESEO', 'emotion', 'emoci\u00F3n'], ['PATIENCE', 'PACIENCIA', 'emotion', 'emoci\u00F3n'], ['PANIC', 'P\u00C1NICO', 'emotion', 'emoci\u00F3n'], ['RELIEF', 'ALIVIO', 'emotion', 'emoci\u00F3n'], ['SORROW', 'PENA', 'emotion', 'emoci\u00F3n'], ['TRUST', 'CONFIANZA', 'emotion', 'emoci\u00F3n'], ['DOUBT', 'DUDA', 'emotion', 'emoci\u00F3n'], ['AWE', 'ADMIRACI\u00D3N', 'emotion', 'emoci\u00F3n'], ['BOREDOM', 'ABURRIMIENTO', 'emotion', 'emoci\u00F3n'], ['FURY', 'FURIA', 'emotion', 'emoci\u00F3n'],
+    // abstract / abstracto
+    ['SILENCE', 'SILENCIO', 'abstract', 'abstracto'], ['CHILDHOOD', 'INFANCIA', 'abstract', 'abstracto'], ['HOME', 'HOGAR', 'abstract', 'abstracto'], ['FREEDOM', 'LIBERTAD', 'abstract', 'abstracto'], ['TIME', 'TIEMPO', 'abstract', 'abstracto'], ['TRUTH', 'VERDAD', 'abstract', 'abstracto'], ['JUSTICE', 'JUSTICIA', 'abstract', 'abstracto'], ['FATE', 'DESTINO', 'abstract', 'abstracto'], ['LUCK', 'SUERTE', 'abstract', 'abstracto'], ['CHAOS', 'CAOS', 'abstract', 'abstracto'], ['DREAM', 'SUE\u00D1O', 'abstract', 'abstracto'], ['MEMORY', 'MEMORIA', 'abstract', 'abstracto'], ['POWER', 'PODER', 'abstract', 'abstracto'], ['BEAUTY', 'BELLEZA', 'abstract', 'abstracto'], ['DEATH', 'MUERTE', 'abstract', 'abstracto'], ['LIFE', 'VIDA', 'abstract', 'abstracto'], ['WISDOM', 'SABIDUR\u00CDA', 'abstract', 'abstracto'], ['CHANGE', 'CAMBIO', 'abstract', 'abstracto'], ['SOUL', 'ALMA', 'abstract', 'abstracto'], ['SHADOW', 'SOMBRA', 'abstract', 'abstracto'], ['LIGHT', 'LUZ', 'abstract', 'abstracto'], ['ETERNITY', 'ETERNIDAD', 'abstract', 'abstracto'], ['BALANCE', 'EQUILIBRIO', 'abstract', 'abstracto'], ['LEGACY', 'LEGADO', 'abstract', 'abstracto'], ['PURPOSE', 'PROP\u00D3SITO', 'abstract', 'abstracto'], ['RISK', 'RIESGO', 'abstract', 'abstracto'], ['MAGIC', 'MAGIA', 'abstract', 'abstracto'],
+    // food / comida
+    ['PIZZA', 'PIZZA', 'food', 'comida'], ['COFFEE', 'CAF\u00C9', 'food', 'comida'], ['CHOCOLATE', 'CHOCOLATE', 'food', 'comida'], ['BREAD', 'PAN', 'food', 'comida'], ['CHEESE', 'QUESO', 'food', 'comida'], ['BACON', 'TOCINO', 'food', 'comida'], ['TACO', 'TACO', 'food', 'comida'], ['PASTA', 'PASTA', 'food', 'comida'], ['HONEY', 'MIEL', 'food', 'comida'], ['AVOCADO', 'AGUACATE', 'food', 'comida'], ['MANGO', 'MANGO', 'food', 'comida'], ['STEAK', 'BISTEC', 'food', 'comida'], ['SOUP', 'SOPA', 'food', 'comida'], ['CAKE', 'PASTEL', 'food', 'comida'], ['BUTTER', 'MANTEQUILLA', 'food', 'comida'], ['TOAST', 'TOSTADA', 'food', 'comida'], ['SALAD', 'ENSALADA', 'food', 'comida'], ['GARLIC', 'AJO', 'food', 'comida'], ['LEMON', 'LIM\u00D3N', 'food', 'comida'], ['SPICE', 'ESPECIA', 'food', 'comida'], ['CANDY', 'DULCE', 'food', 'comida'], ['COOKIE', 'GALLETA', 'food', 'comida'],
+    // life / vida
+    ['MONDAY', 'LUNES', 'life', 'vida'], ['FRIDAY', 'VIERNES', 'life', 'vida'], ['MORNING', 'MA\u00D1ANA', 'life', 'vida'], ['WEDDING', 'BODA', 'life', 'vida'], ['BIRTHDAY', 'CUMPLEA\u00D1OS', 'life', 'vida'], ['VACATION', 'VACACIONES', 'life', 'vida'], ['SCHOOL', 'ESCUELA', 'life', 'vida'], ['WORK', 'TRABAJO', 'life', 'vida'], ['MONEY', 'DINERO', 'life', 'vida'], ['TRAFFIC', 'TR\u00C1FICO', 'life', 'vida'], ['SLEEP', 'SUE\u00D1O', 'life', 'vida'], ['FAMILY', 'FAMILIA', 'life', 'vida'], ['DATING', 'CITAS', 'life', 'vida'], ['COOKING', 'COCINAR', 'life', 'vida'], ['WEEKEND', 'FIN DE SEMANA', 'life', 'vida'], ['ALARM', 'ALARMA', 'life', 'vida'], ['DEADLINE', 'PLAZO', 'life', 'vida'], ['PARTY', 'FIESTA', 'life', 'vida'], ['GOSSIP', 'CHISME', 'life', 'vida'], ['NEIGHBOR', 'VECINO', 'life', 'vida'],
+    // objects / objetos
+    ['KEYS', 'LLAVES', 'objects', 'objetos'], ['MIRROR', 'ESPEJO', 'objects', 'objetos'], ['PHONE', 'TEL\u00C9FONO', 'objects', 'objetos'], ['PILLOW', 'ALMOHADA', 'objects', 'objetos'], ['UMBRELLA', 'PARAGUAS', 'objects', 'objetos'], ['WALLET', 'CARTERA', 'objects', 'objetos'], ['CLOCK', 'RELOJ', 'objects', 'objetos'], ['DOOR', 'PUERTA', 'objects', 'objetos'], ['WINDOW', 'VENTANA', 'objects', 'objetos'], ['CANDLE', 'VELA', 'objects', 'objetos'], ['BOOK', 'LIBRO', 'objects', 'objetos'], ['BRIDGE', 'PUENTE', 'objects', 'objetos'], ['COIN', 'MONEDA', 'objects', 'objetos'], ['MASK', 'M\u00C1SCARA', 'objects', 'objetos'], ['CROWN', 'CORONA', 'objects', 'objetos'], ['SWORD', 'ESPADA', 'objects', 'objetos'], ['BELL', 'CAMPANA', 'objects', 'objetos'], ['FLAG', 'BANDERA', 'objects', 'objetos'], ['LAMP', 'L\u00C1MPARA', 'objects', 'objetos'], ['TROPHY', 'TROFEO', 'objects', 'objetos'], ['BALLOON', 'GLOBO', 'objects', 'objetos'],
+    // modern / moderno
+    ['WIFI', 'WIFI', 'modern', 'moderno'], ['PASSWORD', 'CONTRASE\u00D1A', 'modern', 'moderno'], ['SELFIE', 'SELFIE', 'modern', 'moderno'], ['EMOJI', 'EMOJI', 'modern', 'moderno'], ['ALGORITHM', 'ALGORITMO', 'modern', 'moderno'], ['INFLUENCER', 'INFLUENCER', 'modern', 'moderno'], ['PODCAST', 'PODCAST', 'modern', 'moderno'], ['MEME', 'MEME', 'modern', 'moderno'], ['BITCOIN', 'BITCOIN', 'modern', 'moderno'], ['STREAMING', 'STREAMING', 'modern', 'moderno'], ['STARTUP', 'STARTUP', 'modern', 'moderno'], ['DRONE', 'DRON', 'modern', 'moderno'], ['ROBOT', 'ROBOT', 'modern', 'moderno'], ['VIRAL', 'VIRAL', 'modern', 'moderno'], ['HACKER', 'HACKER', 'modern', 'moderno'], ['NOTIFICATION', 'NOTIFICACI\u00D3N', 'modern', 'moderno'],
+    // science / ciencia
+    ['GRAVITY', 'GRAVEDAD', 'science', 'ciencia'], ['ATOM', '\u00C1TOMO', 'science', 'ciencia'], ['DNA', 'ADN', 'science', 'ciencia'], ['GALAXY', 'GALAXIA', 'science', 'ciencia'], ['EVOLUTION', 'EVOLUCI\u00D3N', 'science', 'ciencia'], ['OXYGEN', 'OX\u00CDGENO', 'science', 'ciencia'], ['ECLIPSE', 'ECLIPSE', 'science', 'ciencia'], ['COMET', 'COMETA', 'science', 'ciencia'], ['VIRUS', 'VIRUS', 'science', 'ciencia'], ['MAGNET', 'IM\u00C1N', 'science', 'ciencia'], ['LASER', 'L\u00C1SER', 'science', 'ciencia'], ['FOSSIL', 'F\u00D3SIL', 'science', 'ciencia'], ['NEURON', 'NEURONA', 'science', 'ciencia'], ['ORBIT', '\u00D3RBITA', 'science', 'ciencia'], ['CRYSTAL', 'CRISTAL', 'science', 'ciencia'], ['VACCINE', 'VACUNA', 'science', 'ciencia'], ['MOLECULE', 'MOL\u00C9CULA', 'science', 'ciencia'], ['TELESCOPE', 'TELESCOPIO', 'science', 'ciencia'],
+    // animal
+    ['DOG', 'PERRO', 'animal', 'animal'], ['CAT', 'GATO', 'animal', 'animal'], ['SHARK', 'TIBUR\u00D3N', 'animal', 'animal'], ['EAGLE', '\u00C1GUILA', 'animal', 'animal'], ['SNAKE', 'SERPIENTE', 'animal', 'animal'], ['DOLPHIN', 'DELF\u00CDN', 'animal', 'animal'], ['LION', 'LE\u00D3N', 'animal', 'animal'], ['WOLF', 'LOBO', 'animal', 'animal'], ['BEAR', 'OSO', 'animal', 'animal'], ['OWL', 'B\u00DAHO', 'animal', 'animal'], ['WHALE', 'BALLENA', 'animal', 'animal'], ['PENGUIN', 'PING\u00DCINO', 'animal', 'animal'], ['TIGER', 'TIGRE', 'animal', 'animal'], ['MONKEY', 'MONO', 'animal', 'animal'], ['ELEPHANT', 'ELEFANTE', 'animal', 'animal'], ['RABBIT', 'CONEJO', 'animal', 'animal'], ['TURTLE', 'TORTUGA', 'animal', 'animal'], ['BUTTERFLY', 'MARIPOSA', 'animal', 'animal'], ['OCTOPUS', 'PULPO', 'animal', 'animal'],
+    // people / personas
+    ['TEACHER', 'PROFESOR', 'people', 'personas'], ['STRANGER', 'EXTRA\u00D1O', 'people', 'personas'], ['HERO', 'H\u00C9ROE', 'people', 'personas'], ['LEADER', 'L\u00CDDER', 'people', 'personas'], ['REBEL', 'REBELDE', 'people', 'personas'], ['ARTIST', 'ARTISTA', 'people', 'personas'], ['DOCTOR', 'DOCTOR', 'people', 'personas'], ['GHOST', 'FANTASMA', 'people', 'personas'], ['CLOWN', 'PAYASO', 'people', 'personas'], ['KING', 'REY', 'people', 'personas'], ['QUEEN', 'REINA', 'people', 'personas'], ['WARRIOR', 'GUERRERO', 'people', 'personas'], ['PIRATE', 'PIRATA', 'people', 'personas'], ['WIZARD', 'MAGO', 'people', 'personas'], ['FRIEND', 'AMIGO', 'people', 'personas'], ['BABY', 'BEB\u00C9', 'people', 'personas'], ['CHEF', 'CHEF', 'people', 'personas'], ['SPY', 'ESP\u00CDA', 'people', 'personas'],
+    // places / lugares
+    ['AIRPORT', 'AEROPUERTO', 'places', 'lugares'], ['LIBRARY', 'BIBLIOTECA', 'places', 'lugares'], ['HOSPITAL', 'HOSPITAL', 'places', 'lugares'], ['PRISON', 'PRISI\u00D3N', 'places', 'lugares'], ['BEACH', 'PLAYA', 'places', 'lugares'], ['MUSEUM', 'MUSEO', 'places', 'lugares'], ['KITCHEN', 'COCINA', 'places', 'lugares'], ['HIGHWAY', 'AUTOPISTA', 'places', 'lugares'], ['GARDEN', 'JARD\u00CDN', 'places', 'lugares'], ['TEMPLE', 'TEMPLO', 'places', 'lugares'], ['MARKET', 'MERCADO', 'places', 'lugares'], ['HARBOR', 'PUERTO', 'places', 'lugares'], ['CABIN', 'CABA\u00D1A', 'places', 'lugares'], ['GARAGE', 'GARAJE', 'places', 'lugares'], ['TUNNEL', 'T\u00DANEL', 'places', 'lugares'], ['BALCONY', 'BALC\u00D3N', 'places', 'lugares'],
+    // action / acci\u00F3n
+    ['RUNNING', 'CORRER', 'action', 'acci\u00F3n'], ['FALLING', 'CAER', 'action', 'acci\u00F3n'], ['LAUGHING', 'RE\u00CDR', 'action', 'acci\u00F3n'], ['CRYING', 'LLORAR', 'action', 'acci\u00F3n'], ['DANCING', 'BAILAR', 'action', 'acci\u00F3n'], ['FIGHTING', 'PELEAR', 'action', 'acci\u00F3n'], ['FLYING', 'VOLAR', 'action', 'acci\u00F3n'], ['HIDING', 'ESCONDERSE', 'action', 'acci\u00F3n'], ['KISSING', 'BESAR', 'action', 'acci\u00F3n'], ['SLEEPING', 'DORMIR', 'action', 'acci\u00F3n'], ['BURNING', 'QUEMAR', 'action', 'acci\u00F3n'], ['CLIMBING', 'ESCALAR', 'action', 'acci\u00F3n'], ['DIVING', 'BUCEAR', 'action', 'acci\u00F3n'], ['WHISPERING', 'SUSURRAR', 'action', 'acci\u00F3n'], ['PAINTING', 'PINTAR', 'action', 'acci\u00F3n'], ['SINGING', 'CANTAR', 'action', 'acci\u00F3n'],
+  ];
 
-  const allWords: Array<{ word: string; date: string; category: string }> = [];
-  const categories = Object.keys(wordsByCategory);
-  const flatWords: Array<{ word: string; category: string }> = [];
+  const allWords: Array<{ word: string; date: string; category: string; language: string }> = [];
 
-  for (const [cat, words] of Object.entries(wordsByCategory)) {
-    for (const word of words) {
-      flatWords.push({ word, category: cat });
-    }
-  }
-
-  // Shuffle
-  for (let i = flatWords.length - 1; i > 0; i--) {
+  // Shuffle the pairs
+  for (let i = wordPairs.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
-    [flatWords[i], flatWords[j]] = [flatWords[j], flatWords[i]];
+    [wordPairs[i], wordPairs[j]] = [wordPairs[j], wordPairs[i]];
   }
 
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
 
-  for (let i = 0; i < 365 && i < flatWords.length; i++) {
+  for (let i = 0; i < 365 && i < wordPairs.length; i++) {
     const date = new Date(tomorrow);
     date.setDate(date.getDate() + i);
     const dateStr = date.toISOString().split('T')[0];
-    allWords.push({ word: flatWords[i].word, date: dateStr, category: flatWords[i].category });
+    const [enWord, esWord, enCat, esCat] = wordPairs[i];
+    allWords.push({ word: enWord, date: dateStr, category: enCat, language: 'en' });
+    allWords.push({ word: esWord, date: dateStr, category: esCat, language: 'es' });
   }
 
   return allWords;

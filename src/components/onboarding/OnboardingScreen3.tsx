@@ -1,36 +1,31 @@
 import { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Animated } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   isActive: boolean;
 }
 
-const ENTRIES = [
-  { emoji: '🥇', desc: '"Where fish pay no rent"', user: '@sara', votes: 847, gold: true },
-  { emoji: '🥈', desc: '"God\'s swimming pool, no lifeguard"', user: '@mike', votes: 723, gold: false },
-  { emoji: '🥉', desc: '"Big salty infinity bath time"', user: '@luna', votes: 694, gold: false },
-];
-
-const STATS = [
-  { emoji: '🔥', value: '12', label: 'DAY STREAK' },
-  { emoji: '🏆', value: '#3', label: 'BEST RANK' },
-  { emoji: '📤', value: 'share', label: 'RESULTS' },
-];
+const EMOJIS = ['\uD83E\uDD47', '\uD83E\uDD48', '\uD83E\uDD49'];
+const STAT_EMOJIS = ['\uD83D\uDD25', '\uD83C\uDFC6', '\uD83D\uDCE4'];
 
 export function OnboardingScreen3({ isActive }: Props) {
+  const { t } = useTranslation();
+  const entries = t('onboarding.screen3_entries', { returnObjects: true }) as unknown as Array<{ desc: string; user: string; votes: number }>;
+  const stats = t('onboarding.screen3_stats', { returnObjects: true }) as unknown as Array<{ label: string; value: string }>;
+
   const labelOpacity = useRef(new Animated.Value(0)).current;
   const titleOpacity = useRef(new Animated.Value(0)).current;
   const subtitleOpacity = useRef(new Animated.Value(0)).current;
 
-  const entryOpacities = useRef(ENTRIES.map(() => new Animated.Value(0))).current;
-  const entryTranslateYs = useRef(ENTRIES.map(() => new Animated.Value(30))).current;
+  const entryOpacities = useRef(entries.map(() => new Animated.Value(0))).current;
+  const entryTranslateYs = useRef(entries.map(() => new Animated.Value(30))).current;
 
   const statsOpacity = useRef(new Animated.Value(0)).current;
   const statsTranslateY = useRef(new Animated.Value(20)).current;
 
   useEffect(() => {
     if (isActive) {
-      // Reset
       labelOpacity.setValue(0);
       titleOpacity.setValue(0);
       subtitleOpacity.setValue(0);
@@ -39,7 +34,7 @@ export function OnboardingScreen3({ isActive }: Props) {
       statsOpacity.setValue(0);
       statsTranslateY.setValue(20);
 
-      const entryAnimations = ENTRIES.map((_, i) =>
+      const entryAnimations = entries.map((_, i) =>
         Animated.parallel([
           Animated.timing(entryOpacities[i], { toValue: 1, duration: 400, useNativeDriver: true }),
           Animated.spring(entryTranslateYs[i], { toValue: 0, damping: 14, stiffness: 120, useNativeDriver: true }),
@@ -47,18 +42,13 @@ export function OnboardingScreen3({ isActive }: Props) {
       );
 
       Animated.sequence([
-        // Header
         Animated.parallel([
           Animated.timing(labelOpacity, { toValue: 1, duration: 400, useNativeDriver: true }),
           Animated.timing(titleOpacity, { toValue: 1, duration: 400, delay: 100, useNativeDriver: true }),
           Animated.timing(subtitleOpacity, { toValue: 1, duration: 400, delay: 200, useNativeDriver: true }),
         ]),
-
-        // Leaderboard entries cascade
         Animated.delay(100),
         Animated.stagger(500, entryAnimations),
-
-        // Stats
         Animated.delay(300),
         Animated.parallel([
           Animated.timing(statsOpacity, { toValue: 1, duration: 500, useNativeDriver: true }),
@@ -79,30 +69,30 @@ export function OnboardingScreen3({ isActive }: Props) {
   return (
     <View style={styles.container}>
       <Animated.Text style={[styles.label, { opacity: labelOpacity }]}>
-        CLIMB THE RANKS
+        {t('onboarding.screen3_label')}
       </Animated.Text>
       <Animated.Text style={[styles.title, { opacity: titleOpacity }]}>
-        Compete globally
+        {t('onboarding.screen3_title')}
       </Animated.Text>
       <Animated.Text style={[styles.subtitle, { opacity: subtitleOpacity }]}>
-        Build streaks. Top the leaderboard. Share your best.
+        {t('onboarding.screen3_subtitle')}
       </Animated.Text>
 
       {/* Leaderboard */}
       <View style={styles.leaderboard}>
-        {ENTRIES.map((entry, i) => (
+        {entries.map((entry, i) => (
           <Animated.View
             key={i}
             style={[
               styles.entry,
-              entry.gold && styles.entryGold,
+              i === 0 && styles.entryGold,
               {
                 opacity: entryOpacities[i],
                 transform: [{ translateY: entryTranslateYs[i] }],
               },
             ]}
           >
-            <Text style={styles.entryEmoji}>{entry.emoji}</Text>
+            <Text style={styles.entryEmoji}>{EMOJIS[i]}</Text>
             <View style={styles.entryInfo}>
               <Text style={styles.entryDesc}>{entry.desc}</Text>
               <Text style={styles.entryUser}>{entry.user}</Text>
@@ -122,9 +112,9 @@ export function OnboardingScreen3({ isActive }: Props) {
           },
         ]}
       >
-        {STATS.map((stat, i) => (
-          <View key={stat.label} style={[styles.statItem, i < STATS.length - 1 && styles.statBorder]}>
-            <Text style={styles.statEmoji}>{stat.emoji}</Text>
+        {stats.map((stat, i) => (
+          <View key={stat.label} style={[styles.statItem, i < stats.length - 1 && styles.statBorder]}>
+            <Text style={styles.statEmoji}>{STAT_EMOJIS[i]}</Text>
             <Text style={styles.statValue}>{stat.value}</Text>
             <Text style={styles.statLabel}>{stat.label}</Text>
           </View>

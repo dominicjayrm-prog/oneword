@@ -3,7 +3,6 @@ import { View, Text, StyleSheet, TouchableOpacity, Alert, ScrollView, Platform }
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useAuthContext } from '../src/contexts/AuthContext';
-import { useGameContext } from '../src/contexts/GameContext';
 import { useTheme } from '../src/contexts/ThemeContext';
 import { Button } from '../src/components/Button';
 import { ThemeToggle } from '../src/components/ThemeToggle';
@@ -28,7 +27,6 @@ export default function ProfileScreen() {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const { profile, signOut, updateAvatar, updateLanguage, deleteAccount, language } = useAuthContext();
-  const { refresh } = useGameContext();
   const [showAvatarPicker, setShowAvatarPicker] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
@@ -55,8 +53,6 @@ export default function ProfileScreen() {
 
   async function handleLanguageSwitch(lang: string) {
     await updateLanguage(lang);
-    // Reload word for new language
-    refresh();
   }
 
   async function handleLogout() {
@@ -139,39 +135,6 @@ export default function ProfileScreen() {
         </View>
       )}
 
-      {/* Language Switcher */}
-      <View style={[styles.langCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-        <Text style={[styles.langCardLabel, { color: colors.textSecondary }]}>{t('profile.language')}</Text>
-        <View style={styles.langRow}>
-          <TouchableOpacity
-            style={[
-              styles.langOption,
-              { borderColor: colors.primary },
-              language === 'en' && { backgroundColor: colors.primary },
-            ]}
-            onPress={() => handleLanguageSwitch('en')}
-            activeOpacity={0.7}
-          >
-            <Text style={[styles.langOptionText, language === 'en' ? { color: '#FFF' } : { color: colors.primary }]}>
-              English
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[
-              styles.langOption,
-              { borderColor: colors.primary },
-              language === 'es' && { backgroundColor: colors.primary },
-            ]}
-            onPress={() => handleLanguageSwitch('es')}
-            activeOpacity={0.7}
-          >
-            <Text style={[styles.langOptionText, language === 'es' ? { color: '#FFF' } : { color: colors.primary }]}>
-              Espa{'\u00F1'}ol
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-
       {/* Stats Grid */}
       <View style={styles.statsGrid}>
         {stats.map((stat) => (
@@ -194,6 +157,24 @@ export default function ProfileScreen() {
             {deleting ? t('profile.deleting') : t('profile.delete_account')}
           </Text>
         </TouchableOpacity>
+      </View>
+
+      {/* Language – small, at the very bottom */}
+      <View style={styles.langFooter}>
+        <Text style={[styles.langFooterLabel, { color: colors.textMuted }]}>{t('profile.language')}</Text>
+        <View style={styles.langFooterRow}>
+          <TouchableOpacity onPress={() => handleLanguageSwitch('en')} activeOpacity={0.7}>
+            <Text style={[styles.langFooterOption, language === 'en' ? { color: colors.primary, fontWeight: '700' } : { color: colors.textMuted }]}>
+              English
+            </Text>
+          </TouchableOpacity>
+          <Text style={[styles.langFooterDivider, { color: colors.textMuted }]}>|</Text>
+          <TouchableOpacity onPress={() => handleLanguageSwitch('es')} activeOpacity={0.7}>
+            <Text style={[styles.langFooterOption, language === 'es' ? { color: colors.primary, fontWeight: '700' } : { color: colors.textMuted }]}>
+              Espa{'\u00F1'}ol
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </ScrollView>
   );
@@ -266,32 +247,26 @@ const styles = StyleSheet.create({
   avatarOptionText: {
     fontSize: 28,
   },
-  langCard: {
-    borderRadius: borderRadius.md,
-    borderWidth: 1,
-    padding: spacing.md,
-    marginBottom: spacing.lg,
+  langFooter: {
+    alignItems: 'center',
+    marginTop: spacing.xl,
+    paddingTop: spacing.md,
+    gap: 4,
+  },
+  langFooterLabel: {
+    fontSize: fontSize.xs - 1,
+    letterSpacing: 1,
+  },
+  langFooterRow: {
+    flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
   },
-  langCardLabel: {
-    fontSize: fontSize.sm,
-    fontWeight: '600',
-    letterSpacing: 1,
+  langFooterOption: {
+    fontSize: fontSize.xs,
   },
-  langRow: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-  },
-  langOption: {
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.lg,
-    borderRadius: borderRadius.full,
-    borderWidth: 2,
-  },
-  langOptionText: {
-    fontSize: fontSize.sm,
-    fontWeight: '700',
+  langFooterDivider: {
+    fontSize: fontSize.xs,
   },
   statsGrid: {
     flexDirection: 'row',

@@ -10,45 +10,52 @@ export default async function ModerationPage() {
   if (!(await isAuthenticated())) redirect('/login');
   const supabase = createAdminClient();
 
-  // Get pending reports with description and reporter info
+  // Get reports
   const { data: reports } = await supabase
     .from('reports')
-    .select(`
-      id,
-      reason,
-      status,
-      created_at,
-      description_id,
-      reporter_id,
-      word_id
-    `)
+    .select('id, reason, status, created_at, description_id, reporter_id, word_id')
     .order('created_at', { ascending: false })
     .limit(100);
 
-  // Enrich with description text, reporter username, and word
-  const enriched = [];
-  for (const report of reports || []) {
-    const [descRes, reporterRes, wordRes] = await Promise.all([
-      supabase.from('descriptions').select('description, user_id').eq('id', report.description_id).single(),
-      supabase.from('profiles').select('username').eq('id', report.reporter_id).single(),
-      supabase.from('daily_words').select('word, date').eq('id', report.word_id).single(),
-    ]);
+  const reportsList = reports || [];
 
-    let authorUsername = null;
-    if (descRes.data?.user_id) {
-      const authorRes = await supabase.from('profiles').select('username').eq('id', descRes.data.user_id).single();
-      authorUsername = authorRes.data?.username;
-    }
+  // Collect unique IDs for batch fetching
+  const descIds = [...new Set(reportsList.map((r) => r.description_id))];
+  const reporterIds = [...new Set(reportsList.map((r) => r.reporter_id))];
+  const wordIds = [...new Set(reportsList.map((r) => r.word_id))];
 
-    enriched.push({
+  // Batch fetch all related data in parallel (instead of N+1 loop)
+  const [descsRes, reportersRes, wordsRes] = await Promise.all([
+    descIds.length > 0 ? supabase.from('descriptions').select('id, description, user_id').in('id', descIds) : { data: [] },
+    reporterIds.length > 0 ? supabase.from('profiles').select('id, username').in('id', reporterIds) : { data: [] },
+    wordIds.length > 0 ? supabase.from('daily_words').select('id, word, date').in('id', wordIds) : { data: [] },
+  ]);
+
+  const descMap = new Map((descsRes.data || []).map((d: any) => [d.id, d]));
+  const profileMap = new Map((reportersRes.data || []).map((p: any) => [p.id, p]));
+  const wordMap = new Map((wordsRes.data || []).map((w: any) => [w.id, w]));
+
+  // Batch fetch author usernames
+  const authorIds = [...new Set([...descMap.values()].map((d: any) => d.user_id).filter(Boolean))];
+  const authorsRes = authorIds.length > 0
+    ? await supabase.from('profiles').select('id, username').in('id', authorIds)
+    : { data: [] };
+  const authorMap = new Map((authorsRes.data || []).map((a: any) => [a.id, a]));
+
+  const enriched = reportsList.map((report) => {
+    const desc = descMap.get(report.description_id);
+    const reporter = profileMap.get(report.reporter_id);
+    const word = wordMap.get(report.word_id);
+    const author = desc ? authorMap.get(desc.user_id) : null;
+    return {
       ...report,
-      descriptionText: descRes.data?.description ?? '[deleted]',
-      reporterUsername: reporterRes.data?.username ?? 'unknown',
-      authorUsername: authorUsername ?? 'unknown',
-      word: wordRes.data?.word ?? 'unknown',
-      wordDate: wordRes.data?.date ?? '',
-    });
-  }
+      descriptionText: desc?.description ?? '[deleted]',
+      reporterUsername: reporter?.username ?? 'unknown',
+      authorUsername: author?.username ?? 'unknown',
+      word: word?.word ?? 'unknown',
+      wordDate: word?.date ?? '',
+    };
+  });
 
   const pending = enriched.filter((r) => r.status === 'pending');
   const resolved = enriched.filter((r) => r.status !== 'pending');

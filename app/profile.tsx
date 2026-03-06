@@ -247,6 +247,7 @@ const styles = StyleSheet.create({
   },
   statValue: {
     fontSize: fontSize.xl,
+    fontFamily: 'DMMono_500Medium',
     fontWeight: '800',
   },
   statLabel: {

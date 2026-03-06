@@ -81,6 +81,7 @@ const styles = StyleSheet.create({
   },
   votes: {
     fontSize: fontSize.lg,
+    fontFamily: 'DMMono_500Medium',
     fontWeight: '800',
   },
   votesLabel: {

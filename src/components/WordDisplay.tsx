@@ -34,8 +34,8 @@ const styles = StyleSheet.create({
   },
   word: {
     fontSize: fontSize.hero,
-    fontWeight: '800',
-    letterSpacing: 6,
+    fontFamily: 'PlayfairDisplay_700Bold',
+    letterSpacing: 2,
   },
   underline: {
     width: 60,

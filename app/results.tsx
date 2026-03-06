@@ -1,14 +1,25 @@
-import { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, FlatList, Share } from 'react-native';
+import { useEffect, useState, useRef } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ActivityIndicator,
+  FlatList,
+  Modal,
+  TouchableOpacity,
+} from 'react-native';
+import { captureRef } from 'react-native-view-shot';
+import * as Sharing from 'expo-sharing';
 import { useRouter } from 'expo-router';
 import { useAuthContext } from '../src/contexts/AuthContext';
 import { useGameContext } from '../src/contexts/GameContext';
 import { useTheme } from '../src/contexts/ThemeContext';
 import { WordDisplay } from '../src/components/WordDisplay';
 import { LeaderboardRow } from '../src/components/LeaderboardRow';
+import { ShareCard } from '../src/components/ShareCard';
 import { Button } from '../src/components/Button';
 import { ThemeToggle } from '../src/components/ThemeToggle';
-import { fontSize, spacing } from '../src/constants/theme';
+import { fontSize, spacing, borderRadius } from '../src/constants/theme';
 import type { LeaderboardEntry } from '../src/types/database';
 
 export default function ResultsScreen() {
@@ -19,6 +30,10 @@ export default function ResultsScreen() {
 
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showPreview, setShowPreview] = useState(false);
+  const [sharing, setSharing] = useState(false);
+
+  const shareCardRef = useRef<View>(null);
 
   useEffect(() => {
     async function load() {
@@ -29,21 +44,35 @@ export default function ResultsScreen() {
     load();
   }, []);
 
+  const myEntry = leaderboard.find((e) => e.username === profile?.username);
+
+  const handleSharePress = () => {
+    setShowPreview(true);
+  };
+
   const handleShare = async () => {
-    const myEntry = leaderboard.find((e) => e.username === profile?.username);
-    const word = todayWord?.word ?? '???';
-    const lines = [`OneWord - ${word}`];
-    if (userDescription) {
-      lines.push(`"${userDescription}"`);
-    }
-    if (myEntry) {
-      lines.push(`#${myEntry.rank} with ${myEntry.votes} votes`);
-    }
-    lines.push('', 'Play OneWord daily!');
+    if (!shareCardRef.current) return;
+    setSharing(true);
     try {
-      await Share.share({ message: lines.join('\n') });
+      const uri = await captureRef(shareCardRef, {
+        format: 'png',
+        quality: 1,
+        result: 'tmpfile',
+        width: 960,
+        height: 1200,
+      });
+      setShowPreview(false);
+      // Small delay so the modal closes before share sheet opens
+      await new Promise((r) => setTimeout(r, 300));
+      await Sharing.shareAsync(uri, {
+        mimeType: 'image/png',
+        dialogTitle: 'Share your OneWord result',
+        UTI: 'public.png',
+      });
     } catch {
-      // user cancelled
+      // user cancelled or error
+    } finally {
+      setSharing(false);
     }
   };
 
@@ -81,10 +110,53 @@ export default function ResultsScreen() {
       )}
 
       <View style={styles.actions}>
-        <Button title="SHARE RESULTS" onPress={handleShare} variant="primary" />
+        <Button title="SHARE RESULTS" onPress={handleSharePress} variant="primary" />
         <View style={{ height: spacing.sm }} />
         <Button title="BACK HOME" onPress={() => router.replace('/')} variant="outline" />
       </View>
+
+      {/* Share preview modal */}
+      <Modal visible={showPreview} transparent animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
+            <Text style={[styles.modalTitle, { color: colors.text }]}>Share Preview</Text>
+
+            <View style={styles.cardWrapper}>
+              <ShareCard
+                ref={shareCardRef}
+                word={todayWord?.word ?? '???'}
+                description={userDescription}
+                rank={myEntry?.rank ?? null}
+                votes={myEntry?.votes ?? null}
+                streak={profile?.current_streak ?? 0}
+              />
+            </View>
+
+            <View style={styles.modalActions}>
+              <TouchableOpacity
+                style={[styles.modalBtn, { backgroundColor: colors.primary }]}
+                onPress={handleShare}
+                disabled={sharing}
+                activeOpacity={0.8}
+              >
+                {sharing ? (
+                  <ActivityIndicator color="#FFFFFF" size="small" />
+                ) : (
+                  <Text style={styles.modalBtnText}>SHARE</Text>
+                )}
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.modalBtn, styles.cancelBtn, { borderColor: colors.border }]}
+                onPress={() => setShowPreview(false)}
+                activeOpacity={0.8}
+              >
+                <Text style={[styles.cancelBtnText, { color: colors.textSecondary }]}>CANCEL</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -119,5 +191,65 @@ const styles = StyleSheet.create({
   },
   actions: {
     paddingBottom: spacing.xl,
+  },
+  // Modal styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: spacing.lg,
+  },
+  modalContent: {
+    borderRadius: borderRadius.xl,
+    padding: spacing.lg,
+    alignItems: 'center',
+    width: '100%',
+    maxWidth: 380,
+  },
+  modalTitle: {
+    fontSize: fontSize.md,
+    fontWeight: '700',
+    letterSpacing: 1,
+    marginBottom: spacing.md,
+  },
+  cardWrapper: {
+    borderRadius: 24,
+    overflow: 'hidden',
+    // Subtle shadow
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 16,
+    elevation: 12,
+  },
+  modalActions: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    marginTop: spacing.lg,
+    width: '100%',
+  },
+  modalBtn: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: borderRadius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 48,
+  },
+  modalBtnText: {
+    color: '#FFFFFF',
+    fontSize: fontSize.md,
+    fontWeight: '700',
+    letterSpacing: 1,
+  },
+  cancelBtn: {
+    backgroundColor: 'transparent',
+    borderWidth: 1.5,
+  },
+  cancelBtnText: {
+    fontSize: fontSize.md,
+    fontWeight: '700',
+    letterSpacing: 1,
   },
 });

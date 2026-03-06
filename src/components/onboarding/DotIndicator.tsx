@@ -1,8 +1,5 @@
-import { View, StyleSheet } from 'react-native';
-import Animated, {
-  useAnimatedStyle,
-  withTiming,
-} from 'react-native-reanimated';
+import { useEffect, useRef } from 'react';
+import { View, StyleSheet, Animated } from 'react-native';
 
 interface DotIndicatorProps {
   total: number;
@@ -20,13 +17,27 @@ export function DotIndicator({ total, current }: DotIndicatorProps) {
 }
 
 function Dot({ active }: { active: boolean }) {
-  const animatedStyle = useAnimatedStyle(() => ({
-    width: withTiming(active ? 24 : 8, { duration: 300 }),
-    backgroundColor: withTiming(active ? '#FF6B4A' : '#E8E3D9', { duration: 300 }),
-    borderRadius: 4,
-  }));
+  const width = useRef(new Animated.Value(active ? 24 : 8)).current;
 
-  return <Animated.View style={[styles.dot, animatedStyle]} />;
+  useEffect(() => {
+    Animated.timing(width, {
+      toValue: active ? 24 : 8,
+      duration: 300,
+      useNativeDriver: false,
+    }).start();
+  }, [active]);
+
+  return (
+    <Animated.View
+      style={[
+        styles.dot,
+        {
+          width,
+          backgroundColor: active ? '#FF6B4A' : '#E8E3D9',
+        },
+      ]}
+    />
+  );
 }
 
 const styles = StyleSheet.create({

@@ -1,13 +1,5 @@
-import { useEffect } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withDelay,
-  withTiming,
-  withSpring,
-} from 'react-native-reanimated';
-import { WordPill } from './WordPill';
+import { useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, Animated } from 'react-native';
 
 const WORDS = ['Where', 'fish', 'pay', 'no', 'rent'];
 
@@ -16,78 +8,123 @@ interface Props {
 }
 
 export function OnboardingScreen1({ isActive }: Props) {
-  const labelOpacity = useSharedValue(0);
-  const wordOpacity = useSharedValue(0);
-  const wordScale = useSharedValue(0.9);
-  const subtitleOpacity = useSharedValue(0);
-  const promptOpacity = useSharedValue(0);
-  const counterOpacity = useSharedValue(0);
+  const labelOpacity = useRef(new Animated.Value(0)).current;
+  const wordOpacity = useRef(new Animated.Value(0)).current;
+  const wordScale = useRef(new Animated.Value(0.9)).current;
+  const subtitleOpacity = useRef(new Animated.Value(0)).current;
+  const promptOpacity = useRef(new Animated.Value(0)).current;
+  const counterOpacity = useRef(new Animated.Value(0)).current;
+  const pillOpacities = useRef(WORDS.map(() => new Animated.Value(0))).current;
+  const pillScales = useRef(WORDS.map(() => new Animated.Value(0))).current;
 
   useEffect(() => {
     if (isActive) {
-      // Reset
-      labelOpacity.value = 0;
-      wordOpacity.value = 0;
-      wordScale.value = 0.9;
-      subtitleOpacity.value = 0;
-      promptOpacity.value = 0;
-      counterOpacity.value = 0;
+      // Reset all values
+      labelOpacity.setValue(0);
+      wordOpacity.setValue(0);
+      wordScale.setValue(0.9);
+      subtitleOpacity.setValue(0);
+      promptOpacity.setValue(0);
+      counterOpacity.setValue(0);
+      pillOpacities.forEach((v) => v.setValue(0));
+      pillScales.forEach((v) => v.setValue(0));
 
-      // "today's word" label — immediate
-      labelOpacity.value = withTiming(1, { duration: 500 });
+      // Build animation sequence
+      const pillAnimations = WORDS.map((_, i) =>
+        Animated.parallel([
+          Animated.spring(pillScales[i], {
+            toValue: 1,
+            damping: 8,
+            stiffness: 150,
+            mass: 0.6,
+            useNativeDriver: true,
+          }),
+          Animated.timing(pillOpacities[i], {
+            toValue: 1,
+            duration: 200,
+            useNativeDriver: true,
+          }),
+        ])
+      );
 
-      // "OCEAN" — fade in at 600ms
-      wordOpacity.value = withDelay(600, withTiming(1, { duration: 600 }));
-      wordScale.value = withDelay(600, withSpring(1, { damping: 12, stiffness: 100 }));
+      Animated.sequence([
+        // Label fades in immediately
+        Animated.timing(labelOpacity, { toValue: 1, duration: 500, useNativeDriver: true }),
 
-      // "nature · day 1" subtitle
-      subtitleOpacity.value = withDelay(1000, withTiming(1, { duration: 400 }));
+        // Small pause then OCEAN
+        Animated.delay(100),
+        Animated.parallel([
+          Animated.timing(wordOpacity, { toValue: 1, duration: 600, useNativeDriver: true }),
+          Animated.spring(wordScale, { toValue: 1, damping: 12, stiffness: 100, useNativeDriver: true }),
+        ]),
 
-      // "describe it" prompt
-      promptOpacity.value = withDelay(1800, withTiming(1, { duration: 400 }));
+        // Subtitle
+        Animated.delay(200),
+        Animated.timing(subtitleOpacity, { toValue: 1, duration: 400, useNativeDriver: true }),
 
-      // "5/5 words" counter
-      counterOpacity.value = withDelay(4000, withTiming(1, { duration: 400 }));
+        // Prompt
+        Animated.delay(400),
+        Animated.timing(promptOpacity, { toValue: 1, duration: 400, useNativeDriver: true }),
+
+        // Pills one by one
+        Animated.delay(300),
+        Animated.stagger(300, pillAnimations),
+
+        // Counter
+        Animated.delay(200),
+        Animated.timing(counterOpacity, { toValue: 1, duration: 400, useNativeDriver: true }),
+      ]).start();
     } else {
-      labelOpacity.value = 0;
-      wordOpacity.value = 0;
-      wordScale.value = 0.9;
-      subtitleOpacity.value = 0;
-      promptOpacity.value = 0;
-      counterOpacity.value = 0;
+      // Reset
+      labelOpacity.setValue(0);
+      wordOpacity.setValue(0);
+      wordScale.setValue(0.9);
+      subtitleOpacity.setValue(0);
+      promptOpacity.setValue(0);
+      counterOpacity.setValue(0);
+      pillOpacities.forEach((v) => v.setValue(0));
+      pillScales.forEach((v) => v.setValue(0));
     }
   }, [isActive]);
 
-  const labelStyle = useAnimatedStyle(() => ({ opacity: labelOpacity.value }));
-  const wordStyle = useAnimatedStyle(() => ({
-    opacity: wordOpacity.value,
-    transform: [{ scale: wordScale.value }],
-  }));
-  const subtitleStyle = useAnimatedStyle(() => ({ opacity: subtitleOpacity.value }));
-  const promptStyle = useAnimatedStyle(() => ({ opacity: promptOpacity.value }));
-  const counterStyle = useAnimatedStyle(() => ({ opacity: counterOpacity.value }));
-
   return (
     <View style={styles.container}>
-      <Animated.Text style={[styles.label, labelStyle]}>TODAY&apos;S WORD</Animated.Text>
+      <Animated.Text style={[styles.label, { opacity: labelOpacity }]}>
+        TODAY&apos;S WORD
+      </Animated.Text>
 
-      <Animated.View style={wordStyle}>
+      <Animated.View style={{ opacity: wordOpacity, transform: [{ scale: wordScale }] }}>
         <Text style={styles.word}>OCEAN</Text>
       </Animated.View>
 
-      <Animated.Text style={[styles.subtitle, subtitleStyle]}>nature · day 1</Animated.Text>
+      <Animated.Text style={[styles.subtitle, { opacity: subtitleOpacity }]}>
+        nature · day 1
+      </Animated.Text>
 
-      <Animated.Text style={[styles.prompt, promptStyle]}>
+      <Animated.Text style={[styles.prompt, { opacity: promptOpacity }]}>
         DESCRIBE IT IN EXACTLY 5 WORDS
       </Animated.Text>
 
       <View style={styles.pillsContainer}>
         {WORDS.map((word, i) => (
-          <WordPill key={word} word={word} index={i} isActive={isActive} />
+          <Animated.View
+            key={word}
+            style={[
+              styles.pill,
+              {
+                opacity: pillOpacities[i],
+                transform: [{ scale: pillScales[i] }],
+              },
+            ]}
+          >
+            <Text style={styles.pillText}>{word}</Text>
+          </Animated.View>
         ))}
       </View>
 
-      <Animated.Text style={[styles.counter, counterStyle]}>5/5 words ✓</Animated.Text>
+      <Animated.Text style={[styles.counter, { opacity: counterOpacity }]}>
+        5/5 words ✓
+      </Animated.Text>
     </View>
   );
 }
@@ -103,7 +140,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     letterSpacing: 3,
     color: '#8B8697',
-    textTransform: 'uppercase',
     marginBottom: 16,
   },
   word: {
@@ -122,7 +158,6 @@ const styles = StyleSheet.create({
     fontSize: 11,
     letterSpacing: 2.5,
     color: '#8B8697',
-    textTransform: 'uppercase',
     marginBottom: 20,
   },
   pillsContainer: {
@@ -131,6 +166,21 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     maxWidth: 320,
     marginBottom: 20,
+  },
+  pill: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1.5,
+    borderColor: '#FF6B4A',
+    backgroundColor: '#FF6B4A14',
+    marginHorizontal: 4,
+    marginVertical: 4,
+  },
+  pillText: {
+    color: '#FF6B4A',
+    fontSize: 16,
+    fontWeight: '600',
   },
   counter: {
     fontSize: 15,

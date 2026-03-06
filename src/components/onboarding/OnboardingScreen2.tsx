@@ -1,170 +1,181 @@
-import { useEffect } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withDelay,
-  withTiming,
-  withSpring,
-  withSequence,
-} from 'react-native-reanimated';
-import * as Haptics from 'expo-haptics';
+import { useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, Animated } from 'react-native';
 
 interface Props {
   isActive: boolean;
 }
 
 export function OnboardingScreen2({ isActive }: Props) {
-  const labelOpacity = useSharedValue(0);
-  const titleOpacity = useSharedValue(0);
-  const subtitleOpacity = useSharedValue(0);
+  const labelOpacity = useRef(new Animated.Value(0)).current;
+  const titleOpacity = useRef(new Animated.Value(0)).current;
+  const subtitleOpacity = useRef(new Animated.Value(0)).current;
 
-  const card1TranslateX = useSharedValue(-60);
-  const card1Opacity = useSharedValue(0);
-  const card2TranslateX = useSharedValue(60);
-  const card2Opacity = useSharedValue(0);
+  const card1Opacity = useRef(new Animated.Value(0)).current;
+  const card1TranslateX = useRef(new Animated.Value(-60)).current;
+  const card2Opacity = useRef(new Animated.Value(0)).current;
+  const card2TranslateX = useRef(new Animated.Value(60)).current;
 
-  // Vote selection
-  const card1Scale = useSharedValue(1);
-  const card1BorderColor = useSharedValue(0); // 0 = border, 1 = coral
-  const card1BgOpacity = useSharedValue(0);
-  const card2Scale = useSharedValue(1);
-  const card2FadeOpacity = useSharedValue(1);
-  const badgeOpacity = useSharedValue(0);
-  const badgeScale = useSharedValue(0);
+  const card1Scale = useRef(new Animated.Value(1)).current;
+  const card1Selected = useRef(new Animated.Value(0)).current; // 0=no, 1=yes
+  const card2Scale = useRef(new Animated.Value(1)).current;
+  const card2Fade = useRef(new Animated.Value(1)).current;
+  const badgeScale = useRef(new Animated.Value(0)).current;
 
-  const progressOpacity = useSharedValue(0);
-  const progressWidth = useSharedValue(0);
+  const progressOpacity = useRef(new Animated.Value(0)).current;
+  const progressWidth = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     if (isActive) {
-      // Reset all
-      labelOpacity.value = 0;
-      titleOpacity.value = 0;
-      subtitleOpacity.value = 0;
-      card1TranslateX.value = -60;
-      card1Opacity.value = 0;
-      card2TranslateX.value = 60;
-      card2Opacity.value = 0;
-      card1Scale.value = 1;
-      card1BorderColor.value = 0;
-      card1BgOpacity.value = 0;
-      card2Scale.value = 1;
-      card2FadeOpacity.value = 1;
-      badgeOpacity.value = 0;
-      badgeScale.value = 0;
-      progressOpacity.value = 0;
-      progressWidth.value = 0;
+      // Reset
+      labelOpacity.setValue(0);
+      titleOpacity.setValue(0);
+      subtitleOpacity.setValue(0);
+      card1Opacity.setValue(0);
+      card1TranslateX.setValue(-60);
+      card2Opacity.setValue(0);
+      card2TranslateX.setValue(60);
+      card1Scale.setValue(1);
+      card1Selected.setValue(0);
+      card2Scale.setValue(1);
+      card2Fade.setValue(1);
+      badgeScale.setValue(0);
+      progressOpacity.setValue(0);
+      progressWidth.setValue(0);
 
-      // Label + title
-      labelOpacity.value = withTiming(1, { duration: 400 });
-      titleOpacity.value = withDelay(200, withTiming(1, { duration: 400 }));
-      subtitleOpacity.value = withDelay(300, withTiming(1, { duration: 400 }));
+      Animated.sequence([
+        // Header
+        Animated.parallel([
+          Animated.timing(labelOpacity, { toValue: 1, duration: 400, useNativeDriver: true }),
+          Animated.timing(titleOpacity, { toValue: 1, duration: 400, delay: 100, useNativeDriver: true }),
+          Animated.timing(subtitleOpacity, { toValue: 1, duration: 400, delay: 200, useNativeDriver: true }),
+        ]),
 
-      // Cards slide in
-      card1Opacity.value = withDelay(400, withTiming(1, { duration: 400 }));
-      card1TranslateX.value = withDelay(400, withSpring(0, { damping: 15, stiffness: 120 }));
-      card2Opacity.value = withDelay(800, withTiming(1, { duration: 400 }));
-      card2TranslateX.value = withDelay(800, withSpring(0, { damping: 15, stiffness: 120 }));
+        // Card 1 slides in from left
+        Animated.parallel([
+          Animated.timing(card1Opacity, { toValue: 1, duration: 400, useNativeDriver: true }),
+          Animated.spring(card1TranslateX, { toValue: 0, damping: 15, stiffness: 120, useNativeDriver: true }),
+        ]),
 
-      // Progress bar
-      progressOpacity.value = withDelay(1200, withTiming(1, { duration: 300 }));
-      progressWidth.value = withDelay(1400, withTiming(27, { duration: 600 }));
+        // Card 2 slides in from right
+        Animated.delay(200),
+        Animated.parallel([
+          Animated.timing(card2Opacity, { toValue: 1, duration: 400, useNativeDriver: true }),
+          Animated.spring(card2TranslateX, { toValue: 0, damping: 15, stiffness: 120, useNativeDriver: true }),
+        ]),
 
-      // Vote selection at 2600ms
-      card1Scale.value = withDelay(2600, withSpring(1.02, { damping: 10, stiffness: 150 }));
-      card1BorderColor.value = withDelay(2600, withTiming(1, { duration: 300 }));
-      card1BgOpacity.value = withDelay(2600, withTiming(1, { duration: 300 }));
-      card2Scale.value = withDelay(2600, withSpring(0.97, { damping: 10, stiffness: 150 }));
-      card2FadeOpacity.value = withDelay(2600, withTiming(0.4, { duration: 300 }));
-      badgeOpacity.value = withDelay(2700, withTiming(1, { duration: 200 }));
-      badgeScale.value = withDelay(2700, withSpring(1, { damping: 8, stiffness: 200 }));
+        // Progress bar
+        Animated.parallel([
+          Animated.timing(progressOpacity, { toValue: 1, duration: 300, useNativeDriver: true }),
+          Animated.timing(progressWidth, { toValue: 27, duration: 600, useNativeDriver: false }),
+        ]),
 
-      // Haptic on vote
-      const timer = setTimeout(() => {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-      }, 2600);
-      return () => clearTimeout(timer);
+        // Vote selection after pause
+        Animated.delay(800),
+        Animated.parallel([
+          Animated.spring(card1Scale, { toValue: 1.02, damping: 10, stiffness: 150, useNativeDriver: true }),
+          Animated.timing(card1Selected, { toValue: 1, duration: 300, useNativeDriver: false }),
+          Animated.spring(card2Scale, { toValue: 0.97, damping: 10, stiffness: 150, useNativeDriver: true }),
+          Animated.timing(card2Fade, { toValue: 0.4, duration: 300, useNativeDriver: true }),
+          Animated.spring(badgeScale, { toValue: 1, damping: 8, stiffness: 200, useNativeDriver: true }),
+        ]),
+      ]).start();
     } else {
-      labelOpacity.value = 0;
-      titleOpacity.value = 0;
-      subtitleOpacity.value = 0;
-      card1Opacity.value = 0;
-      card1TranslateX.value = -60;
-      card2Opacity.value = 0;
-      card2TranslateX.value = 60;
-      card1Scale.value = 1;
-      card1BorderColor.value = 0;
-      card1BgOpacity.value = 0;
-      card2Scale.value = 1;
-      card2FadeOpacity.value = 1;
-      badgeOpacity.value = 0;
-      badgeScale.value = 0;
-      progressOpacity.value = 0;
-      progressWidth.value = 0;
+      labelOpacity.setValue(0);
+      titleOpacity.setValue(0);
+      subtitleOpacity.setValue(0);
+      card1Opacity.setValue(0);
+      card1TranslateX.setValue(-60);
+      card2Opacity.setValue(0);
+      card2TranslateX.setValue(60);
+      card1Scale.setValue(1);
+      card1Selected.setValue(0);
+      card2Scale.setValue(1);
+      card2Fade.setValue(1);
+      badgeScale.setValue(0);
+      progressOpacity.setValue(0);
+      progressWidth.setValue(0);
     }
   }, [isActive]);
 
-  const labelStyle = useAnimatedStyle(() => ({ opacity: labelOpacity.value }));
-  const titleStyle = useAnimatedStyle(() => ({ opacity: titleOpacity.value }));
-  const subtitleStyle_ = useAnimatedStyle(() => ({ opacity: subtitleOpacity.value }));
+  const card1BorderColor = card1Selected.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['#E8E3D9', '#FF6B4A'],
+  });
 
-  const card1Style = useAnimatedStyle(() => ({
-    opacity: card1Opacity.value,
-    transform: [
-      { translateX: card1TranslateX.value },
-      { scale: card1Scale.value },
-    ],
-    borderColor: card1BorderColor.value === 1 ? '#FF6B4A' : '#E8E3D9',
-    backgroundColor: card1BgOpacity.value === 1 ? '#FFF0EC' : '#FFFFFF',
-  }));
-
-  const card2Style = useAnimatedStyle(() => ({
-    opacity: card2Opacity.value * card2FadeOpacity.value,
-    transform: [
-      { translateX: card2TranslateX.value },
-      { scale: card2Scale.value },
-    ],
-  }));
-
-  const badgeStyle = useAnimatedStyle(() => ({
-    opacity: badgeOpacity.value,
-    transform: [{ scale: badgeScale.value }],
-  }));
-
-  const progressContainerStyle = useAnimatedStyle(() => ({ opacity: progressOpacity.value }));
-  const progressBarStyle = useAnimatedStyle(() => ({
-    width: `${progressWidth.value}%`,
-  }));
+  const card1Bg = card1Selected.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['#FFFFFF', '#FFF0EC'],
+  });
 
   return (
     <View style={styles.container}>
-      <Animated.Text style={[styles.label, labelStyle]}>THE WORLD VOTES</Animated.Text>
-      <Animated.Text style={[styles.title, titleStyle]}>Which is better?</Animated.Text>
-      <Animated.Text style={[styles.subtitle, subtitleStyle_]}>
+      <Animated.Text style={[styles.label, { opacity: labelOpacity }]}>
+        THE WORLD VOTES
+      </Animated.Text>
+      <Animated.Text style={[styles.title, { opacity: titleOpacity }]}>
+        Which is better?
+      </Animated.Text>
+      <Animated.Text style={[styles.subtitle, { opacity: subtitleOpacity }]}>
         Tap to vote. The best descriptions rise to the top.
       </Animated.Text>
 
       {/* Card 1 */}
       <View style={styles.cardWrapper}>
-        <Animated.View style={[styles.card, card1Style]}>
+        <Animated.View
+          style={[
+            styles.card,
+            {
+              opacity: card1Opacity,
+              transform: [{ translateX: card1TranslateX }, { scale: card1Scale }],
+              borderColor: card1BorderColor,
+              backgroundColor: card1Bg,
+            },
+          ]}
+        >
           <Text style={styles.cardText}>&ldquo;Where fish pay no rent&rdquo;</Text>
         </Animated.View>
-        <Animated.View style={[styles.badge, badgeStyle]}>
+        <Animated.View
+          style={[
+            styles.badge,
+            {
+              transform: [{ scale: badgeScale }],
+              opacity: badgeScale,
+            },
+          ]}
+        >
           <Text style={styles.badgeText}>YOUR PICK ✓</Text>
         </Animated.View>
       </View>
 
       {/* Card 2 */}
-      <Animated.View style={[styles.card, styles.card2, card2Style]}>
+      <Animated.View
+        style={[
+          styles.card,
+          styles.card2,
+          {
+            opacity: Animated.multiply(card2Opacity, card2Fade),
+            transform: [{ translateX: card2TranslateX }, { scale: card2Scale }],
+          },
+        ]}
+      >
         <Text style={styles.cardText}>&ldquo;God&apos;s swimming pool, no lifeguard&rdquo;</Text>
       </Animated.View>
 
       {/* Progress */}
-      <Animated.View style={[styles.progressContainer, progressContainerStyle]}>
+      <Animated.View style={[styles.progressContainer, { opacity: progressOpacity }]}>
         <Text style={styles.progressText}>vote 4 of 15</Text>
         <View style={styles.progressTrack}>
-          <Animated.View style={[styles.progressFill, progressBarStyle]} />
+          <Animated.View
+            style={[
+              styles.progressFill,
+              {
+                width: progressWidth.interpolate({
+                  inputRange: [0, 100],
+                  outputRange: ['0%', '100%'],
+                }),
+              },
+            ]}
+          />
         </View>
       </Animated.View>
     </View>
@@ -182,7 +193,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     letterSpacing: 3,
     color: '#8B8697',
-    textTransform: 'uppercase',
     marginBottom: 12,
   },
   title: {
@@ -201,7 +211,6 @@ const styles = StyleSheet.create({
   cardWrapper: {
     width: '100%',
     marginBottom: 12,
-    position: 'relative',
   },
   card: {
     width: '100%',

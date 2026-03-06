@@ -53,10 +53,8 @@ export function useGame(userId: string | undefined) {
       setHasSubmitted(true);
       setUserDescription(description.trim());
 
-      // Update streak
-      await supabase.rpc('update_streak', { p_user_id: userId }).catch(() => {
-        // Streak function may not exist yet
-      });
+      // Update streak and total_plays
+      await supabase.rpc('update_streak', { p_user_id: userId });
     }
 
     return { error };

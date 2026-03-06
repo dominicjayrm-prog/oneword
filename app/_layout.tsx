@@ -34,7 +34,7 @@ function InnerLayout() {
       setHasSeenOnboarding(value === 'true');
       setOnboardingChecked(true);
     });
-  }, []);
+  }, [segments]);
 
   useEffect(() => {
     if (!onboardingChecked) return;

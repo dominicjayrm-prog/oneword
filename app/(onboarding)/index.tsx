@@ -98,12 +98,10 @@ export default function OnboardingScreen() {
         <DotIndicator total={3} current={currentIndex} />
 
         <View style={styles.buttons}>
-          {currentIndex > 0 ? (
+          {currentIndex > 0 && (
             <TouchableOpacity style={styles.backButton} onPress={goBack} activeOpacity={0.7}>
               <Text style={styles.backButtonText}>Back</Text>
             </TouchableOpacity>
-          ) : (
-            <View style={styles.backPlaceholder} />
           )}
 
           {isLast ? (
@@ -155,19 +153,17 @@ const styles = StyleSheet.create({
   },
   bottom: {
     paddingHorizontal: 24,
-    gap: 20,
+    gap: 16,
+    paddingBottom: 4,
   },
   buttons: {
     flexDirection: 'row',
-    gap: 12,
-  },
-  backPlaceholder: {
-    width: 100,
+    gap: 10,
   },
   backButton: {
-    width: 100,
-    paddingVertical: 16,
-    borderRadius: 14,
+    width: 90,
+    paddingVertical: 14,
+    borderRadius: 12,
     borderWidth: 1.5,
     borderColor: '#E8E3D9',
     alignItems: 'center',
@@ -180,21 +176,21 @@ const styles = StyleSheet.create({
   },
   nextButton: {
     flex: 1,
-    paddingVertical: 16,
-    borderRadius: 14,
+    paddingVertical: 14,
+    borderRadius: 12,
     backgroundColor: '#1A1A2E',
     alignItems: 'center',
     justifyContent: 'center',
   },
   nextButtonText: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '700',
     color: '#FFFFFF',
   },
   finishButton: {
     flex: 1,
-    paddingVertical: 16,
-    borderRadius: 14,
+    paddingVertical: 14,
+    borderRadius: 12,
     backgroundColor: '#FF6B4A',
     alignItems: 'center',
     justifyContent: 'center',

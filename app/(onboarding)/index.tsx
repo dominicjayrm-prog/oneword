@@ -5,6 +5,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
+  Platform,
   type NativeSyntheticEvent,
   type NativeScrollEvent,
   type LayoutChangeEvent,
@@ -56,7 +57,11 @@ export default function OnboardingScreen() {
 
   const handleFinish = async () => {
     await AsyncStorage.setItem('hasSeenOnboarding', 'true');
-    router.replace('/');
+    if (Platform.OS === 'web') {
+      window.location.href = '/';
+    } else {
+      router.replace('/');
+    }
   };
 
   const isLast = currentIndex === 2;

@@ -198,7 +198,7 @@ export function WordsClient({ words }: { words: Word[] }) {
           <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
             <span style={{ display: 'inline-block', width: 12, height: 12, background: '#22c55e22', border: '1px solid #22c55e44', borderRadius: 3, marginRight: 4, verticalAlign: 'middle' }} /> Has word
             <span style={{ display: 'inline-block', width: 12, height: 12, background: 'var(--surface-2)', borderRadius: 3, marginLeft: 16, marginRight: 4, verticalAlign: 'middle' }} /> Empty
-            <span style={{ display: 'inline-block', width: 12, height: 12, border: '1px solid var(--orange)', borderRadius: 3, marginLeft: 16, marginRight: 4, verticalAlign: 'middle' }} /> Today
+            <span style={{ display: 'inline-block', width: 12, height: 12, border: '1px solid var(--accent)', borderRadius: 3, marginLeft: 16, marginRight: 4, verticalAlign: 'middle' }} /> Today
           </div>
         </div>
       )}

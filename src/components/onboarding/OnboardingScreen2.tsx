@@ -1,11 +1,14 @@
 import { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Animated } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   isActive: boolean;
 }
 
 export function OnboardingScreen2({ isActive }: Props) {
+  const { t } = useTranslation();
+
   const labelOpacity = useRef(new Animated.Value(0)).current;
   const titleOpacity = useRef(new Animated.Value(0)).current;
   const subtitleOpacity = useRef(new Animated.Value(0)).current;
@@ -16,7 +19,7 @@ export function OnboardingScreen2({ isActive }: Props) {
   const card2TranslateX = useRef(new Animated.Value(60)).current;
 
   const card1Scale = useRef(new Animated.Value(1)).current;
-  const card1Selected = useRef(new Animated.Value(0)).current; // 0=no, 1=yes
+  const card1Selected = useRef(new Animated.Value(0)).current;
   const card2Scale = useRef(new Animated.Value(1)).current;
   const card2Fade = useRef(new Animated.Value(1)).current;
   const badgeScale = useRef(new Animated.Value(0)).current;
@@ -26,7 +29,6 @@ export function OnboardingScreen2({ isActive }: Props) {
 
   useEffect(() => {
     if (isActive) {
-      // Reset
       labelOpacity.setValue(0);
       titleOpacity.setValue(0);
       subtitleOpacity.setValue(0);
@@ -43,33 +45,24 @@ export function OnboardingScreen2({ isActive }: Props) {
       progressWidth.setValue(0);
 
       Animated.sequence([
-        // Header
         Animated.parallel([
           Animated.timing(labelOpacity, { toValue: 1, duration: 400, useNativeDriver: true }),
           Animated.timing(titleOpacity, { toValue: 1, duration: 400, delay: 100, useNativeDriver: true }),
           Animated.timing(subtitleOpacity, { toValue: 1, duration: 400, delay: 200, useNativeDriver: true }),
         ]),
-
-        // Card 1 slides in from left
         Animated.parallel([
           Animated.timing(card1Opacity, { toValue: 1, duration: 400, useNativeDriver: true }),
           Animated.spring(card1TranslateX, { toValue: 0, damping: 15, stiffness: 120, useNativeDriver: true }),
         ]),
-
-        // Card 2 slides in from right
         Animated.delay(200),
         Animated.parallel([
           Animated.timing(card2Opacity, { toValue: 1, duration: 400, useNativeDriver: true }),
           Animated.spring(card2TranslateX, { toValue: 0, damping: 15, stiffness: 120, useNativeDriver: true }),
         ]),
-
-        // Progress bar
         Animated.parallel([
           Animated.timing(progressOpacity, { toValue: 1, duration: 300, useNativeDriver: true }),
           Animated.timing(progressWidth, { toValue: 27, duration: 600, useNativeDriver: false }),
         ]),
-
-        // Vote selection after pause
         Animated.delay(800),
         Animated.parallel([
           Animated.spring(card1Scale, { toValue: 1.02, damping: 10, stiffness: 150, useNativeDriver: true }),
@@ -110,13 +103,13 @@ export function OnboardingScreen2({ isActive }: Props) {
   return (
     <View style={styles.container}>
       <Animated.Text style={[styles.label, { opacity: labelOpacity }]}>
-        THE WORLD VOTES
+        {t('onboarding.screen2_label')}
       </Animated.Text>
       <Animated.Text style={[styles.title, { opacity: titleOpacity }]}>
-        Which is better?
+        {t('onboarding.screen2_title')}
       </Animated.Text>
       <Animated.Text style={[styles.subtitle, { opacity: subtitleOpacity }]}>
-        Tap to vote. The best descriptions rise to the top.
+        {t('onboarding.screen2_subtitle')}
       </Animated.Text>
 
       {/* Card 1 */}
@@ -132,7 +125,7 @@ export function OnboardingScreen2({ isActive }: Props) {
             },
           ]}
         >
-          <Text style={styles.cardText}>&ldquo;Where fish pay no rent&rdquo;</Text>
+          <Text style={styles.cardText}>&ldquo;{t('onboarding.screen2_desc1')}&rdquo;</Text>
         </Animated.View>
         <Animated.View
           style={[
@@ -143,7 +136,7 @@ export function OnboardingScreen2({ isActive }: Props) {
             },
           ]}
         >
-          <Text style={styles.badgeText}>YOUR PICK ✓</Text>
+          <Text style={styles.badgeText}>{t('onboarding.screen2_pick')}</Text>
         </Animated.View>
       </View>
 
@@ -158,12 +151,12 @@ export function OnboardingScreen2({ isActive }: Props) {
           },
         ]}
       >
-        <Text style={styles.cardText}>&ldquo;God&apos;s swimming pool, no lifeguard&rdquo;</Text>
+        <Text style={styles.cardText}>&ldquo;{t('onboarding.screen2_desc2')}&rdquo;</Text>
       </Animated.View>
 
       {/* Progress */}
       <Animated.View style={[styles.progressContainer, { opacity: progressOpacity }]}>
-        <Text style={styles.progressText}>vote 4 of 15</Text>
+        <Text style={styles.progressText}>{t('onboarding.screen2_progress')}</Text>
         <View style={styles.progressTrack}>
           <Animated.View
             style={[

@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert, ScrollView, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { useAuthContext } from '../src/contexts/AuthContext';
+import { useGameContext } from '../src/contexts/GameContext';
 import { useTheme } from '../src/contexts/ThemeContext';
 import { Button } from '../src/components/Button';
 import { ThemeToggle } from '../src/components/ThemeToggle';
@@ -19,12 +21,14 @@ function confirm(title: string, message: string): Promise<boolean> {
   });
 }
 
-const AVATARS = ['🎭', '🦊', '🐙', '🌟', '🎨', '🔥', '💎', '🌙', '🦄', '🍕', '🎯', '🧊', '🪐', '🎸', '🌊', '🦅'];
+const AVATARS = ['\uD83C\uDFAD', '\uD83E\uDD8A', '\uD83D\uDC19', '\uD83C\uDF1F', '\uD83C\uDFA8', '\uD83D\uDD25', '\uD83D\uDC8E', '\uD83C\uDF19', '\uD83E\uDD84', '\uD83C\uDF55', '\uD83C\uDFAF', '\uD83E\uDDCA', '\uD83E\uDE90', '\uD83C\uDFB8', '\uD83C\uDF0A', '\uD83E\uDD85'];
 
 export default function ProfileScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const { colors } = useTheme();
-  const { profile, signOut, updateAvatar, deleteAccount } = useAuthContext();
+  const { profile, signOut, updateAvatar, updateLanguage, deleteAccount, language } = useAuthContext();
+  const { refresh } = useGameContext();
   const [showAvatarPicker, setShowAvatarPicker] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
@@ -38,7 +42,8 @@ export default function ProfileScreen() {
     return null;
   }
 
-  const memberSince = new Date(profile.created_at).toLocaleDateString('en-US', {
+  const locale = language === 'es' ? 'es-ES' : 'en-US';
+  const memberSince = new Date(profile.created_at).toLocaleDateString(locale, {
     month: 'long',
     year: 'numeric',
   });
@@ -48,38 +53,44 @@ export default function ProfileScreen() {
     setShowAvatarPicker(false);
   }
 
+  async function handleLanguageSwitch(lang: string) {
+    await updateLanguage(lang);
+    // Reload word for new language
+    refresh();
+  }
+
   async function handleLogout() {
-    const ok = await confirm('Log Out', 'Are you sure you want to log out?');
+    const ok = await confirm(t('profile.log_out_title'), t('profile.log_out_message'));
     if (ok) {
       signOut();
     }
   }
 
   async function handleDeleteAccount() {
-    const ok = await confirm('Delete Account', 'This will permanently delete your account and all your data. This cannot be undone.');
+    const ok = await confirm(t('profile.delete_title'), t('profile.delete_message'));
     if (!ok) return;
 
-    const really = await confirm('Are you absolutely sure?', 'All your descriptions, votes, and stats will be gone forever.');
+    const really = await confirm(t('profile.delete_confirm_title'), t('profile.delete_confirm_message'));
     if (!really) return;
 
     setDeleting(true);
     const { error } = await deleteAccount();
     if (error) {
       if (Platform.OS === 'web') {
-        window.alert('Failed to delete account. Please try again.');
+        window.alert(t('profile.delete_error'));
       } else {
-        Alert.alert('Error', 'Failed to delete account. Please try again.');
+        Alert.alert('Error', t('profile.delete_error'));
       }
       setDeleting(false);
     }
   }
 
   const stats = [
-    { label: 'Current Streak', value: `${profile.current_streak}`, icon: '🔥' },
-    { label: 'Best Streak', value: `${profile.longest_streak}`, icon: '⭐' },
-    { label: 'Total Plays', value: `${profile.total_plays}`, icon: '🎮' },
-    { label: 'Votes Received', value: `${profile.total_votes_received}`, icon: '👍' },
-    { label: 'Best Rank', value: profile.best_rank ? `#${profile.best_rank}` : '-', icon: '🏆' },
+    { label: t('profile.current_streak'), value: `${profile.current_streak}`, icon: '\uD83D\uDD25' },
+    { label: t('profile.best_streak'), value: `${profile.longest_streak}`, icon: '\u2B50' },
+    { label: t('profile.total_plays'), value: `${profile.total_plays}`, icon: '\uD83C\uDFAE' },
+    { label: t('profile.votes_received'), value: `${profile.total_votes_received}`, icon: '\uD83D\uDC4D' },
+    { label: t('profile.best_rank'), value: profile.best_rank ? `#${profile.best_rank}` : '-', icon: '\uD83C\uDFC6' },
   ];
 
   return (
@@ -96,18 +107,20 @@ export default function ProfileScreen() {
           onPress={() => setShowAvatarPicker(!showAvatarPicker)}
           activeOpacity={0.7}
         >
-          <Text style={styles.avatarText}>{profile.avatar_url || '🎭'}</Text>
+          <Text style={styles.avatarText}>{profile.avatar_url || '\uD83C\uDFAD'}</Text>
         </TouchableOpacity>
-        <Text style={[styles.tapToChange, { color: colors.textMuted }]}>Tap to change</Text>
+        <Text style={[styles.tapToChange, { color: colors.textMuted }]}>{t('profile.tap_to_change')}</Text>
 
         <Text style={[styles.username, { color: colors.text }]}>{profile.username}</Text>
-        <Text style={[styles.memberSince, { color: colors.textMuted }]}>Member since {memberSince}</Text>
+        <Text style={[styles.memberSince, { color: colors.textMuted }]}>
+          {t('profile.member_since', { date: memberSince })}
+        </Text>
       </View>
 
       {/* Avatar Picker */}
       {showAvatarPicker && (
         <View style={[styles.avatarPicker, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-          <Text style={[styles.pickerTitle, { color: colors.textSecondary }]}>CHOOSE AVATAR</Text>
+          <Text style={[styles.pickerTitle, { color: colors.textSecondary }]}>{t('profile.choose_avatar')}</Text>
           <View style={styles.avatarGrid}>
             {AVATARS.map((emoji) => (
               <TouchableOpacity
@@ -126,6 +139,39 @@ export default function ProfileScreen() {
         </View>
       )}
 
+      {/* Language Switcher */}
+      <View style={[styles.langCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+        <Text style={[styles.langCardLabel, { color: colors.textSecondary }]}>{t('profile.language')}</Text>
+        <View style={styles.langRow}>
+          <TouchableOpacity
+            style={[
+              styles.langOption,
+              { borderColor: colors.primary },
+              language === 'en' && { backgroundColor: colors.primary },
+            ]}
+            onPress={() => handleLanguageSwitch('en')}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.langOptionText, language === 'en' ? { color: '#FFF' } : { color: colors.primary }]}>
+              English
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[
+              styles.langOption,
+              { borderColor: colors.primary },
+              language === 'es' && { backgroundColor: colors.primary },
+            ]}
+            onPress={() => handleLanguageSwitch('es')}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.langOptionText, language === 'es' ? { color: '#FFF' } : { color: colors.primary }]}>
+              Espa{'\u00F1'}ol
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
       {/* Stats Grid */}
       <View style={styles.statsGrid}>
         {stats.map((stat) => (
@@ -139,13 +185,13 @@ export default function ProfileScreen() {
 
       {/* Actions */}
       <View style={styles.actions}>
-        <Button title="BACK HOME" onPress={() => router.replace('/')} variant="outline" />
+        <Button title={t('profile.back_home')} onPress={() => router.replace('/')} variant="outline" />
         <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-          <Text style={[styles.logoutText, { color: colors.textSecondary }]}>Log Out</Text>
+          <Text style={[styles.logoutText, { color: colors.textSecondary }]}>{t('profile.log_out')}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.deleteButton} onPress={handleDeleteAccount} disabled={deleting}>
           <Text style={[styles.deleteText, { color: colors.error }]}>
-            {deleting ? 'Deleting...' : 'Delete Account'}
+            {deleting ? t('profile.deleting') : t('profile.delete_account')}
           </Text>
         </TouchableOpacity>
       </View>
@@ -219,6 +265,33 @@ const styles = StyleSheet.create({
   },
   avatarOptionText: {
     fontSize: 28,
+  },
+  langCard: {
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+    padding: spacing.md,
+    marginBottom: spacing.lg,
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  langCardLabel: {
+    fontSize: fontSize.sm,
+    fontWeight: '600',
+    letterSpacing: 1,
+  },
+  langRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  langOption: {
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    borderRadius: borderRadius.full,
+    borderWidth: 2,
+  },
+  langOptionText: {
+    fontSize: fontSize.sm,
+    fontWeight: '700',
   },
   statsGrid: {
     flexDirection: 'row',

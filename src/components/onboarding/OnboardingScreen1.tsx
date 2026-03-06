@@ -1,25 +1,26 @@
 import { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Animated } from 'react-native';
-
-const WORDS = ['Where', 'fish', 'pay', 'no', 'rent'];
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   isActive: boolean;
 }
 
 export function OnboardingScreen1({ isActive }: Props) {
+  const { t } = useTranslation();
+  const words = t('onboarding.screen1_example', { returnObjects: true }) as unknown as string[];
+
   const labelOpacity = useRef(new Animated.Value(0)).current;
   const wordOpacity = useRef(new Animated.Value(0)).current;
   const wordScale = useRef(new Animated.Value(0.9)).current;
   const subtitleOpacity = useRef(new Animated.Value(0)).current;
   const promptOpacity = useRef(new Animated.Value(0)).current;
   const counterOpacity = useRef(new Animated.Value(0)).current;
-  const pillOpacities = useRef(WORDS.map(() => new Animated.Value(0))).current;
-  const pillScales = useRef(WORDS.map(() => new Animated.Value(0))).current;
+  const pillOpacities = useRef(words.map(() => new Animated.Value(0))).current;
+  const pillScales = useRef(words.map(() => new Animated.Value(0))).current;
 
   useEffect(() => {
     if (isActive) {
-      // Reset all values
       labelOpacity.setValue(0);
       wordOpacity.setValue(0);
       wordScale.setValue(0.9);
@@ -29,8 +30,7 @@ export function OnboardingScreen1({ isActive }: Props) {
       pillOpacities.forEach((v) => v.setValue(0));
       pillScales.forEach((v) => v.setValue(0));
 
-      // Build animation sequence
-      const pillAnimations = WORDS.map((_, i) =>
+      const pillAnimations = words.map((_, i) =>
         Animated.parallel([
           Animated.spring(pillScales[i], {
             toValue: 1,
@@ -48,34 +48,22 @@ export function OnboardingScreen1({ isActive }: Props) {
       );
 
       Animated.sequence([
-        // Label fades in immediately
         Animated.timing(labelOpacity, { toValue: 1, duration: 500, useNativeDriver: true }),
-
-        // Small pause then OCEAN
         Animated.delay(100),
         Animated.parallel([
           Animated.timing(wordOpacity, { toValue: 1, duration: 600, useNativeDriver: true }),
           Animated.spring(wordScale, { toValue: 1, damping: 12, stiffness: 100, useNativeDriver: true }),
         ]),
-
-        // Subtitle
         Animated.delay(200),
         Animated.timing(subtitleOpacity, { toValue: 1, duration: 400, useNativeDriver: true }),
-
-        // Prompt
         Animated.delay(400),
         Animated.timing(promptOpacity, { toValue: 1, duration: 400, useNativeDriver: true }),
-
-        // Pills one by one
         Animated.delay(300),
         Animated.stagger(300, pillAnimations),
-
-        // Counter
         Animated.delay(200),
         Animated.timing(counterOpacity, { toValue: 1, duration: 400, useNativeDriver: true }),
       ]).start();
     } else {
-      // Reset
       labelOpacity.setValue(0);
       wordOpacity.setValue(0);
       wordScale.setValue(0.9);
@@ -90,25 +78,25 @@ export function OnboardingScreen1({ isActive }: Props) {
   return (
     <View style={styles.container}>
       <Animated.Text style={[styles.label, { opacity: labelOpacity }]}>
-        TODAY&apos;S WORD
+        {t('onboarding.screen1_label')}
       </Animated.Text>
 
       <Animated.View style={{ opacity: wordOpacity, transform: [{ scale: wordScale }] }}>
-        <Text style={styles.word}>OCEAN</Text>
+        <Text style={styles.word}>{t('onboarding.screen1_example_word')}</Text>
       </Animated.View>
 
       <Animated.Text style={[styles.subtitle, { opacity: subtitleOpacity }]}>
-        nature · day 1
+        {t('onboarding.screen1_subtitle')}
       </Animated.Text>
 
       <Animated.Text style={[styles.prompt, { opacity: promptOpacity }]}>
-        DESCRIBE IT IN EXACTLY 5 WORDS
+        {t('onboarding.screen1_prompt')}
       </Animated.Text>
 
       <View style={styles.pillsContainer}>
-        {WORDS.map((word, i) => (
+        {words.map((word: string, i: number) => (
           <Animated.View
-            key={word}
+            key={`${word}-${i}`}
             style={[
               styles.pill,
               {
@@ -123,7 +111,7 @@ export function OnboardingScreen1({ isActive }: Props) {
       </View>
 
       <Animated.Text style={[styles.counter, { opacity: counterOpacity }]}>
-        5/5 words ✓
+        {t('onboarding.screen1_counter')}
       </Animated.Text>
     </View>
   );

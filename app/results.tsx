@@ -11,6 +11,7 @@ import {
 import { captureRef } from 'react-native-view-shot';
 import * as Sharing from 'expo-sharing';
 import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { useAuthContext } from '../src/contexts/AuthContext';
 import { useGameContext } from '../src/contexts/GameContext';
 import { useTheme } from '../src/contexts/ThemeContext';
@@ -24,6 +25,7 @@ import type { LeaderboardEntry } from '../src/types/database';
 
 export default function ResultsScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const { colors } = useTheme();
   const { profile } = useAuthContext();
   const { todayWord, userDescription, getLeaderboard } = useGameContext();
@@ -62,7 +64,6 @@ export default function ResultsScreen() {
         height: 1200,
       });
       setShowPreview(false);
-      // Small delay so the modal closes before share sheet opens
       await new Promise((r) => setTimeout(r, 300));
       await Sharing.shareAsync(uri, {
         mimeType: 'image/png',
@@ -80,7 +81,7 @@ export default function ResultsScreen() {
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <ThemeToggle />
       {todayWord && <WordDisplay word={todayWord.word} category={todayWord.category} />}
-      <Text style={[styles.title, { color: colors.textMuted }]}>LEADERBOARD</Text>
+      <Text style={[styles.title, { color: colors.textMuted }]}>{t('results.leaderboard')}</Text>
 
       {loading ? (
         <View style={[styles.center, { backgroundColor: colors.background }]}>
@@ -88,8 +89,8 @@ export default function ResultsScreen() {
         </View>
       ) : leaderboard.length === 0 ? (
         <View style={[styles.center, { backgroundColor: colors.background }]}>
-          <Text style={[styles.empty, { color: colors.text }]}>No results yet.</Text>
-          <Text style={[styles.emptySub, { color: colors.textSecondary }]}>Vote more to see rankings!</Text>
+          <Text style={[styles.empty, { color: colors.text }]}>{t('results.no_results')}</Text>
+          <Text style={[styles.emptySub, { color: colors.textSecondary }]}>{t('results.no_results_sub')}</Text>
         </View>
       ) : (
         <FlatList
@@ -110,16 +111,16 @@ export default function ResultsScreen() {
       )}
 
       <View style={styles.actions}>
-        <Button title="SHARE RESULTS" onPress={handleSharePress} variant="primary" />
+        <Button title={t('results.share_results')} onPress={handleSharePress} variant="primary" />
         <View style={{ height: spacing.sm }} />
-        <Button title="BACK HOME" onPress={() => router.replace('/')} variant="outline" />
+        <Button title={t('results.back_home')} onPress={() => router.replace('/')} variant="outline" />
       </View>
 
       {/* Share preview modal */}
       <Modal visible={showPreview} transparent animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
-            <Text style={[styles.modalTitle, { color: colors.text }]}>Share Preview</Text>
+            <Text style={[styles.modalTitle, { color: colors.text }]}>{t('results.share_preview')}</Text>
 
             <View style={styles.cardWrapper}>
               <ShareCard
@@ -142,7 +143,7 @@ export default function ResultsScreen() {
                 {sharing ? (
                   <ActivityIndicator color="#FFFFFF" size="small" />
                 ) : (
-                  <Text style={styles.modalBtnText}>SHARE</Text>
+                  <Text style={styles.modalBtnText}>{t('results.share_btn')}</Text>
                 )}
               </TouchableOpacity>
 
@@ -151,7 +152,7 @@ export default function ResultsScreen() {
                 onPress={() => setShowPreview(false)}
                 activeOpacity={0.8}
               >
-                <Text style={[styles.cancelBtnText, { color: colors.textSecondary }]}>CANCEL</Text>
+                <Text style={[styles.cancelBtnText, { color: colors.textSecondary }]}>{t('results.cancel')}</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -192,7 +193,6 @@ const styles = StyleSheet.create({
   actions: {
     paddingBottom: spacing.xl,
   },
-  // Modal styles
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.7)',
@@ -216,7 +216,6 @@ const styles = StyleSheet.create({
   cardWrapper: {
     borderRadius: 24,
     overflow: 'hidden',
-    // Subtle shadow
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.3,

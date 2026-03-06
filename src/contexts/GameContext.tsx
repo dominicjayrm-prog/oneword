@@ -32,7 +32,7 @@ const GameContext = createContext<GameContextType>({
 });
 
 export function GameProvider({ children }: { children: ReactNode }) {
-  const { session } = useAuthContext();
+  const { session, language } = useAuthContext();
   const userId = session?.user?.id;
 
   const [todayWord, setTodayWord] = useState<DailyWord | null>(null);
@@ -43,7 +43,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const fetchTodayWord = useCallback(async () => {
     setLoading(true);
     try {
-      const { data } = await withTimeout(supabase.rpc('get_today_word'));
+      const { data } = await withTimeout(supabase.rpc('get_today_word', { p_language: language }));
       if (data && data.length > 0) {
         setTodayWord(data[0]);
         if (userId) {
@@ -58,15 +58,22 @@ export function GameProvider({ children }: { children: ReactNode }) {
           if (desc) {
             setHasSubmitted(true);
             setUserDescription(desc.description);
+          } else {
+            setHasSubmitted(false);
+            setUserDescription(null);
           }
         }
+      } else {
+        setTodayWord(null);
+        setHasSubmitted(false);
+        setUserDescription(null);
       }
     } catch (err) {
       console.error('Failed to fetch today word:', err);
     } finally {
       setLoading(false);
     }
-  }, [userId]);
+  }, [userId, language]);
 
   useEffect(() => {
     fetchTodayWord();

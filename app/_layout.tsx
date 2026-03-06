@@ -21,6 +21,7 @@ import { ThemeProvider, useTheme } from '../src/contexts/ThemeContext';
 import { AuthProvider } from '../src/contexts/AuthContext';
 import { GameProvider } from '../src/contexts/GameContext';
 import { MobileContainer } from '../src/components/MobileContainer';
+import { ErrorBoundary } from '../src/components/ErrorBoundary';
 
 function InnerLayout() {
   const { colors, mode } = useTheme();
@@ -90,13 +91,15 @@ export default function RootLayout() {
   }
 
   return (
-    <ThemeProvider>
-      <AuthProvider>
-        <GameProvider>
-          <InnerLayout />
-        </GameProvider>
-      </AuthProvider>
-    </ThemeProvider>
+    <ErrorBoundary>
+      <ThemeProvider>
+        <AuthProvider>
+          <GameProvider>
+            <InnerLayout />
+          </GameProvider>
+        </AuthProvider>
+      </ThemeProvider>
+    </ErrorBoundary>
   );
 }
 

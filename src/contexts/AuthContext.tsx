@@ -52,13 +52,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   async function fetchProfile(userId: string) {
-    const { data } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .single();
-    setProfile(data);
-    setLoading(false);
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+      if (error) {
+        console.error('Failed to fetch profile:', error.message);
+      }
+      setProfile(data);
+    } catch (err) {
+      console.error('Profile fetch error:', err);
+      setProfile(null);
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function refreshProfile() {

@@ -156,6 +156,59 @@ export default {
     friends: 'Friends',
   },
 
+  // Errors
+  errors: {
+    generic: 'Something went wrong. Try again.',
+    network: 'No internet connection',
+    network_retry: "Couldn't connect. Check your internet.",
+    load_word: "Couldn't load today's word",
+    load_results: "Couldn't load results",
+    load_friends: "Couldn't load friends",
+    submit_failed: "Couldn't submit. Try again.",
+    vote_failed: "Vote couldn't be saved. Retrying...",
+    friend_request_failed: "Couldn't send friend request",
+    search_failed: 'Search not available right now',
+    try_again: 'Try Again',
+    delete_confirm: 'Are you sure? This will permanently delete your account and all your data. This cannot be undone.',
+    delete_type_username: 'Type your username to confirm',
+    logout_confirm: 'Are you sure you want to log out?',
+    max_friends: "You've reached the friend limit (50)",
+    username_taken: 'This username is already taken',
+    invalid_email: 'Enter a valid email address',
+    password_short: 'Password must be at least 6 characters',
+    wrong_credentials: 'Incorrect email or password',
+  },
+
+  // Loading
+  loading: {
+    word: "Loading today's word...",
+    results: 'Loading results...',
+    submitting: 'Submitting...',
+    generic: 'Loading...',
+  },
+
+  // Empty states
+  empty: {
+    no_word: 'No word today',
+    no_word_sub: 'Check back tomorrow!',
+    no_results: "Results aren't ready yet",
+    no_results_sub: 'Keep voting to help rank the descriptions!',
+    no_descriptions: 'No descriptions yet',
+    no_descriptions_sub: "Be the first to play today's word!",
+    no_friends_played: "None of your friends have played yet today",
+    vote_complete: 'You voted on {{count}} pairs today!',
+    no_pairs: 'Not enough descriptions yet. Check back later.',
+  },
+
+  // Success messages
+  success: {
+    vote_saved: 'Vote saved!',
+    friend_sent: 'Friend request sent!',
+    friend_accepted: 'Friend added!',
+    description_submitted: 'Locked in!',
+    account_deleted: 'Account deleted',
+  },
+
   // Language names
   lang: {
     en: 'English',

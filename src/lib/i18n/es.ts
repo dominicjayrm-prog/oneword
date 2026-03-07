@@ -156,6 +156,59 @@ export default {
     friends: 'Amigos',
   },
 
+  // Errors
+  errors: {
+    generic: 'Algo sali\u00F3 mal. Int\u00E9ntalo de nuevo.',
+    network: 'Sin conexi\u00F3n a internet',
+    network_retry: 'No se pudo conectar. Revisa tu internet.',
+    load_word: 'No se pudo cargar la palabra de hoy',
+    load_results: 'No se pudieron cargar los resultados',
+    load_friends: 'No se pudieron cargar los amigos',
+    submit_failed: 'No se pudo enviar. Int\u00E9ntalo de nuevo.',
+    vote_failed: 'No se pudo guardar el voto. Reintentando...',
+    friend_request_failed: 'No se pudo enviar la solicitud',
+    search_failed: 'B\u00FAsqueda no disponible ahora',
+    try_again: 'Reintentar',
+    delete_confirm: '\u00BFEst\u00E1s seguro? Esto eliminar\u00E1 permanentemente tu cuenta y todos tus datos. No se puede deshacer.',
+    delete_type_username: 'Escribe tu nombre de usuario para confirmar',
+    logout_confirm: '\u00BFSeguro que quieres cerrar sesi\u00F3n?',
+    max_friends: 'Has alcanzado el l\u00EDmite de amigos (50)',
+    username_taken: 'Este nombre de usuario ya est\u00E1 en uso',
+    invalid_email: 'Introduce un correo v\u00E1lido',
+    password_short: 'La contrase\u00F1a debe tener al menos 6 caracteres',
+    wrong_credentials: 'Correo o contrase\u00F1a incorrectos',
+  },
+
+  // Loading
+  loading: {
+    word: 'Cargando la palabra de hoy...',
+    results: 'Cargando resultados...',
+    submitting: 'Enviando...',
+    generic: 'Cargando...',
+  },
+
+  // Empty states
+  empty: {
+    no_word: 'No hay palabra hoy',
+    no_word_sub: '\u00A1Vuelve ma\u00F1ana!',
+    no_results: 'Los resultados a\u00FAn no est\u00E1n listos',
+    no_results_sub: '\u00A1Sigue votando para ayudar a clasificar!',
+    no_descriptions: 'A\u00FAn no hay descripciones',
+    no_descriptions_sub: '\u00A1S\u00E9 el primero en jugar la palabra de hoy!',
+    no_friends_played: 'Ninguno de tus amigos ha jugado hoy',
+    vote_complete: '\u00A1Votaste en {{count}} pares hoy!',
+    no_pairs: 'A\u00FAn no hay suficientes descripciones. Vuelve m\u00E1s tarde.',
+  },
+
+  // Success messages
+  success: {
+    vote_saved: '\u00A1Voto guardado!',
+    friend_sent: '\u00A1Solicitud enviada!',
+    friend_accepted: '\u00A1Amigo a\u00F1adido!',
+    description_submitted: '\u00A1Registrado!',
+    account_deleted: 'Cuenta eliminada',
+  },
+
   // Language names
   lang: {
     en: 'English',

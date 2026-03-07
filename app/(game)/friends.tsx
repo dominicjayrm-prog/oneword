@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, RefreshControl } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useAuthContext } from '../../src/contexts/AuthContext';
 import { useGameContext } from '../../src/contexts/GameContext';
@@ -10,6 +10,9 @@ import { FriendRequests } from '../../src/components/FriendRequests';
 import { FriendsToday } from '../../src/components/FriendsToday';
 import { FriendsList } from '../../src/components/FriendsList';
 import { AddFriendModal } from '../../src/components/AddFriendModal';
+import { LoadingSpinner } from '../../src/components/LoadingSpinner';
+import { ErrorState } from '../../src/components/ErrorState';
+import { useToast } from '../../src/components/Toast';
 import {
   getFriends,
   getPendingRequests,
@@ -29,27 +32,35 @@ export default function FriendsScreen() {
   const { session } = useAuthContext();
   const { todayWord, hasSubmitted } = useGameContext();
 
+  const { showToast } = useToast();
   const userId = session?.user?.id;
 
   const [friends, setFriends] = useState<Friend[]>([]);
   const [requests, setRequests] = useState<PendingRequest[]>([]);
   const [descriptions, setDescriptions] = useState<FriendDescription[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
 
   const loadData = useCallback(async () => {
     if (!userId) return;
     setLoading(true);
-    const [friendsData, requestsData] = await Promise.all([
-      getFriends(userId),
-      getPendingRequests(userId),
-    ]);
-    setFriends(friendsData);
-    setRequests(requestsData);
+    setLoadError(false);
+    try {
+      const [friendsData, requestsData] = await Promise.all([
+        getFriends(userId),
+        getPendingRequests(userId),
+      ]);
+      setFriends(friendsData);
+      setRequests(requestsData);
 
-    if (todayWord?.id && friendsData.length > 0) {
-      const descs = await getFriendsDescriptions(userId, todayWord.id);
-      setDescriptions(descs);
+      if (todayWord?.id && friendsData.length > 0) {
+        const descs = await getFriendsDescriptions(userId, todayWord.id);
+        setDescriptions(descs);
+      }
+    } catch {
+      setLoadError(true);
     }
     setLoading(false);
   }, [userId, todayWord?.id]);
@@ -58,25 +69,63 @@ export default function FriendsScreen() {
     loadData();
   }, [loadData]);
 
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await loadData();
+    setRefreshing(false);
+  }, [loadData]);
+
   async function handleAccept(friendshipId: string) {
-    await acceptFriendRequest(friendshipId);
-    loadData();
+    // Optimistic: remove from requests immediately
+    setRequests((prev) => prev.filter((r) => r.friendship_id !== friendshipId));
+    try {
+      await acceptFriendRequest(friendshipId);
+      showToast(t('success.friend_accepted'), 'success');
+      loadData();
+    } catch {
+      showToast(t('errors.generic'), 'error');
+      loadData(); // reload to restore state
+    }
   }
 
   async function handleDecline(friendshipId: string) {
-    await declineFriendRequest(friendshipId);
+    // Optimistic: remove from requests immediately
     setRequests((prev) => prev.filter((r) => r.friendship_id !== friendshipId));
+    try {
+      await declineFriendRequest(friendshipId);
+    } catch {
+      showToast(t('errors.generic'), 'error');
+      loadData();
+    }
   }
 
   async function handleRemove(friendshipId: string) {
-    await removeFriend(friendshipId);
+    // Optimistic: remove from list immediately
     setFriends((prev) => prev.filter((f) => f.friendship_id !== friendshipId));
+    try {
+      await removeFriend(friendshipId);
+    } catch {
+      showToast(t('errors.generic'), 'error');
+      loadData();
+    }
   }
 
   if (loading) {
     return (
       <View style={[styles.center, { backgroundColor: colors.background }]}>
-        <ActivityIndicator size="large" color={colors.primary} />
+        <LoadingSpinner message={t('loading.generic')} />
+      </View>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <ThemeToggle />
+        <ErrorState
+          title={t('errors.load_friends')}
+          onRetry={loadData}
+        />
       </View>
     );
   }
@@ -120,6 +169,14 @@ export default function FriendsScreen() {
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            tintColor={colors.primary}
+            colors={[colors.primary]}
+          />
+        }
       >
         {/* Section 1: Friend Requests */}
         <FriendRequests
@@ -129,12 +186,18 @@ export default function FriendsScreen() {
         />
 
         {/* Section 2: Today's word — friends' descriptions */}
-        {todayWord && descriptions.length > 0 && (
+        {todayWord && descriptions.length > 0 ? (
           <FriendsToday
             descriptions={descriptions}
             wordText={todayWord.word}
             userHasPlayed={hasSubmitted}
           />
+        ) : todayWord && friends.length > 0 && (
+          <View style={styles.noFriendsPlayed}>
+            <Text style={[styles.noFriendsPlayedText, { color: colors.textMuted }]}>
+              {t('empty.no_friends_played')}
+            </Text>
+          </View>
         )}
 
         {/* Section 3: All friends */}
@@ -195,5 +258,14 @@ const styles = StyleSheet.create({
   emptyBtn: {
     width: '100%',
     maxWidth: 280,
+  },
+  noFriendsPlayed: {
+    paddingVertical: spacing.lg,
+    alignItems: 'center',
+  },
+  noFriendsPlayedText: {
+    fontSize: fontSize.sm,
+    textAlign: 'center',
+    fontStyle: 'italic',
   },
 });

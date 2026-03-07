@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, ScrollView, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, ScrollView, Platform, TextInput } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useAuthContext } from '../src/contexts/AuthContext';
 import { useTheme } from '../src/contexts/ThemeContext';
 import { Button } from '../src/components/Button';
 import { ThemeToggle } from '../src/components/ThemeToggle';
+import { LoadingSpinner } from '../src/components/LoadingSpinner';
+import { useToast } from '../src/components/Toast';
 import { fontSize, spacing, borderRadius } from '../src/constants/theme';
 
 function confirm(title: string, message: string): Promise<boolean> {
@@ -27,8 +29,11 @@ export default function ProfileScreen() {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const { profile, signOut, updateAvatar, updateLanguage, deleteAccount, language } = useAuthContext();
+  const { showToast } = useToast();
   const [showAvatarPicker, setShowAvatarPicker] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [deleteUsername, setDeleteUsername] = useState('');
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   useEffect(() => {
     if (!profile) {
@@ -37,7 +42,11 @@ export default function ProfileScreen() {
   }, [profile]);
 
   if (!profile) {
-    return null;
+    return (
+      <View style={[styles.scrollView, { backgroundColor: colors.background }]}>
+        <LoadingSpinner />
+      </View>
+    );
   }
 
   const locale = language === 'es' ? 'es-ES' : 'en-US';
@@ -47,12 +56,30 @@ export default function ProfileScreen() {
   });
 
   async function handleAvatarSelect(emoji: string) {
-    await updateAvatar(emoji);
-    setShowAvatarPicker(false);
+    try {
+      const { error } = await updateAvatar(emoji);
+      if (error) {
+        showToast(t('errors.generic'), 'error');
+        return;
+      }
+      setShowAvatarPicker(false);
+    } catch {
+      showToast(t('errors.generic'), 'error');
+    }
   }
 
   async function handleLanguageSwitch(lang: string) {
-    await updateLanguage(lang);
+    const prevLang = language;
+    try {
+      const { error } = await updateLanguage(lang);
+      if (error) {
+        showToast(t('errors.generic'), 'error');
+        updateLanguage(prevLang);
+      }
+    } catch {
+      showToast(t('errors.generic'), 'error');
+      updateLanguage(prevLang);
+    }
   }
 
   async function handleLogout() {
@@ -63,20 +90,19 @@ export default function ProfileScreen() {
   }
 
   async function handleDeleteAccount() {
-    const ok = await confirm(t('profile.delete_title'), t('profile.delete_message'));
+    const ok = await confirm(t('profile.delete_title'), t('errors.delete_confirm'));
     if (!ok) return;
 
-    const really = await confirm(t('profile.delete_confirm_title'), t('profile.delete_confirm_message'));
-    if (!really) return;
+    setShowDeleteConfirm(true);
+  }
 
+  async function confirmDelete() {
+    if (!profile || deleteUsername !== profile.username) return;
+    setShowDeleteConfirm(false);
     setDeleting(true);
     const { error } = await deleteAccount();
     if (error) {
-      if (Platform.OS === 'web') {
-        window.alert(t('profile.delete_error'));
-      } else {
-        Alert.alert('Error', t('profile.delete_error'));
-      }
+      showToast(t('profile.delete_error'), 'error');
       setDeleting(false);
     }
   }
@@ -158,6 +184,35 @@ export default function ProfileScreen() {
           </Text>
         </TouchableOpacity>
       </View>
+
+      {/* Delete Confirmation */}
+      {showDeleteConfirm && (
+        <View style={[styles.deleteConfirmBox, { backgroundColor: colors.surface, borderColor: colors.error + '40' }]}>
+          <Text style={[styles.deleteConfirmTitle, { color: colors.error }]}>
+            {t('errors.delete_type_username')}
+          </Text>
+          <TextInput
+            style={[styles.deleteInput, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
+            value={deleteUsername}
+            onChangeText={setDeleteUsername}
+            placeholder={profile.username}
+            placeholderTextColor={colors.textMuted}
+            autoCapitalize="none"
+          />
+          <View style={styles.deleteConfirmActions}>
+            <TouchableOpacity
+              style={[styles.deleteConfirmBtn, { backgroundColor: colors.error, opacity: deleteUsername === profile.username ? 1 : 0.4 }]}
+              onPress={confirmDelete}
+              disabled={deleteUsername !== profile.username}
+            >
+              <Text style={styles.deleteConfirmBtnText}>{t('profile.delete_account')}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => { setShowDeleteConfirm(false); setDeleteUsername(''); }}>
+              <Text style={[styles.cancelText, { color: colors.textMuted }]}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
 
       {/* Language – small, at the very bottom */}
       <View style={styles.langFooter}>
@@ -313,5 +368,45 @@ const styles = StyleSheet.create({
   deleteText: {
     fontSize: fontSize.sm,
     fontWeight: '500',
+  },
+  deleteConfirmBox: {
+    borderRadius: borderRadius.lg,
+    borderWidth: 1,
+    padding: spacing.lg,
+    marginTop: spacing.lg,
+    gap: spacing.md,
+  },
+  deleteConfirmTitle: {
+    fontSize: fontSize.sm,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  deleteInput: {
+    borderRadius: borderRadius.md,
+    padding: spacing.md,
+    fontSize: fontSize.md,
+    borderWidth: 1,
+    textAlign: 'center',
+  },
+  deleteConfirmActions: {
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  deleteConfirmBtn: {
+    paddingVertical: spacing.md - 2,
+    paddingHorizontal: spacing.xl,
+    borderRadius: borderRadius.md,
+    width: '100%',
+    alignItems: 'center',
+  },
+  deleteConfirmBtnText: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+    fontSize: fontSize.sm,
+  },
+  cancelText: {
+    fontSize: fontSize.sm,
+    fontWeight: '600',
+    paddingVertical: spacing.sm,
   },
 });

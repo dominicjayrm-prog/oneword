@@ -3,12 +3,10 @@ import {
   View,
   Text,
   StyleSheet,
-  ActivityIndicator,
   TextInput,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  Alert,
   TouchableOpacity,
 } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -20,6 +18,10 @@ import { WordDisplay } from '../../src/components/WordDisplay';
 import { WordCounter } from '../../src/components/WordCounter';
 import { Button } from '../../src/components/Button';
 import { ThemeToggle } from '../../src/components/ThemeToggle';
+import { LoadingSpinner } from '../../src/components/LoadingSpinner';
+import { EmptyState } from '../../src/components/EmptyState';
+import { ErrorState } from '../../src/components/ErrorState';
+import { useToast } from '../../src/components/Toast';
 import { fontSize, spacing, borderRadius } from '../../src/constants/theme';
 
 export default function HomeScreen() {
@@ -27,7 +29,9 @@ export default function HomeScreen() {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const { session, profile, loading: authLoading, signIn, signUp, language, updateLanguage } = useAuthContext();
-  const { todayWord, hasSubmitted, userDescription, loading: gameLoading, submitDescription } = useGameContext();
+  const { todayWord, hasSubmitted, userDescription, loading: gameLoading, loadError: gameError, submitDescription, refresh } = useGameContext();
+
+  const { showToast } = useToast();
 
   const [input, setInput] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -37,6 +41,7 @@ export default function HomeScreen() {
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
   const [authError, setAuthError] = useState('');
+  const [authLoading2, setAuthLoading2] = useState(false);
   const [selectedLang, setSelectedLang] = useState(language);
 
   const wordCount = input.trim().split(/\s+/).filter(Boolean).length;
@@ -45,29 +50,54 @@ export default function HomeScreen() {
   const loading = authLoading || gameLoading;
 
   async function handleSubmit() {
-    if (!isExactlyFive) return;
+    if (!isExactlyFive || submitting) return;
     setSubmitting(true);
-    const { error } = await submitDescription(input);
-    if (error) {
-      if (Platform.OS === 'web') {
-        window.alert(error.message);
-      } else {
-        Alert.alert('Error', error.message);
+    try {
+      const { error } = await submitDescription(input);
+      if (error) {
+        showToast(error.message, 'error');
+        setSubmitting(false);
       }
+    } catch {
+      showToast(t('errors.submit_failed'), 'error');
+      setSubmitting(false);
     }
-    setSubmitting(false);
+  }
+
+  function validateAuth(): string | null {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) return t('errors.invalid_email');
+    if (password.length < 6) return t('errors.password_short');
+    if (authMode === 'signup') {
+      if (username.length < 3 || username.length > 20) return t('errors.username_taken');
+      if (!/^[a-zA-Z0-9_]+$/.test(username)) return t('errors.username_taken');
+    }
+    return null;
   }
 
   async function handleAuth() {
     setAuthError('');
-    if (authMode === 'signup') {
-      const { error } = await signUp(email, password, username, selectedLang);
-      if (error) setAuthError(error.message);
-      else setShowAuth(false);
-    } else {
-      const { error } = await signIn(email, password);
-      if (error) setAuthError(error.message);
-      else setShowAuth(false);
+    const validationError = validateAuth();
+    if (validationError) {
+      setAuthError(validationError);
+      return;
+    }
+    if (authLoading2) return;
+    setAuthLoading2(true);
+    try {
+      if (authMode === 'signup') {
+        const { error } = await signUp(email, password, username, selectedLang);
+        if (error) setAuthError(error.message);
+        else setShowAuth(false);
+      } else {
+        const { error } = await signIn(email, password);
+        if (error) setAuthError(error.message);
+        else setShowAuth(false);
+      }
+    } catch {
+      setAuthError(t('errors.network_retry'));
+    } finally {
+      setAuthLoading2(false);
     }
   }
 
@@ -79,7 +109,20 @@ export default function HomeScreen() {
   if (loading) {
     return (
       <View style={[styles.center, { backgroundColor: colors.background }]}>
-        <ActivityIndicator size="large" color={colors.primary} />
+        <LoadingSpinner message={t('loading.word')} />
+      </View>
+    );
+  }
+
+  if (gameError && session) {
+    return (
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <ThemeToggle />
+        <ErrorState
+          title={t('errors.load_word')}
+          message={t('errors.network_retry')}
+          onRetry={refresh}
+        />
       </View>
     );
   }
@@ -167,6 +210,8 @@ export default function HomeScreen() {
             <Button
               title={authMode === 'signin' ? t('auth.login_button') : t('auth.signup_button')}
               onPress={handleAuth}
+              loading={authLoading2}
+              disabled={!email || !password || (authMode === 'signup' && !username)}
             />
             <Button
               title={authMode === 'signin' ? t('auth.login_link') : t('auth.signup_link')}
@@ -183,8 +228,11 @@ export default function HomeScreen() {
     return (
       <View style={[styles.center, { backgroundColor: colors.background }]}>
         <ThemeToggle />
-        <Text style={[styles.noWord, { color: colors.text }]}>{t('game.no_word')}</Text>
-        <Text style={[styles.noWordSub, { color: colors.textSecondary }]}>{t('game.no_word_sub')}</Text>
+        <EmptyState
+          emoji={'\uD83D\uDCC5'}
+          title={t('empty.no_word')}
+          subtitle={t('empty.no_word_sub')}
+        />
       </View>
     );
   }
@@ -254,9 +302,9 @@ export default function HomeScreen() {
         />
         <WordCounter count={wordCount} max={5} />
         <Button
-          title={t('game.submit')}
+          title={submitting ? t('loading.submitting') : t('game.submit')}
           onPress={handleSubmit}
-          disabled={!isExactlyFive}
+          disabled={!isExactlyFive || submitting}
           loading={submitting}
         />
       </View>

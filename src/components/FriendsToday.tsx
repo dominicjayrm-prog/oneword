@@ -58,11 +58,6 @@ export function FriendsToday({ descriptions, wordText, userHasPlayed }: Props) {
               <Text style={[styles.description, { color: colors.text }]} numberOfLines={2}>
                 &ldquo;{fd.description_text}&rdquo;
               </Text>
-              {fd.elo_rating != null && (
-                <Text style={[styles.elo, { color: colors.textMuted }]}>
-                  {Math.round(fd.elo_rating)}
-                </Text>
-              )}
             </View>
           ) : (
             <Text style={[styles.notPlayed, { color: colors.textMuted }]}>
@@ -145,11 +140,6 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     flex: 1,
     fontStyle: 'italic',
-  },
-  elo: {
-    fontSize: fontSize.xs,
-    fontFamily: 'DMMono_500Medium',
-    marginLeft: spacing.sm,
   },
   lockedDesc: {
     fontSize: fontSize.sm,

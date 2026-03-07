@@ -6,17 +6,19 @@ interface VoteCardProps {
   description: string;
   onPress: () => void;
   onReport: () => void;
+  disabled?: boolean;
 }
 
-export function VoteCard({ description, onPress, onReport }: VoteCardProps) {
+export function VoteCard({ description, onPress, onReport, disabled }: VoteCardProps) {
   const { colors } = useTheme();
 
   return (
-    <View>
+    <View style={disabled ? { opacity: 0.6 } : undefined}>
       <TouchableOpacity
         style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}
         onPress={onPress}
         activeOpacity={0.85}
+        disabled={disabled}
       >
         <Text style={[styles.text, { color: colors.text }]}>{description}</Text>
       </TouchableOpacity>

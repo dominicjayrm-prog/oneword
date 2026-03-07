@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuthContext } from '../contexts/AuthContext';
 import { useGameContext } from '../contexts/GameContext';
 import { getFriendsDescriptions, type FriendDescription } from '../lib/friends';
 import { LeaderboardRow } from './LeaderboardRow';
-import { fontSize, spacing, borderRadius } from '../constants/theme';
+import { LoadingSpinner } from './LoadingSpinner';
+import { fontSize, spacing } from '../constants/theme';
 
 export function FriendsLeaderboard() {
   const { t } = useTranslation();
@@ -32,7 +33,7 @@ export function FriendsLeaderboard() {
   if (loading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator color={colors.primary} />
+        <LoadingSpinner />
       </View>
     );
   }

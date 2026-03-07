@@ -217,8 +217,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.lg,
     paddingBottom: spacing.xxl,
-    maxHeight: '80%',
-    minHeight: '50%',
+    maxHeight: '50%',
   },
   sheetHeader: {
     flexDirection: 'row',

@@ -74,7 +74,7 @@ export default function GameLayout() {
         name="index"
         options={{
           title: 'Today',
-          tabBarIcon: () => <TabIcon emoji={'\uD83C\uDFE0'} />,
+          tabBarIcon: () => <TabIcon emoji={'\uD83C\uDF0D'} />,
         }}
       />
       <Tabs.Screen

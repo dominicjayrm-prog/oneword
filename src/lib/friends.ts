@@ -111,11 +111,33 @@ export async function getFriendsDescriptions(userId: string, wordId: string): Pr
     p_user_id: userId,
     p_word_id: wordId,
   });
-  if (error) {
-    // Silently fail — friends descriptions are a nice-to-have
-    return [];
-  }
-  return data ?? [];
+  if (!error && data && data.length > 0) return data;
+
+  // Fallback: direct query if RPC doesn't exist or returns empty
+  const friends = await getFriends(userId);
+  if (friends.length === 0) return [];
+
+  const friendIds = friends.map((f) => f.friend_id);
+
+  const { data: descs } = await supabase
+    .from('descriptions')
+    .select('user_id, description, vote_count, elo_rating')
+    .eq('word_id', wordId)
+    .in('user_id', friendIds);
+
+  return friends.map((f) => {
+    const desc = descs?.find((d) => d.user_id === f.friend_id);
+    return {
+      friend_id: f.friend_id,
+      friend_username: f.friend_username,
+      friend_avatar_url: f.friend_avatar_url,
+      description_text: desc?.description ?? null,
+      vote_count: desc?.vote_count ?? null,
+      elo_rating: desc?.elo_rating ?? null,
+      friend_streak: f.friend_current_streak,
+      has_played: !!desc,
+    };
+  });
 }
 
 export async function searchUsers(query: string, currentUserId: string): Promise<UserSearchResult[]> {

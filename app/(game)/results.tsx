@@ -12,16 +12,17 @@ import { captureRef } from 'react-native-view-shot';
 import * as Sharing from 'expo-sharing';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { useAuthContext } from '../src/contexts/AuthContext';
-import { useGameContext } from '../src/contexts/GameContext';
-import { useTheme } from '../src/contexts/ThemeContext';
-import { WordDisplay } from '../src/components/WordDisplay';
-import { LeaderboardRow } from '../src/components/LeaderboardRow';
-import { ShareCard } from '../src/components/ShareCard';
-import { Button } from '../src/components/Button';
-import { ThemeToggle } from '../src/components/ThemeToggle';
-import { fontSize, spacing, borderRadius } from '../src/constants/theme';
-import type { LeaderboardEntry } from '../src/types/database';
+import { useAuthContext } from '../../src/contexts/AuthContext';
+import { useGameContext } from '../../src/contexts/GameContext';
+import { useTheme } from '../../src/contexts/ThemeContext';
+import { WordDisplay } from '../../src/components/WordDisplay';
+import { LeaderboardRow } from '../../src/components/LeaderboardRow';
+import { ShareCard } from '../../src/components/ShareCard';
+import { Button } from '../../src/components/Button';
+import { ThemeToggle } from '../../src/components/ThemeToggle';
+import { FriendsLeaderboard } from '../../src/components/FriendsLeaderboard';
+import { fontSize, spacing, borderRadius } from '../../src/constants/theme';
+import type { LeaderboardEntry } from '../../src/types/database';
 
 export default function ResultsScreen() {
   const router = useRouter();
@@ -34,6 +35,7 @@ export default function ResultsScreen() {
   const [loading, setLoading] = useState(true);
   const [showPreview, setShowPreview] = useState(false);
   const [sharing, setSharing] = useState(false);
+  const [tab, setTab] = useState<'global' | 'friends'>('global');
 
   const shareCardRef = useRef<View>(null);
 
@@ -81,9 +83,32 @@ export default function ResultsScreen() {
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <ThemeToggle />
       {todayWord && <WordDisplay word={todayWord.word} category={todayWord.category} />}
-      <Text style={[styles.title, { color: colors.textMuted }]}>{t('results.leaderboard')}</Text>
 
-      {loading ? (
+      {/* Global / Friends toggle */}
+      <View style={[styles.segmentedControl, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+        <TouchableOpacity
+          style={[styles.segment, tab === 'global' && { backgroundColor: colors.primary }]}
+          onPress={() => setTab('global')}
+          activeOpacity={0.7}
+        >
+          <Text style={[styles.segmentText, { color: tab === 'global' ? '#FFFFFF' : colors.textMuted }]}>
+            {'\uD83C\uDF0D'} {t('results_tabs.global')}
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.segment, tab === 'friends' && { backgroundColor: colors.primary }]}
+          onPress={() => setTab('friends')}
+          activeOpacity={0.7}
+        >
+          <Text style={[styles.segmentText, { color: tab === 'friends' ? '#FFFFFF' : colors.textMuted }]}>
+            {'\uD83D\uDC65'} {t('results_tabs.friends')}
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      {tab === 'friends' ? (
+        <FriendsLeaderboard />
+      ) : loading ? (
         <View style={[styles.center, { backgroundColor: colors.background }]}>
           <ActivityIndicator size="large" color={colors.primary} />
         </View>
@@ -111,9 +136,12 @@ export default function ResultsScreen() {
       )}
 
       <View style={styles.actions}>
-        <Button title={t('results.share_results')} onPress={handleSharePress} variant="primary" />
-        <View style={{ height: spacing.sm }} />
-        <Button title={t('results.back_home')} onPress={() => router.replace('/')} variant="outline" />
+        {tab !== 'friends' && (
+          <>
+            <Button title={t('results.share_results')} onPress={handleSharePress} variant="primary" />
+            <View style={{ height: spacing.sm }} />
+          </>
+        )}
       </View>
 
       {/* Share preview modal */}
@@ -173,11 +201,22 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  title: {
-    fontSize: fontSize.xs,
-    letterSpacing: 4,
-    textAlign: 'center',
+  segmentedControl: {
+    flexDirection: 'row',
+    borderRadius: borderRadius.full,
+    borderWidth: 1,
+    padding: 3,
     marginBottom: spacing.lg,
+  },
+  segment: {
+    flex: 1,
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.full,
+    alignItems: 'center',
+  },
+  segmentText: {
+    fontSize: fontSize.sm,
+    fontWeight: '700',
   },
   list: {
     paddingBottom: spacing.lg,

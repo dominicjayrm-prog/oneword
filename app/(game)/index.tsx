@@ -13,14 +13,14 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { useAuthContext } from '../src/contexts/AuthContext';
-import { useGameContext } from '../src/contexts/GameContext';
-import { useTheme } from '../src/contexts/ThemeContext';
-import { WordDisplay } from '../src/components/WordDisplay';
-import { WordCounter } from '../src/components/WordCounter';
-import { Button } from '../src/components/Button';
-import { ThemeToggle } from '../src/components/ThemeToggle';
-import { fontSize, spacing, borderRadius } from '../src/constants/theme';
+import { useAuthContext } from '../../src/contexts/AuthContext';
+import { useGameContext } from '../../src/contexts/GameContext';
+import { useTheme } from '../../src/contexts/ThemeContext';
+import { WordDisplay } from '../../src/components/WordDisplay';
+import { WordCounter } from '../../src/components/WordCounter';
+import { Button } from '../../src/components/Button';
+import { ThemeToggle } from '../../src/components/ThemeToggle';
+import { fontSize, spacing, borderRadius } from '../../src/constants/theme';
 
 export default function HomeScreen() {
   const router = useRouter();

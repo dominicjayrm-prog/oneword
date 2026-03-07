@@ -125,6 +125,37 @@ export default {
     play_daily: '\u00A1Juega OneWord cada d\u00EDa!',
   },
 
+  // Friends
+  friends: {
+    tab_title: 'Amigos',
+    requests: 'Solicitudes de amistad',
+    today_title: 'C\u00F3mo lo describieron tus amigos',
+    play_first: 'Juega la palabra de hoy para ver las descripciones de tus amigos',
+    locked: 'Juega primero para revelar',
+    hasnt_played: 'A\u00FAn no ha jugado hoy',
+    your_friends: 'Tus Amigos',
+    add: 'A\u00F1adir',
+    add_friends: 'A\u00F1adir Amigos',
+    search_placeholder: 'Buscar por nombre de usuario',
+    pending: 'Pendiente...',
+    already_friends: 'Amigos',
+    remove: 'Eliminar',
+    remove_confirm: '\u00BFEliminar este amigo?',
+    remove_confirm_title: 'Eliminar Amigo',
+    accept: 'Aceptar',
+    decline: 'Rechazar',
+    empty_title: 'A\u00F1ade amigos para ver c\u00F3mo describen la palabra de hoy',
+    empty_subtitle: 'Compara descripciones y compite con tu c\u00EDrculo',
+    no_requests: 'No hay solicitudes pendientes',
+    max_friends: 'Puedes tener hasta 50 amigos',
+  },
+
+  // Results tabs
+  results_tabs: {
+    global: 'Global',
+    friends: 'Amigos',
+  },
+
   // Language names
   lang: {
     en: 'English',

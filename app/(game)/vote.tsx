@@ -2,15 +2,15 @@ import { useEffect, useState, useCallback } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, Alert, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { useAuthContext } from '../src/contexts/AuthContext';
-import { useGameContext } from '../src/contexts/GameContext';
-import { useTheme } from '../src/contexts/ThemeContext';
-import { WordDisplay } from '../src/components/WordDisplay';
-import { VoteCard } from '../src/components/VoteCard';
-import { Button } from '../src/components/Button';
-import { ThemeToggle } from '../src/components/ThemeToggle';
-import { fontSize, spacing } from '../src/constants/theme';
-import type { VotePair } from '../src/types/database';
+import { useAuthContext } from '../../src/contexts/AuthContext';
+import { useGameContext } from '../../src/contexts/GameContext';
+import { useTheme } from '../../src/contexts/ThemeContext';
+import { WordDisplay } from '../../src/components/WordDisplay';
+import { VoteCard } from '../../src/components/VoteCard';
+import { Button } from '../../src/components/Button';
+import { ThemeToggle } from '../../src/components/ThemeToggle';
+import { fontSize, spacing } from '../../src/constants/theme';
+import type { VotePair } from '../../src/types/database';
 
 const MAX_VOTES = 15;
 

@@ -1,0 +1,118 @@
+import { useState, useEffect } from 'react';
+import { Text, View, StyleSheet } from 'react-native';
+import { Tabs } from 'expo-router';
+import { useTranslation } from 'react-i18next';
+import { useTheme } from '../../src/contexts/ThemeContext';
+import { useAuthContext } from '../../src/contexts/AuthContext';
+import { getPendingRequests } from '../../src/lib/friends';
+
+function TabIcon({ emoji }: { emoji: string }) {
+  return <Text style={styles.tabIcon}>{emoji}</Text>;
+}
+
+function BadgeIcon({ emoji, count }: { emoji: string; count: number }) {
+  return (
+    <View>
+      <Text style={styles.tabIcon}>{emoji}</Text>
+      {count > 0 && (
+        <View style={styles.badge}>
+          <Text style={styles.badgeText}>{count > 9 ? '9+' : count}</Text>
+        </View>
+      )}
+    </View>
+  );
+}
+
+export default function GameLayout() {
+  const { t } = useTranslation();
+  const { colors } = useTheme();
+  const { session } = useAuthContext();
+  const [pendingCount, setPendingCount] = useState(0);
+
+  useEffect(() => {
+    if (!session?.user?.id) return;
+    getPendingRequests(session.user.id).then((requests) => {
+      setPendingCount(requests.length);
+    });
+    const interval = setInterval(() => {
+      getPendingRequests(session.user.id).then((requests) => {
+        setPendingCount(requests.length);
+      });
+    }, 30000);
+    return () => clearInterval(interval);
+  }, [session?.user?.id]);
+
+  return (
+    <Tabs
+      screenOptions={{
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.textMuted,
+        tabBarStyle: {
+          backgroundColor: colors.background,
+          borderTopColor: colors.border,
+          borderTopWidth: 1,
+          height: 60,
+          paddingBottom: 8,
+          paddingTop: 4,
+        },
+        tabBarLabelStyle: {
+          fontSize: 11,
+          fontWeight: '600',
+        },
+        headerShown: false,
+      }}
+    >
+      <Tabs.Screen
+        name="index"
+        options={{
+          title: 'Today',
+          tabBarIcon: () => <TabIcon emoji={'\uD83C\uDFE0'} />,
+        }}
+      />
+      <Tabs.Screen
+        name="vote"
+        options={{
+          title: t('vote.see_results').includes('RESULT') ? 'Vote' : 'Votar',
+          tabBarIcon: () => <TabIcon emoji={'\uD83D\uDDF3\uFE0F'} />,
+        }}
+      />
+      <Tabs.Screen
+        name="results"
+        options={{
+          title: t('results.leaderboard').includes('LEADER') ? 'Results' : 'Resultados',
+          tabBarIcon: () => <TabIcon emoji={'\uD83C\uDFC6'} />,
+        }}
+      />
+      <Tabs.Screen
+        name="friends"
+        options={{
+          title: t('friends.tab_title'),
+          tabBarIcon: () => <BadgeIcon emoji={'\uD83D\uDC65'} count={pendingCount} />,
+        }}
+      />
+    </Tabs>
+  );
+}
+
+const styles = StyleSheet.create({
+  tabIcon: {
+    fontSize: 20,
+  },
+  badge: {
+    position: 'absolute',
+    top: -4,
+    right: -10,
+    backgroundColor: '#EF4444',
+    borderRadius: 8,
+    minWidth: 16,
+    height: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 3,
+  },
+  badgeText: {
+    color: '#FFFFFF',
+    fontSize: 9,
+    fontWeight: '800',
+  },
+});

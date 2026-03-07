@@ -70,7 +70,17 @@ function InnerLayout() {
           contentStyle: { backgroundColor: colors.background },
           animation: 'fade',
         }}
-      />
+      >
+        <Stack.Screen name="(game)" />
+        <Stack.Screen name="(onboarding)" />
+        <Stack.Screen
+          name="profile"
+          options={{
+            presentation: 'modal',
+            animation: 'slide_from_bottom',
+          }}
+        />
+      </Stack>
     </MobileContainer>
   );
 }

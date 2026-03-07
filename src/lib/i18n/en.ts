@@ -125,6 +125,37 @@ export default {
     play_daily: 'Play OneWord daily',
   },
 
+  // Friends
+  friends: {
+    tab_title: 'Friends',
+    requests: 'Friend Requests',
+    today_title: 'How your friends described it',
+    play_first: "Play today's word to see your friends' descriptions",
+    locked: 'Play first to reveal',
+    hasnt_played: "Hasn't played yet today",
+    your_friends: 'Your Friends',
+    add: 'Add',
+    add_friends: 'Add Friends',
+    search_placeholder: 'Search by username',
+    pending: 'Pending...',
+    already_friends: 'Friends',
+    remove: 'Remove',
+    remove_confirm: 'Remove this friend?',
+    remove_confirm_title: 'Remove Friend',
+    accept: 'Accept',
+    decline: 'Decline',
+    empty_title: "Add friends to see how they describe today's word",
+    empty_subtitle: 'Compare descriptions and compete with your inner circle',
+    no_requests: 'No pending requests',
+    max_friends: 'You can have up to 50 friends',
+  },
+
+  // Results tabs
+  results_tabs: {
+    global: 'Global',
+    friends: 'Friends',
+  },
+
   // Language names
   lang: {
     en: 'English',

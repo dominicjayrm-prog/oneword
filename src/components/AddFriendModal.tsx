@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
   Alert,
   Platform,
+  Animated,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../contexts/ThemeContext';
@@ -23,6 +24,48 @@ interface Props {
   onRequestSent: () => void;
 }
 
+function SuccessToast({ visible, username, colors }: { visible: boolean; username: string; colors: any }) {
+  const opacity = useRef(new Animated.Value(0)).current;
+  const scale = useRef(new Animated.Value(0.8)).current;
+
+  useEffect(() => {
+    if (visible) {
+      Animated.parallel([
+        Animated.spring(scale, { toValue: 1, friction: 6, tension: 120, useNativeDriver: true }),
+        Animated.timing(opacity, { toValue: 1, duration: 200, useNativeDriver: true }),
+      ]).start(() => {
+        setTimeout(() => {
+          Animated.parallel([
+            Animated.timing(opacity, { toValue: 0, duration: 300, useNativeDriver: true }),
+            Animated.timing(scale, { toValue: 0.8, duration: 300, useNativeDriver: true }),
+          ]).start();
+        }, 1800);
+      });
+    } else {
+      opacity.setValue(0);
+      scale.setValue(0.8);
+    }
+  }, [visible]);
+
+  if (!visible) return null;
+
+  return (
+    <Animated.View
+      pointerEvents="none"
+      style={[
+        styles.toastContainer,
+        { opacity, transform: [{ scale }] },
+      ]}
+    >
+      <View style={[styles.toast, { backgroundColor: colors.surface, borderColor: colors.primary + '40' }]}>
+        <Text style={styles.toastEmoji}>{'\u2705'}</Text>
+        <Text style={[styles.toastTitle, { color: colors.text }]}>Friend request sent!</Text>
+        <Text style={[styles.toastSubtitle, { color: colors.textMuted }]}>@{username} will see your request</Text>
+      </View>
+    </Animated.View>
+  );
+}
+
 export function AddFriendModal({ visible, onClose, currentUserId, onRequestSent }: Props) {
   const { t } = useTranslation();
   const { colors } = useTheme();
@@ -30,6 +73,7 @@ export function AddFriendModal({ visible, onClose, currentUserId, onRequestSent 
   const [results, setResults] = useState<UserSearchResult[]>([]);
   const [searching, setSearching] = useState(false);
   const [sentIds, setSentIds] = useState<Set<string>>(new Set());
+  const [toastUser, setToastUser] = useState<string | null>(null);
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const doSearch = useCallback(async (text: string) => {
@@ -50,7 +94,7 @@ export function AddFriendModal({ visible, onClose, currentUserId, onRequestSent 
     debounceTimer.current = setTimeout(() => doSearch(text), 300);
   }
 
-  async function handleSendRequest(userId: string) {
+  async function handleSendRequest(userId: string, username: string) {
     const { error } = await sendFriendRequest(currentUserId, userId);
     if (error) {
       const msg = error.message;
@@ -62,6 +106,8 @@ export function AddFriendModal({ visible, onClose, currentUserId, onRequestSent 
       return;
     }
     setSentIds((prev) => new Set(prev).add(userId));
+    setToastUser(username);
+    setTimeout(() => setToastUser(null), 2500);
     onRequestSent();
   }
 
@@ -109,7 +155,7 @@ export function AddFriendModal({ visible, onClose, currentUserId, onRequestSent 
         </View>
         <TouchableOpacity
           style={[styles.actionBtn, buttonStyle]}
-          onPress={() => handleSendRequest(item.user_id)}
+          onPress={() => handleSendRequest(item.user_id, item.username)}
           disabled={disabled}
           activeOpacity={0.7}
         >
@@ -152,6 +198,8 @@ export function AddFriendModal({ visible, onClose, currentUserId, onRequestSent 
             />
           )}
         </View>
+
+        <SuccessToast visible={!!toastUser} username={toastUser ?? ''} colors={colors} />
       </View>
     </Modal>
   );
@@ -244,5 +292,38 @@ const styles = StyleSheet.create({
   actionBtnText: {
     fontSize: fontSize.xs,
     fontWeight: '700',
+  },
+  toastContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  toast: {
+    paddingVertical: spacing.lg + 4,
+    paddingHorizontal: spacing.xl + 4,
+    borderRadius: borderRadius.xl,
+    borderWidth: 1,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  toastEmoji: {
+    fontSize: 36,
+    marginBottom: spacing.sm,
+  },
+  toastTitle: {
+    fontSize: fontSize.md,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  toastSubtitle: {
+    fontSize: fontSize.sm,
   },
 });

@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   FlatList,
   Modal,
   TouchableOpacity,
+  RefreshControl,
 } from 'react-native';
 import { captureRef } from 'react-native-view-shot';
 import * as Sharing from 'expo-sharing';
@@ -21,6 +22,9 @@ import { ShareCard } from '../../src/components/ShareCard';
 import { Button } from '../../src/components/Button';
 import { ThemeToggle } from '../../src/components/ThemeToggle';
 import { FriendsLeaderboard } from '../../src/components/FriendsLeaderboard';
+import { LoadingSpinner } from '../../src/components/LoadingSpinner';
+import { ErrorState } from '../../src/components/ErrorState';
+import { EmptyState } from '../../src/components/EmptyState';
 import { fontSize, spacing, borderRadius } from '../../src/constants/theme';
 import type { LeaderboardEntry } from '../../src/types/database';
 
@@ -33,20 +37,34 @@ export default function ResultsScreen() {
 
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [sharing, setSharing] = useState(false);
   const [tab, setTab] = useState<'global' | 'friends'>('global');
 
   const shareCardRef = useRef<View>(null);
 
-  useEffect(() => {
-    async function load() {
+  const loadResults = useCallback(async () => {
+    setLoadError(false);
+    try {
       const data = await getLeaderboard();
       setLeaderboard(data);
-      setLoading(false);
+    } catch {
+      setLoadError(true);
     }
-    load();
-  }, []);
+    setLoading(false);
+  }, [getLeaderboard]);
+
+  useEffect(() => {
+    loadResults();
+  }, [loadResults]);
+
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await loadResults();
+    setRefreshing(false);
+  }, [loadResults]);
 
   const myEntry = leaderboard.find((e) => e.username === profile?.username);
 
@@ -110,13 +128,19 @@ export default function ResultsScreen() {
         <FriendsLeaderboard />
       ) : loading ? (
         <View style={[styles.center, { backgroundColor: colors.background }]}>
-          <ActivityIndicator size="large" color={colors.primary} />
+          <LoadingSpinner message={t('loading.results')} />
         </View>
+      ) : loadError ? (
+        <ErrorState
+          title={t('errors.load_results')}
+          onRetry={loadResults}
+        />
       ) : leaderboard.length === 0 ? (
-        <View style={[styles.center, { backgroundColor: colors.background }]}>
-          <Text style={[styles.empty, { color: colors.text }]}>{t('results.no_results')}</Text>
-          <Text style={[styles.emptySub, { color: colors.textSecondary }]}>{t('results.no_results_sub')}</Text>
-        </View>
+        <EmptyState
+          emoji={'\uD83D\uDDF3'}
+          title={t('empty.no_results')}
+          subtitle={t('empty.no_results_sub')}
+        />
       ) : (
         <FlatList
           data={leaderboard}
@@ -132,6 +156,14 @@ export default function ResultsScreen() {
           )}
           contentContainerStyle={styles.list}
           showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+              tintColor={colors.primary}
+              colors={[colors.primary]}
+            />
+          }
         />
       )}
 

@@ -24,6 +24,8 @@ import { AuthProvider } from '../src/contexts/AuthContext';
 import { GameProvider } from '../src/contexts/GameContext';
 import { MobileContainer } from '../src/components/MobileContainer';
 import { ErrorBoundary } from '../src/components/ErrorBoundary';
+import { ToastProvider } from '../src/components/Toast';
+import { NetworkBanner } from '../src/components/NetworkBanner';
 
 initSentry();
 
@@ -109,7 +111,10 @@ export default function RootLayout() {
       <ThemeProvider>
         <AuthProvider>
           <GameProvider>
-            <InnerLayout />
+            <ToastProvider>
+              <InnerLayout />
+              <NetworkBanner />
+            </ToastProvider>
           </GameProvider>
         </AuthProvider>
       </ThemeProvider>

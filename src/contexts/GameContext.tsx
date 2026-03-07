@@ -10,6 +10,7 @@ interface GameContextType {
   hasSubmitted: boolean;
   userDescription: string | null;
   loading: boolean;
+  loadError: boolean;
   submitDescription: (description: string) => Promise<{ error: Error | null }>;
   getVotePair: () => Promise<VotePair | null>;
   submitVote: (winnerId: string, loserId: string) => Promise<{ error: Error | null }>;
@@ -23,6 +24,7 @@ const GameContext = createContext<GameContextType>({
   hasSubmitted: false,
   userDescription: null,
   loading: true,
+  loadError: false,
   submitDescription: async () => ({ error: null }),
   getVotePair: async () => null,
   submitVote: async () => ({ error: null }),
@@ -39,9 +41,11 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const [userDescription, setUserDescription] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
 
   const fetchTodayWord = useCallback(async () => {
     setLoading(true);
+    setLoadError(false);
     try {
       const { data } = await withTimeout(supabase.rpc('get_today_word', { p_language: language }));
       if (data && data.length > 0) {
@@ -70,6 +74,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       }
     } catch (err) {
       console.error('Failed to fetch today word:', err);
+      setLoadError(true);
     } finally {
       setLoading(false);
     }
@@ -179,6 +184,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       hasSubmitted,
       userDescription,
       loading,
+      loadError,
       submitDescription,
       getVotePair,
       submitVote,

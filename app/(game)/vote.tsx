@@ -1,5 +1,5 @@
-import { useEffect, useState, useCallback } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, Alert, Platform } from 'react-native';
+import { useEffect, useState, useCallback, useRef } from 'react';
+import { View, Text, StyleSheet, Alert, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useAuthContext } from '../../src/contexts/AuthContext';
@@ -9,6 +9,9 @@ import { WordDisplay } from '../../src/components/WordDisplay';
 import { VoteCard } from '../../src/components/VoteCard';
 import { Button } from '../../src/components/Button';
 import { ThemeToggle } from '../../src/components/ThemeToggle';
+import { LoadingSpinner } from '../../src/components/LoadingSpinner';
+import { EmptyState } from '../../src/components/EmptyState';
+import { useToast } from '../../src/components/Toast';
 import { fontSize, spacing } from '../../src/constants/theme';
 import type { VotePair } from '../../src/types/database';
 
@@ -21,36 +24,83 @@ export default function VoteScreen() {
   const { session } = useAuthContext();
   const { todayWord, getVotePair, submitVote, reportDescription } = useGameContext();
 
+  const { showToast } = useToast();
+
   const [pair, setPair] = useState<VotePair | null>(null);
   const [voteCount, setVoteCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [noMorePairs, setNoMorePairs] = useState(false);
+  const [voting, setVoting] = useState(false);
+  const [loadError, setLoadError] = useState(false);
+  const nextPairRef = useRef<VotePair | null>(null);
 
   const loadPair = useCallback(async () => {
     setLoading(true);
-    const p = await getVotePair();
-    if (!p) {
-      setNoMorePairs(true);
+    setLoadError(false);
+    try {
+      const p = await getVotePair();
+      if (!p) {
+        setNoMorePairs(true);
+      }
+      setPair(p);
+    } catch {
+      setLoadError(true);
     }
-    setPair(p);
     setLoading(false);
+  }, [getVotePair]);
+
+  // Pre-fetch the next pair while user is looking at current
+  const prefetchNext = useCallback(async () => {
+    try {
+      nextPairRef.current = await getVotePair();
+    } catch {
+      nextPairRef.current = null;
+    }
   }, [getVotePair]);
 
   useEffect(() => {
     loadPair();
   }, [loadPair]);
 
+  // Pre-fetch after current pair loads
+  useEffect(() => {
+    if (pair && !loading) {
+      prefetchNext();
+    }
+  }, [pair, loading, prefetchNext]);
+
   async function handleVote(winnerId: string, loserId: string) {
-    await submitVote(winnerId, loserId);
+    if (voting) return;
+    setVoting(true);
+
+    // Optimistic: move to next pair immediately
     const newCount = voteCount + 1;
     setVoteCount(newCount);
 
     if (newCount >= MAX_VOTES) {
       setNoMorePairs(true);
-      return;
+    } else if (nextPairRef.current) {
+      setPair(nextPairRef.current);
+      nextPairRef.current = null;
+      prefetchNext();
+    } else {
+      loadPair();
     }
 
-    loadPair();
+    // Submit in background, retry if needed
+    try {
+      const { error } = await submitVote(winnerId, loserId);
+      if (error) {
+        showToast(t('errors.vote_failed'), 'error');
+        // Retry once silently
+        await submitVote(winnerId, loserId);
+      }
+    } catch {
+      showToast(t('errors.vote_failed'), 'error');
+    }
+
+    // Brief delay to prevent accidental double votes
+    setTimeout(() => setVoting(false), 300);
   }
 
   async function handleReport(descriptionId: string) {
@@ -75,6 +125,20 @@ export default function VoteScreen() {
   }
 
   if (noMorePairs || voteCount >= MAX_VOTES) {
+    if (voteCount === 0) {
+      return (
+        <View style={[styles.container, { backgroundColor: colors.background }]}>
+          <ThemeToggle />
+          <EmptyState
+            emoji={'\uD83D\uDCDD'}
+            title={t('vote.no_pairs')}
+            subtitle={t('empty.no_pairs')}
+            actionLabel={t('vote.back_home')}
+            onAction={() => router.replace('/')}
+          />
+        </View>
+      );
+    }
     const votedText = voteCount === 1
       ? t('vote.voted_on', { count: voteCount })
       : t('vote.voted_on_plural', { count: voteCount });
@@ -82,6 +146,7 @@ export default function VoteScreen() {
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <ThemeToggle />
         <View style={[styles.center, { backgroundColor: colors.background }]}>
+          <Text style={styles.doneEmoji}>{'\uD83C\uDF89'}</Text>
           <Text style={[styles.doneTitle, { color: colors.text }]}>
             {voteCount >= MAX_VOTES ? t('vote.done_title') : t('vote.no_more')}
           </Text>
@@ -110,7 +175,12 @@ export default function VoteScreen() {
 
       <View style={styles.pairContainer}>
         {loading ? (
-          <ActivityIndicator size="large" color={colors.primary} />
+          <LoadingSpinner />
+        ) : loadError ? (
+          <View style={styles.noPairs}>
+            <Text style={[styles.doneTitle, { color: colors.text }]}>{t('errors.generic')}</Text>
+            <Button title={t('errors.try_again')} onPress={loadPair} variant="outline" />
+          </View>
         ) : !pair ? (
           <View style={styles.noPairs}>
             <Text style={[styles.doneTitle, { color: colors.text }]}>{t('vote.no_pairs')}</Text>
@@ -122,12 +192,14 @@ export default function VoteScreen() {
               description={pair.desc1_text}
               onPress={() => handleVote(pair.desc1_id, pair.desc2_id)}
               onReport={() => handleReport(pair.desc1_id)}
+              disabled={voting}
             />
             <Text style={[styles.vs, { color: colors.textMuted }]}>VS</Text>
             <VoteCard
               description={pair.desc2_text}
               onPress={() => handleVote(pair.desc2_id, pair.desc1_id)}
               onReport={() => handleReport(pair.desc2_id)}
+              disabled={voting}
             />
           </>
         )}
@@ -172,6 +244,10 @@ const styles = StyleSheet.create({
   noPairs: {
     alignItems: 'center',
     gap: spacing.lg,
+  },
+  doneEmoji: {
+    fontSize: 48,
+    marginBottom: spacing.md,
   },
   doneTitle: {
     fontSize: fontSize.xl,

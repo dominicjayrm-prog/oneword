@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -28,11 +28,12 @@ export function AddFriendModal({ visible, onClose, currentUserId, onRequestSent 
   const [results, setResults] = useState<UserSearchResult[]>([]);
   const [searching, setSearching] = useState(false);
   const [sentIds, setSentIds] = useState<Set<string>>(new Set());
-  const debounceRef = useState<ReturnType<typeof setTimeout> | null>(null);
+  const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const doSearch = useCallback(async (text: string) => {
     if (text.trim().length < 2) {
       setResults([]);
+      setSearching(false);
       return;
     }
     setSearching(true);
@@ -43,8 +44,8 @@ export function AddFriendModal({ visible, onClose, currentUserId, onRequestSent 
 
   function handleChangeText(text: string) {
     setQuery(text);
-    if (debounceRef[0]) clearTimeout(debounceRef[0]);
-    debounceRef[0] = setTimeout(() => doSearch(text), 300);
+    if (debounceTimer.current) clearTimeout(debounceTimer.current);
+    debounceTimer.current = setTimeout(() => doSearch(text), 300);
   }
 
   async function handleSendRequest(userId: string) {

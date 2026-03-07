@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Text, View, StyleSheet } from 'react-native';
+import { Text, View, StyleSheet, Platform } from 'react-native';
 import { Tabs } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../src/contexts/ThemeContext';
 import { useAuthContext } from '../../src/contexts/AuthContext';
@@ -42,6 +43,9 @@ export default function GameLayout() {
     return () => clearInterval(interval);
   }, [session?.user?.id]);
 
+  const insets = useSafeAreaInsets();
+  const tabBarHeight = 50 + Math.max(insets.bottom, Platform.OS === 'web' ? 8 : 0);
+
   return (
     <Tabs
       screenOptions={{
@@ -51,8 +55,8 @@ export default function GameLayout() {
           backgroundColor: colors.background,
           borderTopColor: colors.border,
           borderTopWidth: 1,
-          height: 60,
-          paddingBottom: 8,
+          height: tabBarHeight,
+          paddingBottom: Math.max(insets.bottom, Platform.OS === 'web' ? 8 : 4),
           paddingTop: 4,
         },
         tabBarLabelStyle: {

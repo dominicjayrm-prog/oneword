@@ -8,6 +8,8 @@ import {
   TouchableOpacity,
   FlatList,
   ActivityIndicator,
+  Alert,
+  Platform,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../contexts/ThemeContext';
@@ -50,10 +52,17 @@ export function AddFriendModal({ visible, onClose, currentUserId, onRequestSent 
 
   async function handleSendRequest(userId: string) {
     const { error } = await sendFriendRequest(currentUserId, userId);
-    if (!error) {
-      setSentIds((prev) => new Set(prev).add(userId));
-      onRequestSent();
+    if (error) {
+      const msg = error.message;
+      if (Platform.OS === 'web') {
+        window.alert(msg);
+      } else {
+        Alert.alert('Error', msg);
+      }
+      return;
     }
+    setSentIds((prev) => new Set(prev).add(userId));
+    onRequestSent();
   }
 
   function handleClose() {

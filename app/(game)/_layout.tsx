@@ -44,7 +44,7 @@ export default function GameLayout() {
   }, [session?.user?.id]);
 
   const insets = useSafeAreaInsets();
-  const tabBarHeight = 50 + Math.max(insets.bottom, Platform.OS === 'web' ? 8 : 0);
+  const bottomPad = Platform.OS === 'web' ? 12 : Math.max(insets.bottom, 4);
 
   return (
     <Tabs
@@ -55,13 +55,17 @@ export default function GameLayout() {
           backgroundColor: colors.background,
           borderTopColor: colors.border,
           borderTopWidth: 1,
-          height: tabBarHeight,
-          paddingBottom: Math.max(insets.bottom, Platform.OS === 'web' ? 8 : 4),
-          paddingTop: 4,
+          paddingBottom: bottomPad,
+          paddingTop: 6,
+          minHeight: 56 + bottomPad,
         },
         tabBarLabelStyle: {
           fontSize: 11,
           fontWeight: '600',
+          marginTop: -2,
+        },
+        tabBarIconStyle: {
+          marginBottom: -2,
         },
         headerShown: false,
       }}

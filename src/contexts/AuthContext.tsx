@@ -87,12 +87,51 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function signUp(email: string, password: string, username: string, lang?: string) {
-    const { error } = await supabase.auth.signUp({
+    const userLang = lang || language;
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { username, language: lang || language } },
+      options: { data: { username, language: userLang } },
     });
-    return { error };
+
+    if (error) {
+      // If the trigger failed, try to recover by creating the profile manually
+      if (error.message?.includes('Database error') && data?.user) {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .upsert({
+            id: data.user.id,
+            username,
+            language: userLang,
+          }, { onConflict: 'id' });
+        if (profileError) {
+          return { error: new Error(profileError.message) };
+        }
+        return { error: null };
+      }
+      return { error };
+    }
+
+    // If signup succeeded but no profile was created by trigger, create it now
+    if (data?.user) {
+      const { data: existingProfile } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('id', data.user.id)
+        .single();
+
+      if (!existingProfile) {
+        await supabase
+          .from('profiles')
+          .upsert({
+            id: data.user.id,
+            username,
+            language: userLang,
+          }, { onConflict: 'id' });
+      }
+    }
+
+    return { error: null };
   }
 
   async function signIn(email: string, password: string) {

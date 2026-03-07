@@ -64,6 +64,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .select('*')
         .eq('id', userId)
         .single();
+
+      if (error && error.code === 'PGRST116') {
+        // Profile doesn't exist — create it from auth metadata
+        const { data: { user } } = await supabase.auth.getUser();
+        const username = user?.user_metadata?.username || 'player_' + userId.slice(0, 8);
+        const lang = user?.user_metadata?.language || 'en';
+
+        const { data: newProfile } = await supabase
+          .from('profiles')
+          .insert({ id: userId, username, language: lang })
+          .select('*')
+          .single();
+
+        setProfile(newProfile);
+        if (newProfile?.language) {
+          setLanguage(newProfile.language);
+          i18n.changeLanguage(newProfile.language);
+        }
+        return;
+      }
+
       if (error) {
         console.error('Failed to fetch profile:', error.message);
       }
@@ -107,28 +128,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (profileError) {
           return { error: new Error(profileError.message) };
         }
+        await fetchProfile(data.user.id);
         return { error: null };
       }
       return { error };
     }
 
-    // If signup succeeded but no profile was created by trigger, create it now
+    // Ensure the profile exists with the correct username
     if (data?.user) {
+      // Small delay to let the trigger complete first
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
       const { data: existingProfile } = await supabase
         .from('profiles')
-        .select('id')
+        .select('id, username')
         .eq('id', data.user.id)
         .single();
 
       if (!existingProfile) {
+        // Trigger didn't create the profile — create it manually
         await supabase
           .from('profiles')
-          .upsert({
+          .insert({
             id: data.user.id,
             username,
             language: userLang,
-          }, { onConflict: 'id' });
+          });
+      } else if (existingProfile.username !== username && existingProfile.username.startsWith('player_')) {
+        // Trigger created a fallback username — update to the real one
+        await supabase
+          .from('profiles')
+          .update({ username })
+          .eq('id', data.user.id);
       }
+
+      // Refresh profile state so the UI shows the correct username
+      await fetchProfile(data.user.id);
     }
 
     return { error: null };

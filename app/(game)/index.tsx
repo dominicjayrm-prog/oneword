@@ -28,7 +28,7 @@ export default function HomeScreen() {
   const router = useRouter();
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const { session, profile, loading: authLoading, signIn, signUp, language, updateLanguage } = useAuthContext();
+  const { session, profile, loading: authLoading, signIn, signUp, language, updateLanguage, pendingVerification, resendVerification, clearPendingVerification } = useAuthContext();
   const { todayWord, hasSubmitted, userDescription, loading: gameLoading, loadError: gameError, submitDescription, refresh } = useGameContext();
 
   const { showToast } = useToast();
@@ -43,6 +43,8 @@ export default function HomeScreen() {
   const [authError, setAuthError] = useState('');
   const [authLoading2, setAuthLoading2] = useState(false);
   const [selectedLang, setSelectedLang] = useState(language);
+  const [resending, setResending] = useState(false);
+  const [resent, setResent] = useState(false);
 
   const wordCount = input.trim().split(/\s+/).filter(Boolean).length;
   const isExactlyFive = wordCount === 5;
@@ -101,6 +103,15 @@ export default function HomeScreen() {
     }
   }
 
+  async function handleResend() {
+    if (resending) return;
+    setResending(true);
+    await resendVerification();
+    setResending(false);
+    setResent(true);
+    setTimeout(() => setResent(false), 3000);
+  }
+
   function handleLangSwitch(lang: string) {
     setSelectedLang(lang);
     updateLanguage(lang);
@@ -123,6 +134,35 @@ export default function HomeScreen() {
           message={t('errors.network_retry')}
           onRetry={refresh}
         />
+      </View>
+    );
+  }
+
+  if (pendingVerification) {
+    return (
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <ThemeToggle />
+        <View style={[styles.center, { backgroundColor: colors.background }]}>
+          <Text style={styles.verifyEmoji}>{'\u2709\uFE0F'}</Text>
+          <Text style={[styles.verifyTitle, { color: colors.text }]}>{t('auth.verify_title')}</Text>
+          <Text style={[styles.verifySubtitle, { color: colors.textSecondary }]}>
+            {t('auth.verify_subtitle', { email: pendingVerification })}
+          </Text>
+          <View style={styles.verifyActions}>
+            <Button
+              title={resent ? t('auth.verify_resent') : t('auth.verify_resend')}
+              onPress={handleResend}
+              loading={resending}
+              disabled={resent}
+              variant="outline"
+            />
+            <Button
+              title={t('auth.verify_back')}
+              onPress={() => clearPendingVerification()}
+              variant="outline"
+            />
+          </View>
+        </View>
       </View>
     );
   }
@@ -460,5 +500,27 @@ const styles = StyleSheet.create({
   noWordSub: {
     fontSize: fontSize.md,
     marginTop: spacing.sm,
+  },
+  verifyEmoji: {
+    fontSize: 64,
+    marginBottom: spacing.lg,
+  },
+  verifyTitle: {
+    fontSize: fontSize.xl,
+    fontWeight: '700',
+    textAlign: 'center',
+    marginBottom: spacing.md,
+  },
+  verifySubtitle: {
+    fontSize: fontSize.md,
+    textAlign: 'center',
+    paddingHorizontal: spacing.lg,
+    marginBottom: spacing.xl,
+    lineHeight: 22,
+  },
+  verifyActions: {
+    gap: spacing.sm,
+    width: '100%',
+    paddingHorizontal: spacing.lg,
   },
 });

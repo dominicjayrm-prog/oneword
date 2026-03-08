@@ -43,6 +43,11 @@ export default {
     login_link: 'Need an account? Sign Up',
     signup_link: 'Have an account? Sign In',
     language_label: 'Playing in',
+    verify_title: 'Check your email',
+    verify_subtitle: 'We sent a confirmation link to {{email}}. Tap the link to verify your account.',
+    verify_resend: 'Resend email',
+    verify_resent: 'Email sent!',
+    verify_back: 'Back to sign in',
   },
 
   // Game

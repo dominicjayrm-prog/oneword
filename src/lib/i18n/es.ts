@@ -148,6 +148,7 @@ export default {
     empty_subtitle: 'Compara descripciones y compite con tu c\u00EDrculo',
     no_requests: 'No hay solicitudes pendientes',
     max_friends: 'Puedes tener hasta 50 amigos',
+    today_word: 'Hoy: {{word}}',
   },
 
   // Results tabs
@@ -204,6 +205,7 @@ export default {
   success: {
     vote_saved: '\u00A1Voto guardado!',
     friend_sent: '\u00A1Solicitud enviada!',
+    friend_request_subtitle: '@{{username}} verá tu solicitud',
     friend_accepted: '\u00A1Amigo a\u00F1adido!',
     description_submitted: '\u00A1Registrado!',
     account_deleted: 'Cuenta eliminada',

@@ -148,6 +148,7 @@ export default {
     empty_subtitle: 'Compare descriptions and compete with your inner circle',
     no_requests: 'No pending requests',
     max_friends: 'You can have up to 50 friends',
+    today_word: 'Today: {{word}}',
   },
 
   // Results tabs
@@ -204,6 +205,7 @@ export default {
   success: {
     vote_saved: 'Vote saved!',
     friend_sent: 'Friend request sent!',
+    friend_request_subtitle: '@{{username}} will see your request',
     friend_accepted: 'Friend added!',
     description_submitted: 'Locked in!',
     account_deleted: 'Account deleted',

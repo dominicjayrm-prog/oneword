@@ -25,6 +25,7 @@ interface Props {
 }
 
 function SuccessToast({ visible, username, colors }: { visible: boolean; username: string; colors: any }) {
+  const { t } = useTranslation();
   const opacity = useRef(new Animated.Value(0)).current;
   const scale = useRef(new Animated.Value(0.8)).current;
 
@@ -59,8 +60,8 @@ function SuccessToast({ visible, username, colors }: { visible: boolean; usernam
     >
       <View style={[styles.toast, { backgroundColor: colors.surface, borderColor: colors.primary + '40' }]}>
         <Text style={styles.toastEmoji}>{'\u2705'}</Text>
-        <Text style={[styles.toastTitle, { color: colors.text }]}>Friend request sent!</Text>
-        <Text style={[styles.toastSubtitle, { color: colors.textMuted }]}>@{username} will see your request</Text>
+        <Text style={[styles.toastTitle, { color: colors.text }]}>{t('success.friend_sent')}</Text>
+        <Text style={[styles.toastSubtitle, { color: colors.textMuted }]}>{t('success.friend_request_subtitle', { username })}</Text>
       </View>
     </Animated.View>
   );
@@ -148,7 +149,7 @@ export function AddFriendModal({ visible, onClose, currentUserId, onRequestSent 
             <Text style={[styles.resultName, { color: colors.text }]}>@{item.username}</Text>
             {item.current_streak > 0 && (
               <Text style={[styles.resultStreak, { color: colors.textMuted }]}>
-                {'\uD83D\uDD25'} {item.current_streak} day streak
+                {'\uD83D\uDD25'} {t('game.day_streak', { count: item.current_streak })}
               </Text>
             )}
           </View>

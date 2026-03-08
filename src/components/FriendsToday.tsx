@@ -19,7 +19,7 @@ export function FriendsToday({ descriptions, wordText, userHasPlayed }: Props) {
   return (
     <View style={styles.container}>
       <Text style={[styles.wordLabel, { color: colors.textMuted }]}>
-        Today: {wordText}
+        {t('friends.today_word', { word: wordText })}
       </Text>
       <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
         {t('friends.today_title')}

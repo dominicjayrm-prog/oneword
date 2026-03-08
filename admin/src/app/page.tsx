@@ -9,16 +9,17 @@ export default async function DashboardPage() {
   if (!(await isAuthenticated())) redirect('/login');
   const supabase = createAdminClient();
 
-  const [wordsRes, profilesRes, descriptionsRes, votesRes, todayWordRes, upcomingRes] = await Promise.all([
+  const today = new Date().toISOString().split('T')[0];
+  const [wordsRes, profilesRes, descriptionsRes, votesRes, todayWordsRes, upcomingRes] = await Promise.all([
     supabase.from('daily_words').select('*', { count: 'exact', head: true }),
     supabase.from('profiles').select('*', { count: 'exact', head: true }),
     supabase.from('descriptions').select('*', { count: 'exact', head: true }),
     supabase.from('votes').select('*', { count: 'exact', head: true }),
-    supabase.rpc('get_today_word'),
-    supabase.from('daily_words').select('*').gte('date', new Date().toISOString().split('T')[0]).order('date', { ascending: true }).limit(7),
+    supabase.from('daily_words').select('*').eq('date', today),
+    supabase.from('daily_words').select('*').gt('date', today).order('date', { ascending: true }).limit(14),
   ]);
 
-  const todayWord = todayWordRes.data?.[0];
+  const todayWords = todayWordsRes.data || [];
   const upcoming = upcomingRes.data || [];
 
   return (
@@ -47,11 +48,16 @@ export default async function DashboardPage() {
         </div>
 
         <div className="card mb-6">
-          <h2 style={{ fontSize: 18, fontWeight: 600, marginBottom: 16 }}>Today&apos;s Word</h2>
-          {todayWord ? (
-            <div>
-              <span style={{ fontSize: 32, fontWeight: 800, letterSpacing: 4 }}>{todayWord.word}</span>
-              <span className="badge badge-success" style={{ marginLeft: 12 }}>{todayWord.category}</span>
+          <h2 style={{ fontSize: 18, fontWeight: 600, marginBottom: 16 }}>Today&apos;s Words</h2>
+          {todayWords.length > 0 ? (
+            <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap' }}>
+              {todayWords.map((w: any) => (
+                <div key={w.id}>
+                  <span style={{ fontSize: 12, textTransform: 'uppercase', color: 'var(--text-muted)', marginRight: 8 }}>{w.language === 'en' ? 'English' : 'Spanish'}</span>
+                  <span style={{ fontSize: 32, fontWeight: 800, letterSpacing: 4 }}>{w.word}</span>
+                  <span className="badge badge-success" style={{ marginLeft: 12 }}>{w.category}</span>
+                </div>
+              ))}
             </div>
           ) : (
             <div style={{ color: 'var(--danger)' }}>No word set for today! Go to Words to add one.</div>

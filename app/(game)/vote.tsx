@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { View, Text, StyleSheet, Alert, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -32,7 +32,6 @@ export default function VoteScreen() {
   const [noMorePairs, setNoMorePairs] = useState(false);
   const [voting, setVoting] = useState(false);
   const [loadError, setLoadError] = useState(false);
-  const nextPairRef = useRef<VotePair | null>(null);
 
   const loadPair = useCallback(async () => {
     setLoading(true);
@@ -49,58 +48,34 @@ export default function VoteScreen() {
     setLoading(false);
   }, [getVotePair]);
 
-  // Pre-fetch the next pair while user is looking at current
-  const prefetchNext = useCallback(async () => {
-    try {
-      nextPairRef.current = await getVotePair();
-    } catch {
-      nextPairRef.current = null;
-    }
-  }, [getVotePair]);
-
   useEffect(() => {
     loadPair();
   }, [loadPair]);
-
-  // Pre-fetch after current pair loads
-  useEffect(() => {
-    if (pair && !loading) {
-      prefetchNext();
-    }
-  }, [pair, loading, prefetchNext]);
 
   async function handleVote(winnerId: string, loserId: string) {
     if (voting) return;
     setVoting(true);
 
-    // Optimistic: move to next pair immediately
     const newCount = voteCount + 1;
     setVoteCount(newCount);
 
-    if (newCount >= MAX_VOTES) {
-      setNoMorePairs(true);
-    } else if (nextPairRef.current) {
-      setPair(nextPairRef.current);
-      nextPairRef.current = null;
-      prefetchNext();
-    } else {
-      loadPair();
-    }
-
-    // Submit in background, retry if needed
+    // Submit vote first, then fetch next pair
     try {
       const { error } = await submitVote(winnerId, loserId);
       if (error) {
         showToast(t('errors.vote_failed'), 'error');
-        // Retry once silently
-        await submitVote(winnerId, loserId);
       }
     } catch {
       showToast(t('errors.vote_failed'), 'error');
     }
 
-    // Brief delay to prevent accidental double votes
-    setTimeout(() => setVoting(false), 300);
+    if (newCount >= MAX_VOTES) {
+      setNoMorePairs(true);
+    } else {
+      await loadPair();
+    }
+
+    setVoting(false);
   }
 
   async function handleReport(descriptionId: string) {

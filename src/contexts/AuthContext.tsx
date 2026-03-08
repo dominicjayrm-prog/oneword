@@ -9,6 +9,7 @@ interface AuthContextType {
   profile: Profile | null;
   loading: boolean;
   language: string;
+  pendingVerification: string | null; // email address awaiting verification
   signUp: (email: string, password: string, username: string, lang?: string) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
@@ -16,6 +17,8 @@ interface AuthContextType {
   updateAvatar: (avatarUrl: string) => Promise<{ error: Error | null }>;
   updateLanguage: (lang: string) => Promise<{ error: Error | null }>;
   deleteAccount: () => Promise<{ error: Error | null }>;
+  resendVerification: () => Promise<{ error: Error | null }>;
+  clearPendingVerification: () => void;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -23,6 +26,7 @@ const AuthContext = createContext<AuthContextType>({
   profile: null,
   loading: true,
   language: i18n.language,
+  pendingVerification: null,
   signUp: async () => ({ error: null }),
   signIn: async () => ({ error: null }),
   signOut: async () => {},
@@ -30,6 +34,8 @@ const AuthContext = createContext<AuthContextType>({
   updateAvatar: async () => ({ error: null }),
   updateLanguage: async () => ({ error: null }),
   deleteAccount: async () => ({ error: null }),
+  resendVerification: async () => ({ error: null }),
+  clearPendingVerification: () => {},
 });
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -37,6 +43,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [language, setLanguage] = useState(i18n.language);
+  const [pendingVerification, setPendingVerification] = useState<string | null>(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -47,8 +54,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
-      if (session?.user) fetchProfile(session.user.id);
-      else {
+      if (session?.user) {
+        setPendingVerification(null);
+        fetchProfile(session.user.id);
+      } else {
         setProfile(null);
         setLoading(false);
       }
@@ -134,6 +143,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { error };
     }
 
+    // Email confirmation required: user exists but no session yet
+    if (data?.user && !data.session) {
+      setPendingVerification(email);
+      return { error: null };
+    }
+
     // Ensure the profile exists with the correct username
     if (data?.user) {
       // Small delay to let the trigger complete first
@@ -210,12 +225,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error };
   }
 
+  async function resendVerification() {
+    if (!pendingVerification) return { error: new Error('No pending verification') };
+    const { error } = await supabase.auth.resend({ type: 'signup', email: pendingVerification });
+    return { error };
+  }
+
+  function clearPendingVerification() {
+    setPendingVerification(null);
+  }
+
   async function signOut() {
     await supabase.auth.signOut();
   }
 
   return (
-    <AuthContext.Provider value={{ session, profile, loading, language, signUp, signIn, signOut, refreshProfile, updateAvatar, updateLanguage, deleteAccount }}>
+    <AuthContext.Provider value={{ session, profile, loading, language, pendingVerification, signUp, signIn, signOut, refreshProfile, updateAvatar, updateLanguage, deleteAccount, resendVerification, clearPendingVerification }}>
       {children}
     </AuthContext.Provider>
   );

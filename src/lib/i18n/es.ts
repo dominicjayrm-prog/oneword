@@ -43,6 +43,11 @@ export default {
     login_link: '\u00BFNo tienes cuenta? Reg\u00EDstrate',
     signup_link: '\u00BFYa tienes cuenta? Inicia sesi\u00F3n',
     language_label: 'Jugando en',
+    verify_title: 'Revisa tu correo',
+    verify_subtitle: 'Enviamos un enlace de confirmaci\u00F3n a {{email}}. Toca el enlace para verificar tu cuenta.',
+    verify_resend: 'Reenviar correo',
+    verify_resent: '\u00A1Correo enviado!',
+    verify_back: 'Volver a iniciar sesi\u00F3n',
   },
 
   // Game

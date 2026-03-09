@@ -5,23 +5,27 @@ import { Platform } from 'react-native';
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL ?? '';
 const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '';
 
+// Web: use sessionStorage instead of localStorage to limit XSS exposure.
+// sessionStorage is scoped to the tab and cleared when the tab closes,
+// so stolen tokens have a shorter window of exploitation.
+// Native: use SecureStore (encrypted keychain / keystore).
 const ExpoSecureStoreAdapter = {
   getItem: (key: string) => {
     if (Platform.OS === 'web') {
-      return localStorage.getItem(key);
+      return sessionStorage.getItem(key);
     }
     return SecureStore.getItemAsync(key);
   },
   setItem: (key: string, value: string) => {
     if (Platform.OS === 'web') {
-      localStorage.setItem(key, value);
+      sessionStorage.setItem(key, value);
       return;
     }
     return SecureStore.setItemAsync(key, value);
   },
   removeItem: (key: string) => {
     if (Platform.OS === 'web') {
-      localStorage.removeItem(key);
+      sessionStorage.removeItem(key);
       return;
     }
     return SecureStore.deleteItemAsync(key);

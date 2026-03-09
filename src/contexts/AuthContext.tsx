@@ -139,15 +139,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       if (error) {
-        console.error('Failed to fetch profile:', error.message);
+        console.error('Failed to fetch profile:', error.code ?? 'unknown');
       }
       setProfile(data);
       if (data?.language) {
         setLanguage(data.language);
         i18n.changeLanguage(data.language);
       }
-    } catch (err) {
-      console.error('Profile fetch error:', err);
+    } catch {
+      console.error('Profile fetch error');
       setProfile(null);
     } finally {
       setLoading(false);
@@ -199,6 +199,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Ensure the profile exists with the correct username
     if (data?.user) {
       // Poll for the profile (trigger may take a moment to complete)
+      // Exponential backoff: 200ms, 400ms, 800ms, 1600ms, 3200ms
       let existingProfile = null;
       for (let attempt = 0; attempt < 5; attempt++) {
         const { data: profile } = await supabase
@@ -210,7 +211,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           existingProfile = profile;
           break;
         }
-        await new Promise((resolve) => setTimeout(resolve, 200 * (attempt + 1)));
+        await new Promise((resolve) => setTimeout(resolve, 200 * Math.pow(2, attempt)));
       }
 
       if (!existingProfile) {

@@ -167,7 +167,7 @@ export async function searchUsers(
 
   // Fallback: direct table query if RPC doesn't exist yet
   // Escape ILIKE wildcards to prevent injection
-  console.warn('search_users RPC failed, using fallback:', error.message);
+  console.warn('search_users RPC failed, using fallback');
   const safeQuery = escapeIlike(query);
   const { data: profiles, error: profileError } = await supabase
     .from('profiles')

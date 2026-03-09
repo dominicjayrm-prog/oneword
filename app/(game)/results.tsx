@@ -96,7 +96,7 @@ export default function ResultsScreen() {
       await new Promise((r) => setTimeout(r, 300));
       await Sharing.shareAsync(uri, {
         mimeType: 'image/png',
-        dialogTitle: 'Share your OneWord result',
+        dialogTitle: t('results.share_dialog_title'),
         UTI: 'public.png',
       });
     } catch {

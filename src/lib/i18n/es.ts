@@ -91,6 +91,7 @@ export default {
     back_home: 'VOLVER AL INICIO',
     no_pairs: 'A\u00FAn no hay pares disponibles',
     report: 'Reportar',
+    your_pick: 'TU ELECCI\u00D3N \u2713',
     report_title: 'Reportar descripci\u00F3n',
     report_message: '\u00BFMarcar esta descripci\u00F3n como inapropiada?',
     report_cancel: 'Cancelar',
@@ -108,6 +109,7 @@ export default {
     back_home: 'VOLVER AL INICIO',
     share_preview: 'Vista previa',
     share_btn: 'COMPARTIR',
+    share_dialog_title: 'Comparte tu resultado de OneWord',
     cancel: 'CANCELAR',
   },
 

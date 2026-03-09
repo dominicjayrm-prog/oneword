@@ -341,12 +341,12 @@ export default function VoteScreen() {
                   onPress={() => handleReport(pair.desc1_id)}
                   hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                 >
-                  <Text style={[styles.reportText, { color: colors.textMuted }]}>Report</Text>
+                  <Text style={[styles.reportText, { color: colors.textMuted }]}>{t('vote.report')}</Text>
                 </TouchableOpacity>
               </Animated.View>
               {selectedCard === 1 && (
                 <Animated.View style={[styles.pickBadge, { backgroundColor: colors.primary }, badgeStyle]}>
-                  <Text style={styles.pickBadgeText}>YOUR PICK {'\u2713'}</Text>
+                  <Text style={styles.pickBadgeText}>{t('vote.your_pick')}</Text>
                 </Animated.View>
               )}
             </View>
@@ -373,12 +373,12 @@ export default function VoteScreen() {
                   onPress={() => handleReport(pair.desc2_id)}
                   hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                 >
-                  <Text style={[styles.reportText, { color: colors.textMuted }]}>Report</Text>
+                  <Text style={[styles.reportText, { color: colors.textMuted }]}>{t('vote.report')}</Text>
                 </TouchableOpacity>
               </Animated.View>
               {selectedCard === 2 && (
                 <Animated.View style={[styles.pickBadge, { backgroundColor: colors.primary }, badgeStyle]}>
-                  <Text style={styles.pickBadgeText}>YOUR PICK {'\u2713'}</Text>
+                  <Text style={styles.pickBadgeText}>{t('vote.your_pick')}</Text>
                 </Animated.View>
               )}
             </View>

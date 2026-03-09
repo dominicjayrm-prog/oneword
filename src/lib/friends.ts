@@ -146,27 +146,35 @@ function escapeIlike(str: string): string {
   return str.replace(/([%_\\])/g, '\\$1');
 }
 
-export async function searchUsers(query: string, currentUserId: string): Promise<UserSearchResult[]> {
+export const SEARCH_PAGE_SIZE = 10;
+
+export async function searchUsers(
+  query: string,
+  currentUserId: string,
+  offset = 0,
+): Promise<UserSearchResult[]> {
   if (!rateLimits.search()) return [];
 
   // Try RPC first (has server-side escaping)
   const { data, error } = await supabase.rpc('search_users', {
     p_query: query,
     p_current_user: currentUserId,
+    p_limit: SEARCH_PAGE_SIZE,
+    p_offset: offset,
   });
 
   if (!error) return data ?? [];
 
   // Fallback: direct table query if RPC doesn't exist yet
   // Escape ILIKE wildcards to prevent injection
-  console.warn('search_users RPC failed, using fallback:', error.message);
+  console.warn('search_users RPC failed, using fallback');
   const safeQuery = escapeIlike(query);
   const { data: profiles, error: profileError } = await supabase
     .from('profiles')
     .select('id, username, avatar_url, current_streak')
     .ilike('username', `%${safeQuery}%`)
     .neq('id', currentUserId)
-    .limit(10);
+    .range(offset, offset + SEARCH_PAGE_SIZE - 1);
 
   if (profileError || !profiles) return [];
 

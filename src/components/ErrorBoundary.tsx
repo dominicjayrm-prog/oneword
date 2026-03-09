@@ -22,7 +22,9 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, info: React.ErrorInfo) {
-    console.error('App crash caught by ErrorBoundary:', error, info.componentStack);
+    // Only log error name/message to console — avoid leaking PII from component props.
+    // Full details go to Sentry where access is controlled.
+    console.error('App crash caught by ErrorBoundary:', error.name, error.message);
     Sentry.captureException(error, { extra: { componentStack: info.componentStack } });
   }
 

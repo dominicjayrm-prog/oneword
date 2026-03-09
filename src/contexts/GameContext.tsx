@@ -73,8 +73,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
         setHasSubmitted(false);
         setUserDescription(null);
       }
-    } catch (err) {
-      console.error('Failed to fetch today word:', err);
+    } catch {
+      console.error('Failed to fetch today word');
       setLoadError(true);
     } finally {
       setLoading(false);
@@ -170,8 +170,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
         p_limit: 20,
       }));
       return data ?? [];
-    } catch (err) {
-      console.error('Failed to get leaderboard:', err);
+    } catch {
+      console.error('Failed to get leaderboard');
       return [];
     }
   }

@@ -664,6 +664,7 @@ const styles = StyleSheet.create({
   verifyEmoji: {
     fontSize: 64,
     marginBottom: spacing.lg,
+    textAlign: 'center',
   },
   verifyTitle: {
     fontSize: fontSize.xl,

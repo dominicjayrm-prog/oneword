@@ -92,10 +92,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
       return { error: new Error('Your description must be exactly 5 words.') };
     }
 
-    // Each word must contain at least 2 letters and no repeated char spam (e.g. "aaaa")
+    // Each word must contain at least one letter and no repeated char spam (e.g. "aaaa")
     for (const w of words) {
-      if (!/[a-zA-ZÀ-ÿ]{2,}/.test(w)) {
-        return { error: new Error('Each word must contain at least 2 letters.') };
+      if (!/[a-zA-ZÀ-ÿ]/.test(w)) {
+        return { error: new Error('Each word must contain at least one letter.') };
       }
       if (/^(.)\1+$/.test(w)) {
         return { error: new Error('Please use real words in your description.') };

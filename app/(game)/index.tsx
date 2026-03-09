@@ -57,6 +57,15 @@ export default function HomeScreen() {
 
   const [refreshing, setRefreshing] = useState(false);
 
+  const resentTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Cleanup timers on unmount
+  useEffect(() => {
+    return () => {
+      if (resentTimerRef.current) clearTimeout(resentTimerRef.current);
+    };
+  }, []);
+
   const wordCount = input.trim().split(/\s+/).filter(Boolean).length;
   const isExactlyFive = wordCount === 5;
   const prevWordCount = useRef(0);
@@ -138,7 +147,8 @@ export default function HomeScreen() {
     await resendVerification();
     setResending(false);
     setResent(true);
-    setTimeout(() => setResent(false), 3000);
+    if (resentTimerRef.current) clearTimeout(resentTimerRef.current);
+    resentTimerRef.current = setTimeout(() => setResent(false), 3000);
   }
 
   async function handleForgotPassword() {

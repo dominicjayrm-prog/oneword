@@ -44,6 +44,11 @@ export default function VoteScreen() {
   const [loadError, setLoadError] = useState(false);
   const [selectedCard, setSelectedCard] = useState<1 | 2 | null>(null);
 
+  const mountedRef = useRef(true);
+  useEffect(() => {
+    return () => { mountedRef.current = false; };
+  }, []);
+
   // Animation shared values
   const card1TranslateX = useSharedValue(-300);
   const card1Opacity = useSharedValue(0);
@@ -153,6 +158,7 @@ export default function VoteScreen() {
 
     // Wait for visual feedback
     await new Promise((r) => setTimeout(r, 600));
+    if (!mountedRef.current) return;
 
     // Slide out
     if (winnerIsCard1) {
@@ -167,6 +173,7 @@ export default function VoteScreen() {
     vsOpacity.value = withTiming(0, { duration: 200 });
 
     await new Promise((r) => setTimeout(r, 300));
+    if (!mountedRef.current) return;
 
     if (newCount >= MAX_VOTES) {
       haptic.success();

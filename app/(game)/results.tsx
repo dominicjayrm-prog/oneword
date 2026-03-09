@@ -45,6 +45,10 @@ export default function ResultsScreen() {
   const [tab, setTab] = useState<'global' | 'friends'>('global');
 
   const shareCardRef = useRef<View>(null);
+  const mountedRef = useRef(true);
+  useEffect(() => {
+    return () => { mountedRef.current = false; };
+  }, []);
 
   const loadResults = useCallback(async () => {
     setLoadError(false);
@@ -94,6 +98,7 @@ export default function ResultsScreen() {
       });
       setShowPreview(false);
       await new Promise((r) => setTimeout(r, 300));
+      if (!mountedRef.current) return;
       await Sharing.shareAsync(uri, {
         mimeType: 'image/png',
         dialogTitle: t('results.share_dialog_title'),

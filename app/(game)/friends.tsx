@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { View, Text, StyleSheet, ScrollView, RefreshControl } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useAuthContext } from '../../src/contexts/AuthContext';
@@ -42,6 +42,7 @@ export default function FriendsScreen() {
   const [loadError, setLoadError] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
+  const processingRef = useRef(new Set<string>());
 
   const loadData = useCallback(async () => {
     if (!userId) return;
@@ -76,37 +77,50 @@ export default function FriendsScreen() {
   }, [loadData]);
 
   async function handleAccept(friendshipId: string) {
+    if (processingRef.current.has(friendshipId)) return;
+    processingRef.current.add(friendshipId);
     // Optimistic: remove from requests immediately
     setRequests((prev) => prev.filter((r) => r.friendship_id !== friendshipId));
     try {
       await acceptFriendRequest(friendshipId);
       showToast(t('success.friend_accepted'), 'success');
-      loadData();
+      // Reload to pick up the new friend in the friends list
+      await loadData();
     } catch {
       showToast(t('errors.generic'), 'error');
-      loadData(); // reload to restore state
+      await loadData(); // reload to restore state
+    } finally {
+      processingRef.current.delete(friendshipId);
     }
   }
 
   async function handleDecline(friendshipId: string) {
+    if (processingRef.current.has(friendshipId)) return;
+    processingRef.current.add(friendshipId);
     // Optimistic: remove from requests immediately
     setRequests((prev) => prev.filter((r) => r.friendship_id !== friendshipId));
     try {
       await declineFriendRequest(friendshipId);
     } catch {
       showToast(t('errors.generic'), 'error');
-      loadData();
+      await loadData();
+    } finally {
+      processingRef.current.delete(friendshipId);
     }
   }
 
   async function handleRemove(friendshipId: string) {
+    if (processingRef.current.has(friendshipId)) return;
+    processingRef.current.add(friendshipId);
     // Optimistic: remove from list immediately
     setFriends((prev) => prev.filter((f) => f.friendship_id !== friendshipId));
     try {
       await removeFriend(friendshipId);
     } catch {
       showToast(t('errors.generic'), 'error');
-      loadData();
+      await loadData();
+    } finally {
+      processingRef.current.delete(friendshipId);
     }
   }
 

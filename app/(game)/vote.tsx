@@ -44,6 +44,11 @@ export default function VoteScreen() {
   const [loadError, setLoadError] = useState(false);
   const [selectedCard, setSelectedCard] = useState<1 | 2 | null>(null);
 
+  const mountedRef = useRef(true);
+  useEffect(() => {
+    return () => { mountedRef.current = false; };
+  }, []);
+
   // Animation shared values
   const card1TranslateX = useSharedValue(-300);
   const card1Opacity = useSharedValue(0);
@@ -153,6 +158,7 @@ export default function VoteScreen() {
 
     // Wait for visual feedback
     await new Promise((r) => setTimeout(r, 600));
+    if (!mountedRef.current) return;
 
     // Slide out
     if (winnerIsCard1) {
@@ -167,6 +173,7 @@ export default function VoteScreen() {
     vsOpacity.value = withTiming(0, { duration: 200 });
 
     await new Promise((r) => setTimeout(r, 300));
+    if (!mountedRef.current) return;
 
     if (newCount >= MAX_VOTES) {
       haptic.success();
@@ -341,12 +348,12 @@ export default function VoteScreen() {
                   onPress={() => handleReport(pair.desc1_id)}
                   hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                 >
-                  <Text style={[styles.reportText, { color: colors.textMuted }]}>Report</Text>
+                  <Text style={[styles.reportText, { color: colors.textMuted }]}>{t('vote.report')}</Text>
                 </TouchableOpacity>
               </Animated.View>
               {selectedCard === 1 && (
                 <Animated.View style={[styles.pickBadge, { backgroundColor: colors.primary }, badgeStyle]}>
-                  <Text style={styles.pickBadgeText}>YOUR PICK {'\u2713'}</Text>
+                  <Text style={styles.pickBadgeText}>{t('vote.your_pick')}</Text>
                 </Animated.View>
               )}
             </View>
@@ -373,12 +380,12 @@ export default function VoteScreen() {
                   onPress={() => handleReport(pair.desc2_id)}
                   hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                 >
-                  <Text style={[styles.reportText, { color: colors.textMuted }]}>Report</Text>
+                  <Text style={[styles.reportText, { color: colors.textMuted }]}>{t('vote.report')}</Text>
                 </TouchableOpacity>
               </Animated.View>
               {selectedCard === 2 && (
                 <Animated.View style={[styles.pickBadge, { backgroundColor: colors.primary }, badgeStyle]}>
-                  <Text style={styles.pickBadgeText}>YOUR PICK {'\u2713'}</Text>
+                  <Text style={styles.pickBadgeText}>{t('vote.your_pick')}</Text>
                 </Animated.View>
               )}
             </View>

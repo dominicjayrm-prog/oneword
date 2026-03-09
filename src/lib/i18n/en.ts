@@ -91,6 +91,7 @@ export default {
     back_home: 'BACK HOME',
     no_pairs: 'No pairs available yet',
     report: 'Report',
+    your_pick: 'YOUR PICK \u2713',
     report_title: 'Report Description',
     report_message: 'Flag this description as inappropriate?',
     report_cancel: 'Cancel',
@@ -108,6 +109,7 @@ export default {
     back_home: 'BACK HOME',
     share_preview: 'Share Preview',
     share_btn: 'SHARE',
+    share_dialog_title: 'Share your OneWord result',
     cancel: 'CANCEL',
   },
 

@@ -126,7 +126,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         const { data: newProfile } = await supabase
           .from('profiles')
-          .insert({ id: userId, username, language: lang })
+          .upsert({ id: userId, username, language: lang }, { onConflict: 'id' })
           .select('*')
           .single();
 
@@ -214,14 +214,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       if (!existingProfile) {
-        // Trigger didn't create the profile — create it manually
+        // Trigger didn't create the profile — create it manually (upsert to avoid race with onAuthStateChange)
         await supabase
           .from('profiles')
-          .insert({
+          .upsert({
             id: data.user.id,
             username,
             language: userLang,
-          });
+          }, { onConflict: 'id' });
       } else if (existingProfile.username !== username && existingProfile.username.startsWith('player_')) {
         // Trigger created a fallback username — update to the real one
         await supabase

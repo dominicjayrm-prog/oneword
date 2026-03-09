@@ -193,6 +193,8 @@ export default {
     logout_confirm: 'Are you sure you want to log out?',
     max_friends: "You've reached the friend limit (50)",
     username_taken: 'This username is already taken',
+    username_length: 'Username must be 3-20 characters',
+    username_format: 'Username can only contain letters, numbers, and underscores',
     invalid_email: 'Enter a valid email address',
     password_short: 'Password must be at least 6 characters',
     wrong_credentials: 'Incorrect email or password',

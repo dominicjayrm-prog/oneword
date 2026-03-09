@@ -58,7 +58,9 @@ export function FriendsLeaderboard() {
     );
   }
 
-  const played = descriptions.filter((d) => d.description_text);
+  const played = descriptions
+    .filter((d) => d.description_text)
+    .sort((a, b) => (b.vote_count ?? 0) - (a.vote_count ?? 0));
   const notPlayed = descriptions.filter((d) => !d.description_text);
 
   return (

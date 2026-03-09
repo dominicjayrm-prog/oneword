@@ -193,6 +193,8 @@ export default {
     logout_confirm: '\u00BFSeguro que quieres cerrar sesi\u00F3n?',
     max_friends: 'Has alcanzado el l\u00EDmite de amigos (50)',
     username_taken: 'Este nombre de usuario ya est\u00E1 en uso',
+    username_length: 'El nombre de usuario debe tener entre 3 y 20 caracteres',
+    username_format: 'El nombre de usuario solo puede contener letras, n\u00FAmeros y guiones bajos',
     invalid_email: 'Introduce un correo v\u00E1lido',
     password_short: 'La contrase\u00F1a debe tener al menos 6 caracteres',
     wrong_credentials: 'Correo o contrase\u00F1a incorrectos',

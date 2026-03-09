@@ -9,8 +9,6 @@ import Animated, {
   withSpring,
   withDelay,
   withSequence,
-  runOnJS,
-  Easing,
 } from 'react-native-reanimated';
 import { useAuthContext } from '../../src/contexts/AuthContext';
 import { useGameContext } from '../../src/contexts/GameContext';
@@ -21,11 +19,10 @@ import { ThemeToggle } from '../../src/components/ThemeToggle';
 import { LoadingSpinner } from '../../src/components/LoadingSpinner';
 import { EmptyState } from '../../src/components/EmptyState';
 import { useToast } from '../../src/components/Toast';
+import { VOTE_BATCH_SIZE } from '../../src/constants/app';
 import { fontSize, spacing, borderRadius } from '../../src/constants/theme';
 import { haptic } from '../../src/lib/haptics';
 import type { VotePair } from '../../src/types/database';
-
-const MAX_VOTES = 15;
 
 export default function VoteScreen() {
   const router = useRouter();
@@ -43,6 +40,8 @@ export default function VoteScreen() {
   const [voting, setVoting] = useState(false);
   const [loadError, setLoadError] = useState(false);
   const [selectedCard, setSelectedCard] = useState<1 | 2 | null>(null);
+  // How many pairs we've shown this session (caps at VOTE_BATCH_SIZE per visit)
+  const pairsShownRef = useRef(0);
 
   const mountedRef = useRef(true);
   useEffect(() => {
@@ -58,7 +57,6 @@ export default function VoteScreen() {
   const card2Scale = useSharedValue(1);
   const vsOpacity = useSharedValue(0);
   const badgeScale = useSharedValue(0);
-  const progressBarWidth = useSharedValue(0);
   const voteCountScale = useSharedValue(1);
 
   // Done screen animations
@@ -93,6 +91,8 @@ export default function VoteScreen() {
       const p = await getVotePair();
       if (!p) {
         setNoMorePairs(true);
+      } else {
+        pairsShownRef.current += 1;
       }
       setPair(p);
     } catch {
@@ -109,10 +109,8 @@ export default function VoteScreen() {
     }
   }, [pair, loading, animatePairIn]);
 
-  // Animate progress bar
+  // Animate vote count bump
   useEffect(() => {
-    const targetWidth = (voteCount / MAX_VOTES) * 100;
-    progressBarWidth.value = withTiming(targetWidth, { duration: 300, easing: Easing.out(Easing.cubic) });
     if (voteCount > 0) {
       voteCountScale.value = withSequence(
         withTiming(1.15, { duration: 100 }),
@@ -175,7 +173,9 @@ export default function VoteScreen() {
     await new Promise((r) => setTimeout(r, 300));
     if (!mountedRef.current) return;
 
-    if (newCount >= MAX_VOTES) {
+    // After VOTE_BATCH_SIZE pairs this session, take a break.
+    // User can revisit the tab later when new descriptions come in.
+    if (pairsShownRef.current >= VOTE_BATCH_SIZE) {
       haptic.success();
       setNoMorePairs(true);
     } else {
@@ -233,10 +233,6 @@ export default function VoteScreen() {
     opacity: badgeScale.value,
   }));
 
-  const progressFillStyle = useAnimatedStyle(() => ({
-    width: `${progressBarWidth.value}%`,
-  }));
-
   const voteCountAnimStyle = useAnimatedStyle(() => ({
     transform: [{ scale: voteCountScale.value }],
   }));
@@ -249,7 +245,8 @@ export default function VoteScreen() {
     opacity: doneTextOpacity.value,
   }));
 
-  if (noMorePairs || voteCount >= MAX_VOTES) {
+  // "All caught up" or "no pairs yet" screen
+  if (noMorePairs) {
     if (voteCount === 0) {
       return (
         <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -257,7 +254,7 @@ export default function VoteScreen() {
           <EmptyState
             emoji={'\uD83D\uDCDD'}
             title={t('vote.no_pairs')}
-            subtitle={t('empty.no_pairs')}
+            subtitle={t('vote.all_caught_up_subtitle')}
             actionLabel={t('vote.back_home')}
             onAction={() => router.replace('/')}
           />
@@ -276,13 +273,16 @@ export default function VoteScreen() {
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <ThemeToggle />
         <View style={[styles.center, { backgroundColor: colors.background }]}>
-          <Animated.Text style={[styles.doneEmoji, doneEmojiStyle]}>{'\uD83C\uDF89'}</Animated.Text>
+          <Animated.Text style={[styles.doneEmoji, doneEmojiStyle]}>{'\u2705'}</Animated.Text>
           <Animated.View style={doneTextStyle}>
             <Text style={[styles.doneTitle, { color: colors.text }]}>
-              {voteCount >= MAX_VOTES ? t('vote.done_title') : t('vote.no_more')}
+              {t('vote.all_caught_up')}
             </Text>
             <Text style={[styles.doneSubtitle, { color: colors.textSecondary }]}>
               {votedText}
+            </Text>
+            <Text style={[styles.doneHint, { color: colors.textMuted }]}>
+              {t('vote.all_caught_up_subtitle')}
             </Text>
           </Animated.View>
         </View>
@@ -300,15 +300,14 @@ export default function VoteScreen() {
       <View style={styles.header}>
         {todayWord && <WordDisplay word={todayWord.word} category={todayWord.category} />}
 
-        {/* Progress bar */}
-        <View style={styles.progressRow}>
-          <Animated.Text style={[styles.progress, { color: colors.textSecondary }, voteCountAnimStyle]}>
-            {t('vote.of', { current: voteCount + 1, total: MAX_VOTES })}
-          </Animated.Text>
-        </View>
-        <View style={[styles.progressTrack, { backgroundColor: colors.surfaceLight || colors.border }]}>
-          <Animated.View style={[styles.progressFill, { backgroundColor: colors.primary }, progressFillStyle]} />
-        </View>
+        {/* Vote count — informational only, not a cap */}
+        {voteCount > 0 && (
+          <View style={styles.progressRow}>
+            <Animated.Text style={[styles.progress, { color: colors.textSecondary }, voteCountAnimStyle]}>
+              {t('vote.pair_count', { current: voteCount, total: pairsShownRef.current })}
+            </Animated.Text>
+          </View>
+        )}
 
         <Text style={[styles.instruction, { color: colors.textMuted }]}>{t('vote.tap_prefer')}</Text>
       </View>
@@ -416,17 +415,6 @@ const styles = StyleSheet.create({
   progress: {
     fontSize: fontSize.sm,
   },
-  progressTrack: {
-    width: '60%',
-    height: 4,
-    borderRadius: 2,
-    marginTop: spacing.xs,
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: '100%',
-    borderRadius: 2,
-  },
   instruction: {
     fontSize: fontSize.md,
     marginTop: spacing.xs,
@@ -497,6 +485,11 @@ const styles = StyleSheet.create({
   doneSubtitle: {
     fontSize: fontSize.md,
     textAlign: 'center',
+  },
+  doneHint: {
+    fontSize: fontSize.sm,
+    textAlign: 'center',
+    marginTop: spacing.sm,
   },
   actions: {
     gap: spacing.md,

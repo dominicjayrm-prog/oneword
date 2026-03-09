@@ -11,7 +11,7 @@ export default {
     screen2_title: '\u00BFCu\u00E1l es mejor?',
     screen2_subtitle: 'Toca para votar. Las mejores suben arriba.',
     screen2_pick: 'TU ELECCI\u00D3N \u2713',
-    screen2_progress: 'voto 4 de 15',
+    screen2_progress: 'Toca el que prefieras',
     screen2_desc1: 'Piscina infinita sin cloro gratis',
     screen2_desc2: 'Dios llenó la bañera entera',
     screen3_label: 'SUBE EN EL RANKING',
@@ -81,10 +81,10 @@ export default {
 
   // Voting
   vote: {
-    of: '{{current}} de {{total}}',
+    pair_count: '{{current}} de {{total}}',
     tap_prefer: 'Toca el que prefieras',
-    done_title: '\u00A1Votaci\u00F3n completa!',
-    no_more: 'No hay m\u00E1s pares',
+    all_caught_up: '\u00A1Todo al d\u00EDa!',
+    all_caught_up_subtitle: 'Vuelve m\u00E1s tarde cuando m\u00E1s jugadores env\u00EDen.',
     voted_on: 'Votaste {{count}} par',
     voted_on_plural: 'Votaste {{count}} pares',
     see_results: 'VER RESULTADOS',

@@ -11,7 +11,7 @@ export default {
     screen2_title: 'Which is better?',
     screen2_subtitle: 'Tap to vote. The best descriptions rise to the top.',
     screen2_pick: 'YOUR PICK \u2713',
-    screen2_progress: 'vote 4 of 15',
+    screen2_progress: 'Tap the one you prefer',
     screen2_desc1: 'Where fish pay no rent',
     screen2_desc2: "God's swimming pool, no lifeguard",
     screen3_label: 'CLIMB THE RANKS',
@@ -81,10 +81,10 @@ export default {
 
   // Voting
   vote: {
-    of: '{{current}} of {{total}}',
+    pair_count: '{{current}} of {{total}}',
     tap_prefer: 'Tap the one you prefer',
-    done_title: 'Voting Complete!',
-    no_more: 'No More Pairs',
+    all_caught_up: 'All Caught Up!',
+    all_caught_up_subtitle: 'Check back later as more players submit.',
     voted_on: 'You voted on {{count}} pair',
     voted_on_plural: 'You voted on {{count}} pairs',
     see_results: 'SEE RESULTS',

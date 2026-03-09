@@ -10,6 +10,9 @@ export const PROFILE_POLL_BASE_MS = 200;
 /** Toast auto-dismiss duration */
 export const TOAST_DURATION_MS = 3_000;
 
+/** Voting: pairs shown per session before prompting to check back */
+export const VOTE_BATCH_SIZE = 15;
+
 /** Leaderboard */
 export const LEADERBOARD_LIMIT = 20;
 

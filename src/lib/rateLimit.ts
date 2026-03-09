@@ -43,8 +43,8 @@ export const rateLimits = {
   signIn: () => rateLimit('signIn', 5, 60_000),
   /** Sign up: 3 attempts per 120s */
   signUp: () => rateLimit('signUp', 3, 120_000),
-  /** Vote: 20 per 30s (generous, but prevents automated spam) */
-  vote: () => rateLimit('vote', 20, 30_000),
+  /** Vote: 30 per 30s (matches server-side rate trigger) */
+  vote: () => rateLimit('vote', 30, 30_000),
   /** Friend request: 10 per 60s */
   friendRequest: () => rateLimit('friendRequest', 10, 60_000),
   /** Search: 15 per 10s */

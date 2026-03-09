@@ -28,7 +28,7 @@ export default function HomeScreen() {
   const router = useRouter();
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const { session, profile, loading: authLoading, signIn, signUp, language, updateLanguage, pendingVerification, resendVerification, clearPendingVerification } = useAuthContext();
+  const { session, profile, loading: authLoading, signIn, signUp, language, updateLanguage, pendingVerification, resendVerification, clearPendingVerification, passwordRecovery, resetPassword, updatePassword } = useAuthContext();
   const { todayWord, hasSubmitted, userDescription, loading: gameLoading, loadError: gameError, submitDescription, refresh } = useGameContext();
 
   const { showToast } = useToast();
@@ -45,6 +45,13 @@ export default function HomeScreen() {
   const [selectedLang, setSelectedLang] = useState(language);
   const [resending, setResending] = useState(false);
   const [resent, setResent] = useState(false);
+  const [forgotMode, setForgotMode] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
+  const [resetSent, setResetSent] = useState(false);
+  const [resetLoading, setResetLoading] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [resetError, setResetError] = useState('');
 
   const wordCount = input.trim().split(/\s+/).filter(Boolean).length;
   const isExactlyFive = wordCount === 5;
@@ -112,6 +119,44 @@ export default function HomeScreen() {
     setTimeout(() => setResent(false), 3000);
   }
 
+  async function handleForgotPassword() {
+    setResetError('');
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(resetEmail)) {
+      setResetError(t('errors.invalid_email'));
+      return;
+    }
+    setResetLoading(true);
+    const { error } = await resetPassword(resetEmail);
+    setResetLoading(false);
+    if (error) {
+      setResetError(error.message);
+    } else {
+      setResetSent(true);
+    }
+  }
+
+  async function handleSetNewPassword() {
+    setResetError('');
+    if (newPassword.length < 6) {
+      setResetError(t('errors.password_short'));
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setResetError(t('auth.passwords_no_match'));
+      return;
+    }
+    setResetLoading(true);
+    const { error } = await updatePassword(newPassword);
+    setResetLoading(false);
+    if (error) {
+      setResetError(error.message);
+    } else {
+      setNewPassword('');
+      setConfirmPassword('');
+    }
+  }
+
   function handleLangSwitch(lang: string) {
     setSelectedLang(lang);
     updateLanguage(lang);
@@ -135,6 +180,48 @@ export default function HomeScreen() {
           onRetry={refresh}
         />
       </View>
+    );
+  }
+
+  // User clicked the reset link in email — show "Set new password" form
+  if (passwordRecovery) {
+    return (
+      <KeyboardAvoidingView
+        style={[styles.container, { backgroundColor: colors.background }]}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+        <ThemeToggle />
+        <ScrollView contentContainerStyle={styles.authContainer} keyboardShouldPersistTaps="handled">
+          <Text style={styles.verifyEmoji}>{'\uD83D\uDD12'}</Text>
+          <Text style={[styles.verifyTitle, { color: colors.text }]}>{t('auth.new_password_title')}</Text>
+          <Text style={[styles.verifySubtitle, { color: colors.textSecondary }]}>{t('auth.new_password_subtitle')}</Text>
+          <View style={styles.authForm}>
+            <TextInput
+              style={[styles.input, { backgroundColor: colors.surface, color: colors.text, borderColor: colors.border }]}
+              placeholder={t('auth.new_password')}
+              placeholderTextColor={colors.textMuted}
+              value={newPassword}
+              onChangeText={setNewPassword}
+              secureTextEntry
+            />
+            <TextInput
+              style={[styles.input, { backgroundColor: colors.surface, color: colors.text, borderColor: colors.border }]}
+              placeholder={t('auth.confirm_password')}
+              placeholderTextColor={colors.textMuted}
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+              secureTextEntry
+            />
+            {resetError ? <Text style={[styles.error, { color: colors.error }]}>{resetError}</Text> : null}
+            <Button
+              title={t('auth.set_password')}
+              onPress={handleSetNewPassword}
+              loading={resetLoading}
+              disabled={!newPassword || !confirmPassword}
+            />
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     );
   }
 
@@ -168,6 +255,69 @@ export default function HomeScreen() {
   }
 
   if (!session || showAuth) {
+    // "Reset link sent" confirmation screen
+    if (resetSent) {
+      return (
+        <View style={[styles.container, { backgroundColor: colors.background }]}>
+          <ThemeToggle />
+          <View style={[styles.center, { backgroundColor: colors.background }]}>
+            <Text style={styles.verifyEmoji}>{'\u2709\uFE0F'}</Text>
+            <Text style={[styles.verifyTitle, { color: colors.text }]}>{t('auth.reset_sent_title')}</Text>
+            <Text style={[styles.verifySubtitle, { color: colors.textSecondary }]}>
+              {t('auth.reset_sent_subtitle', { email: resetEmail })}
+            </Text>
+            <View style={styles.verifyActions}>
+              <Button
+                title={t('auth.verify_back')}
+                onPress={() => { setResetSent(false); setForgotMode(false); setResetEmail(''); }}
+                variant="outline"
+              />
+            </View>
+          </View>
+        </View>
+      );
+    }
+
+    // "Forgot password" email entry screen
+    if (forgotMode) {
+      return (
+        <KeyboardAvoidingView
+          style={[styles.container, { backgroundColor: colors.background }]}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        >
+          <ThemeToggle />
+          <ScrollView contentContainerStyle={styles.authContainer} keyboardShouldPersistTaps="handled">
+            <Text style={styles.verifyEmoji}>{'\uD83D\uDD11'}</Text>
+            <Text style={[styles.verifyTitle, { color: colors.text }]}>{t('auth.forgot_title')}</Text>
+            <Text style={[styles.verifySubtitle, { color: colors.textSecondary }]}>{t('auth.forgot_subtitle')}</Text>
+            <View style={styles.authForm}>
+              <TextInput
+                style={[styles.input, { backgroundColor: colors.surface, color: colors.text, borderColor: colors.border }]}
+                placeholder={t('auth.signup_email')}
+                placeholderTextColor={colors.textMuted}
+                value={resetEmail}
+                onChangeText={setResetEmail}
+                autoCapitalize="none"
+                keyboardType="email-address"
+              />
+              {resetError ? <Text style={[styles.error, { color: colors.error }]}>{resetError}</Text> : null}
+              <Button
+                title={t('auth.forgot_send')}
+                onPress={handleForgotPassword}
+                loading={resetLoading}
+                disabled={!resetEmail}
+              />
+              <Button
+                title={t('auth.verify_back')}
+                onPress={() => { setForgotMode(false); setResetError(''); }}
+                variant="outline"
+              />
+            </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      );
+    }
+
     return (
       <KeyboardAvoidingView
         style={[styles.container, { backgroundColor: colors.background }]}
@@ -253,6 +403,11 @@ export default function HomeScreen() {
               loading={authLoading2}
               disabled={!email || !password || (authMode === 'signup' && !username)}
             />
+            {authMode === 'signin' && (
+              <TouchableOpacity onPress={() => setForgotMode(true)} activeOpacity={0.7}>
+                <Text style={[styles.forgotLink, { color: colors.primary }]}>{t('auth.forgot_link')}</Text>
+              </TouchableOpacity>
+            )}
             <Button
               title={authMode === 'signin' ? t('auth.login_link') : t('auth.signup_link')}
               onPress={() => setAuthMode(authMode === 'signin' ? 'signup' : 'signin')}
@@ -500,6 +655,11 @@ const styles = StyleSheet.create({
   noWordSub: {
     fontSize: fontSize.md,
     marginTop: spacing.sm,
+  },
+  forgotLink: {
+    fontSize: fontSize.sm,
+    textAlign: 'center',
+    fontWeight: '600',
   },
   verifyEmoji: {
     fontSize: 64,

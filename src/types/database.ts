@@ -12,6 +12,7 @@ export interface Profile {
   username: string;
   avatar_url: string | null;
   language: string;
+  timezone: string;
   current_streak: number;
   longest_streak: number;
   total_plays: number;

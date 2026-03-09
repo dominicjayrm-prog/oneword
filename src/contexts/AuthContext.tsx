@@ -110,6 +110,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
+  async function syncTimezone(userId: string, storedTimezone: string | null) {
+    try {
+      const deviceTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      if (deviceTimezone && deviceTimezone !== storedTimezone) {
+        await supabase
+          .from('profiles')
+          .update({ timezone: deviceTimezone })
+          .eq('id', userId);
+      }
+    } catch {
+      // Non-critical — don't block profile load if timezone sync fails
+    }
+  }
+
   async function fetchProfile(userId: string) {
     try {
       const { data, error } = await supabase
@@ -123,10 +137,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const { data: { user } } = await supabase.auth.getUser();
         const username = user?.user_metadata?.username || 'player_' + userId.slice(0, 8);
         const lang = user?.user_metadata?.language || 'en';
+        const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
 
         const { data: newProfile } = await supabase
           .from('profiles')
-          .upsert({ id: userId, username, language: lang }, { onConflict: 'id' })
+          .upsert({ id: userId, username, language: lang, timezone }, { onConflict: 'id' })
           .select('*')
           .single();
 
@@ -145,6 +160,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (data?.language) {
         setLanguage(data.language);
         i18n.changeLanguage(data.language);
+      }
+      // Sync timezone in the background on every profile fetch (handles travel/relocation)
+      if (data) {
+        syncTimezone(userId, data.timezone);
       }
     } catch {
       console.error('Profile fetch error');
@@ -165,6 +184,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { error: new Error('Too many attempts. Please wait a moment.') };
     }
     const userLang = lang || language;
+    const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -180,6 +200,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             id: data.user.id,
             username,
             language: userLang,
+            timezone: userTimezone,
           }, { onConflict: 'id' });
         if (profileError) {
           return { error: new Error(profileError.message) };
@@ -222,6 +243,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             id: data.user.id,
             username,
             language: userLang,
+            timezone: userTimezone,
           }, { onConflict: 'id' });
       } else if (existingProfile.username !== username && existingProfile.username.startsWith('player_')) {
         // Trigger created a fallback username — update to the real one

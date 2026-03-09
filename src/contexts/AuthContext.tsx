@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from '
 import { Linking } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { rateLimits, resetRateLimit } from '../lib/rateLimit';
+import { PROFILE_POLL_MAX_RETRIES, PROFILE_POLL_BASE_MS } from '../constants/app';
 import i18n from '../lib/i18n';
 import type { Session } from '@supabase/supabase-js';
 import type { Profile } from '../types/database';
@@ -26,25 +27,9 @@ interface AuthContextType {
   updatePassword: (newPassword: string) => Promise<{ error: Error | null }>;
 }
 
-const AuthContext = createContext<AuthContextType>({
-  session: null,
-  profile: null,
-  loading: true,
-  language: i18n.language,
-  pendingVerification: null,
-  passwordRecovery: false,
-  signUp: async () => ({ error: null }),
-  signIn: async () => ({ error: null }),
-  signOut: async () => {},
-  refreshProfile: async () => {},
-  updateAvatar: async () => ({ error: null }),
-  updateLanguage: async () => ({ error: null }),
-  deleteAccount: async () => ({ error: null }),
-  resendVerification: async () => ({ error: null }),
-  clearPendingVerification: () => {},
-  resetPassword: async () => ({ error: null }),
-  updatePassword: async () => ({ error: null }),
-});
+// Strict default: throws if used outside <AuthProvider>.
+// This catches bugs early instead of silently returning null/noop stubs.
+const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
@@ -222,7 +207,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Poll for the profile (trigger may take a moment to complete)
       // Exponential backoff: 200ms, 400ms, 800ms, 1600ms, 3200ms
       let existingProfile = null;
-      for (let attempt = 0; attempt < 5; attempt++) {
+      for (let attempt = 0; attempt < PROFILE_POLL_MAX_RETRIES; attempt++) {
         const { data: profile } = await supabase
           .from('profiles')
           .select('id, username')
@@ -232,7 +217,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           existingProfile = profile;
           break;
         }
-        await new Promise((resolve) => setTimeout(resolve, 200 * Math.pow(2, attempt)));
+        await new Promise((resolve) => setTimeout(resolve, PROFILE_POLL_BASE_MS * Math.pow(2, attempt)));
       }
 
       if (!existingProfile) {
@@ -345,5 +330,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 }
 
 export function useAuthContext() {
-  return useContext(AuthContext);
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuthContext must be used within an <AuthProvider>');
+  }
+  return context;
 }

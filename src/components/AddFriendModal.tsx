@@ -8,13 +8,12 @@ import {
   TouchableOpacity,
   FlatList,
   ActivityIndicator,
-  Alert,
-  Platform,
   Animated,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../contexts/ThemeContext';
-import { searchUsers, sendFriendRequest, type UserSearchResult } from '../lib/friends';
+import { useToast } from './Toast';
+import { searchUsers, sendFriendRequest, SEARCH_PAGE_SIZE, type UserSearchResult } from '../lib/friends';
 import { fontSize, spacing, borderRadius } from '../constants/theme';
 import { haptic } from '../lib/haptics';
 
@@ -29,6 +28,7 @@ function SuccessToast({ visible, username, colors }: { visible: boolean; usernam
   const { t } = useTranslation();
   const opacity = useRef(new Animated.Value(0)).current;
   const scale = useRef(new Animated.Value(0.8)).current;
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (visible) {
@@ -36,7 +36,7 @@ function SuccessToast({ visible, username, colors }: { visible: boolean; usernam
         Animated.spring(scale, { toValue: 1, friction: 6, tension: 120, useNativeDriver: true }),
         Animated.timing(opacity, { toValue: 1, duration: 200, useNativeDriver: true }),
       ]).start(() => {
-        setTimeout(() => {
+        timerRef.current = setTimeout(() => {
           Animated.parallel([
             Animated.timing(opacity, { toValue: 0, duration: 300, useNativeDriver: true }),
             Animated.timing(scale, { toValue: 0.8, duration: 300, useNativeDriver: true }),
@@ -47,6 +47,10 @@ function SuccessToast({ visible, username, colors }: { visible: boolean; usernam
       opacity.setValue(0);
       scale.setValue(0.8);
     }
+
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
   }, [visible]);
 
   if (!visible) return null;
@@ -71,23 +75,45 @@ function SuccessToast({ visible, username, colors }: { visible: boolean; usernam
 export function AddFriendModal({ visible, onClose, currentUserId, onRequestSent }: Props) {
   const { t } = useTranslation();
   const { colors } = useTheme();
+  const { showToast } = useToast();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<UserSearchResult[]>([]);
   const [searching, setSearching] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
   const [sentIds, setSentIds] = useState<Set<string>>(new Set());
   const [toastUser, setToastUser] = useState<string | null>(null);
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const doSearch = useCallback(async (text: string) => {
+  // Cleanup timers on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceTimer.current) clearTimeout(debounceTimer.current);
+      if (toastTimer.current) clearTimeout(toastTimer.current);
+    };
+  }, []);
+
+  const doSearch = useCallback(async (text: string, offset = 0) => {
     if (text.trim().length < 2) {
       setResults([]);
       setSearching(false);
+      setHasMore(false);
       return;
     }
-    setSearching(true);
-    const data = await searchUsers(text.trim(), currentUserId);
-    setResults(data);
+    if (offset === 0) setSearching(true);
+    else setLoadingMore(true);
+
+    const data = await searchUsers(text.trim(), currentUserId, offset);
+
+    if (offset === 0) {
+      setResults(data);
+    } else {
+      setResults((prev) => [...prev, ...data]);
+    }
+    setHasMore(data.length >= SEARCH_PAGE_SIZE);
     setSearching(false);
+    setLoadingMore(false);
   }, [currentUserId]);
 
   function handleChangeText(text: string) {
@@ -96,21 +122,22 @@ export function AddFriendModal({ visible, onClose, currentUserId, onRequestSent 
     debounceTimer.current = setTimeout(() => doSearch(text), 300);
   }
 
+  function handleLoadMore() {
+    if (loadingMore || searching || !hasMore) return;
+    doSearch(query, results.length);
+  }
+
   async function handleSendRequest(userId: string, username: string) {
     haptic.medium();
     const { error } = await sendFriendRequest(currentUserId, userId);
     if (error) {
-      const msg = error.message;
-      if (Platform.OS === 'web') {
-        window.alert(msg);
-      } else {
-        Alert.alert('Error', msg);
-      }
+      showToast(error.message, 'error');
       return;
     }
     setSentIds((prev) => new Set(prev).add(userId));
     setToastUser(username);
-    setTimeout(() => setToastUser(null), 2500);
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    toastTimer.current = setTimeout(() => setToastUser(null), 2500);
     onRequestSent();
   }
 
@@ -118,6 +145,7 @@ export function AddFriendModal({ visible, onClose, currentUserId, onRequestSent 
     setQuery('');
     setResults([]);
     setSentIds(new Set());
+    setHasMore(false);
     onClose();
   }
 
@@ -198,6 +226,13 @@ export function AddFriendModal({ visible, onClose, currentUserId, onRequestSent 
               renderItem={renderResult}
               contentContainerStyle={styles.resultsList}
               keyboardShouldPersistTaps="handled"
+              onEndReached={handleLoadMore}
+              onEndReachedThreshold={0.3}
+              ListFooterComponent={
+                loadingMore ? (
+                  <ActivityIndicator style={styles.loadMoreSpinner} color={colors.primary} size="small" />
+                ) : null
+              }
             />
           )}
         </View>
@@ -246,6 +281,9 @@ const styles = StyleSheet.create({
   },
   loader: {
     marginTop: spacing.xl,
+  },
+  loadMoreSpinner: {
+    paddingVertical: spacing.md,
   },
   resultsList: {
     paddingBottom: spacing.lg,

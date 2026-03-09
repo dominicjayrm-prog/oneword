@@ -56,7 +56,7 @@ export function FriendsToday({ descriptions, wordText, userHasPlayed }: Props) {
           ) : fd.has_played && fd.description_text ? (
             <View style={styles.descRow}>
               <Text style={[styles.description, { color: colors.text }]} numberOfLines={2}>
-                &ldquo;{fd.description_text}&rdquo;
+                {'\u201C'}{fd.description_text}{'\u201D'}
               </Text>
             </View>
           ) : (

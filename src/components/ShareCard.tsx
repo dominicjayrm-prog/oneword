@@ -40,7 +40,7 @@ export const ShareCard = forwardRef<View, ShareCardProps>(
         {description && (
           <View style={styles.descriptionBox}>
             <Text style={styles.descriptionText}>
-              &ldquo;{description}&rdquo;
+              {'\u201C'}{description}{'\u201D'}
             </Text>
           </View>
         )}

@@ -68,9 +68,9 @@ export default {
     todays_word: 'LA PALABRA DE HOY',
     prompt: 'Descr\u00EDbela en exactamente 5 palabras',
     placeholder: 'Escribe tus cinco palabras...',
-    submit: 'ENVIAR',
+    submit: '\u00A1VA!',
     your_description: 'TU DESCRIPCI\u00D3N',
-    locked_in: 'Enviado',
+    locked_in: '\u00A1Listo!',
     vote_others: 'VOTAR OTROS',
     see_results: 'VER RESULTADOS',
     no_word: 'A\u00FAn no hay palabra para hoy.',
@@ -199,6 +199,8 @@ export default {
     invalid_email: 'Introduce un correo v\u00E1lido',
     password_short: 'La contrase\u00F1a debe tener al menos 6 caracteres',
     wrong_credentials: 'Correo o contrase\u00F1a incorrectos',
+    crash_title: '\u00A1Ups! Algo fall\u00F3',
+    crash_subtitle: 'La app se cerr\u00F3 inesperadamente. Intenta reiniciar.',
   },
 
   // Loading
@@ -228,8 +230,21 @@ export default {
     friend_sent: '\u00A1Solicitud enviada!',
     friend_request_subtitle: '@{{username}} verá tu solicitud',
     friend_accepted: '\u00A1Amigo a\u00F1adido!',
-    description_submitted: '\u00A1Registrado!',
+    description_submitted: '\u00A1Listo!',
     account_deleted: 'Cuenta eliminada',
+  },
+
+  // Common
+  common: {
+    cancel: 'Cancelar',
+    ok: 'Aceptar',
+  },
+
+  // Tab titles
+  tabs: {
+    today: 'Hoy',
+    vote: 'Votar',
+    results: 'Resultados',
   },
 
   // Language names

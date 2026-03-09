@@ -1,4 +1,5 @@
 import { View, Text, StyleSheet } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useTheme } from '../contexts/ThemeContext';
 import { fontSize, spacing, borderRadius } from '../constants/theme';
 
@@ -11,6 +12,7 @@ interface LeaderboardRowProps {
 }
 
 export function LeaderboardRow({ rank, username, description, votes, isCurrentUser }: LeaderboardRowProps) {
+  const { t } = useTranslation();
   const { colors } = useTheme();
 
   const getRankBg = () => {
@@ -37,7 +39,7 @@ export function LeaderboardRow({ rank, username, description, votes, isCurrentUs
       </View>
       <View style={styles.votesContainer}>
         <Text style={[styles.votes, { color: colors.primary }]}>{votes}</Text>
-        <Text style={[styles.votesLabel, { color: colors.textMuted }]}>votes</Text>
+        <Text style={[styles.votesLabel, { color: colors.textMuted }]}>{t('share.votes')}</Text>
       </View>
     </View>
   );

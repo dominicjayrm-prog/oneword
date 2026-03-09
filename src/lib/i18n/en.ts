@@ -199,6 +199,8 @@ export default {
     invalid_email: 'Enter a valid email address',
     password_short: 'Password must be at least 6 characters',
     wrong_credentials: 'Incorrect email or password',
+    crash_title: 'Oops! Something broke',
+    crash_subtitle: 'The app crashed unexpectedly. Try restarting.',
   },
 
   // Loading
@@ -230,6 +232,19 @@ export default {
     friend_accepted: 'Friend added!',
     description_submitted: 'Locked in!',
     account_deleted: 'Account deleted',
+  },
+
+  // Common
+  common: {
+    cancel: 'Cancel',
+    ok: 'OK',
+  },
+
+  // Tab titles
+  tabs: {
+    today: 'Today',
+    vote: 'Vote',
+    results: 'Results',
   },
 
   // Language names

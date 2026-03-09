@@ -82,21 +82,21 @@ export default function GameLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Today',
+          title: t('tabs.today'),
           tabBarIcon: () => <TabIcon emoji={'\uD83C\uDF0D'} />,
         }}
       />
       <Tabs.Screen
         name="vote"
         options={{
-          title: t('vote.see_results').includes('RESULT') ? 'Vote' : 'Votar',
+          title: t('tabs.vote'),
           tabBarIcon: () => <TabIcon emoji={'\uD83D\uDDF3\uFE0F'} />,
         }}
       />
       <Tabs.Screen
         name="results"
         options={{
-          title: t('results.leaderboard').includes('LEADER') ? 'Results' : 'Resultados',
+          title: t('tabs.results'),
           tabBarIcon: () => <TabIcon emoji={'\uD83C\uDFC6'} />,
         }}
       />

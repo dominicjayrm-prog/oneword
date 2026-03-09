@@ -11,14 +11,14 @@ import { useToast } from '../src/components/Toast';
 import { fontSize, spacing, borderRadius } from '../src/constants/theme';
 import { haptic } from '../src/lib/haptics';
 
-function confirm(title: string, message: string): Promise<boolean> {
+function confirmDialog(title: string, message: string, cancelText: string, okText: string): Promise<boolean> {
   if (Platform.OS === 'web') {
     return Promise.resolve(window.confirm(`${title}\n\n${message}`));
   }
   return new Promise((resolve) => {
     Alert.alert(title, message, [
-      { text: 'Cancel', style: 'cancel', onPress: () => resolve(false) },
-      { text: 'OK', onPress: () => resolve(true) },
+      { text: cancelText, style: 'cancel', onPress: () => resolve(false) },
+      { text: okText, onPress: () => resolve(true) },
     ]);
   });
 }
@@ -87,7 +87,7 @@ export default function ProfileScreen() {
 
   async function handleLogout() {
     haptic.warning();
-    const ok = await confirm(t('profile.log_out_title'), t('profile.log_out_message'));
+    const ok = await confirmDialog(t('profile.log_out_title'), t('profile.log_out_message'), t('common.cancel'), t('common.ok'));
     if (ok) {
       signOut();
     }
@@ -95,7 +95,7 @@ export default function ProfileScreen() {
 
   async function handleDeleteAccount() {
     haptic.error();
-    const ok = await confirm(t('profile.delete_title'), t('errors.delete_confirm'));
+    const ok = await confirmDialog(t('profile.delete_title'), t('errors.delete_confirm'), t('common.cancel'), t('common.ok'));
     if (!ok) return;
 
     setShowDeleteConfirm(true);
@@ -213,7 +213,7 @@ export default function ProfileScreen() {
               <Text style={styles.deleteConfirmBtnText}>{t('profile.delete_account')}</Text>
             </TouchableOpacity>
             <TouchableOpacity onPress={() => { setShowDeleteConfirm(false); setDeleteUsername(''); }}>
-              <Text style={[styles.cancelText, { color: colors.textMuted }]}>Cancel</Text>
+              <Text style={[styles.cancelText, { color: colors.textMuted }]}>{t('common.cancel')}</Text>
             </TouchableOpacity>
           </View>
         </View>

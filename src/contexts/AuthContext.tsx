@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import { Linking } from 'react-native';
 import { supabase } from '../lib/supabase';
 import i18n from '../lib/i18n';
 import type { Session } from '@supabase/supabase-js';
@@ -10,6 +11,7 @@ interface AuthContextType {
   loading: boolean;
   language: string;
   pendingVerification: string | null; // email address awaiting verification
+  passwordRecovery: boolean; // true when user clicked reset link and needs to set new password
   signUp: (email: string, password: string, username: string, lang?: string) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
@@ -19,6 +21,8 @@ interface AuthContextType {
   deleteAccount: () => Promise<{ error: Error | null }>;
   resendVerification: () => Promise<{ error: Error | null }>;
   clearPendingVerification: () => void;
+  resetPassword: (email: string) => Promise<{ error: Error | null }>;
+  updatePassword: (newPassword: string) => Promise<{ error: Error | null }>;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -27,6 +31,7 @@ const AuthContext = createContext<AuthContextType>({
   loading: true,
   language: i18n.language,
   pendingVerification: null,
+  passwordRecovery: false,
   signUp: async () => ({ error: null }),
   signIn: async () => ({ error: null }),
   signOut: async () => {},
@@ -36,6 +41,8 @@ const AuthContext = createContext<AuthContextType>({
   deleteAccount: async () => ({ error: null }),
   resendVerification: async () => ({ error: null }),
   clearPendingVerification: () => {},
+  resetPassword: async () => ({ error: null }),
+  updatePassword: async () => ({ error: null }),
 });
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -44,6 +51,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [language, setLanguage] = useState(i18n.language);
   const [pendingVerification, setPendingVerification] = useState<string | null>(null);
+  const [passwordRecovery, setPasswordRecovery] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -52,8 +60,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       else setLoading(false);
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session);
+      if (event === 'PASSWORD_RECOVERY') {
+        setPasswordRecovery(true);
+      }
       if (session?.user) {
         setPendingVerification(null);
         fetchProfile(session.user.id);
@@ -63,7 +74,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     });
 
-    return () => subscription.unsubscribe();
+    // Handle deep links (e.g. password reset link opens app with tokens in URL fragment)
+    function handleDeepLink(event: { url: string }) {
+      const url = event.url;
+      if (!url) return;
+      // Supabase appends tokens as hash fragment: oneword://reset-password#access_token=...&refresh_token=...
+      const hashIndex = url.indexOf('#');
+      if (hashIndex === -1) return;
+      const params = new URLSearchParams(url.substring(hashIndex + 1));
+      const accessToken = params.get('access_token');
+      const refreshToken = params.get('refresh_token');
+      if (accessToken && refreshToken) {
+        supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
+      }
+    }
+
+    // Check if app was opened via deep link
+    Linking.getInitialURL().then((url) => {
+      if (url) handleDeepLink({ url });
+    });
+    const linkingSub = Linking.addEventListener('url', handleDeepLink);
+
+    return () => {
+      subscription.unsubscribe();
+      linkingSub.remove();
+    };
   }, []);
 
   async function fetchProfile(userId: string) {
@@ -235,12 +270,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setPendingVerification(null);
   }
 
+  async function resetPassword(email: string) {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: 'oneword://reset-password',
+    });
+    return { error };
+  }
+
+  async function updatePassword(newPassword: string) {
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    if (!error) {
+      setPasswordRecovery(false);
+    }
+    return { error };
+  }
+
   async function signOut() {
     await supabase.auth.signOut();
   }
 
   return (
-    <AuthContext.Provider value={{ session, profile, loading, language, pendingVerification, signUp, signIn, signOut, refreshProfile, updateAvatar, updateLanguage, deleteAccount, resendVerification, clearPendingVerification }}>
+    <AuthContext.Provider value={{ session, profile, loading, language, pendingVerification, passwordRecovery, signUp, signIn, signOut, refreshProfile, updateAvatar, updateLanguage, deleteAccount, resendVerification, clearPendingVerification, resetPassword, updatePassword }}>
       {children}
     </AuthContext.Provider>
   );

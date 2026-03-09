@@ -74,11 +74,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     });
 
-    // Handle deep links (e.g. password reset link opens app with tokens in URL fragment)
+    // Handle deep links (e.g. password reset link opens app with tokens in URL)
     function handleDeepLink(event: { url: string }) {
       const url = event.url;
       if (!url) return;
-      // Supabase appends tokens as hash fragment: oneword://reset-password#access_token=...&refresh_token=...
+
+      // PKCE flow (Supabase v2 default): redirect has ?code=AUTH_CODE as query param
+      const codeMatch = url.match(/[?&]code=([^&#]+)/);
+      if (codeMatch) {
+        supabase.auth.exchangeCodeForSession(codeMatch[1]);
+        return;
+      }
+
+      // Implicit flow fallback: tokens in hash fragment
       const hashIndex = url.indexOf('#');
       if (hashIndex === -1) return;
       const params = new URLSearchParams(url.substring(hashIndex + 1));

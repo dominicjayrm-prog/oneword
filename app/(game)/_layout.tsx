@@ -45,20 +45,23 @@ export default function GameLayout() {
 
   const insets = useSafeAreaInsets();
   const bottomPad = Platform.OS === 'web' ? 12 : Math.max(insets.bottom, 4);
+  const isLoggedIn = !!session;
 
   return (
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textMuted,
-        tabBarStyle: {
-          backgroundColor: colors.background,
-          borderTopColor: colors.border,
-          borderTopWidth: 1,
-          paddingBottom: bottomPad,
-          paddingTop: 6,
-          minHeight: 56 + bottomPad,
-        },
+        tabBarStyle: isLoggedIn
+          ? {
+              backgroundColor: colors.background,
+              borderTopColor: colors.border,
+              borderTopWidth: 1,
+              paddingBottom: bottomPad,
+              paddingTop: 6,
+              minHeight: 56 + bottomPad,
+            }
+          : { display: 'none' },
         tabBarLabelStyle: {
           fontSize: 11,
           fontWeight: '600',

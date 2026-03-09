@@ -9,6 +9,7 @@ const links = [
   { href: '/users', label: 'Users' },
   { href: '/moderation', label: 'Moderation' },
   { href: '/seed-accounts', label: 'Seed Accounts' },
+  { href: '/subscribers', label: 'Subscribers' },
 ];
 
 export function NavBar() {

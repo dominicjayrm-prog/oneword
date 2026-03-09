@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, ScrollView, Platform, TextInput } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, ScrollView, Platform, TextInput, Linking } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useAuthContext } from '../src/contexts/AuthContext';
@@ -219,6 +219,41 @@ export default function ProfileScreen() {
         </View>
       )}
 
+      {/* Support & Info */}
+      <View style={[styles.supportSection, { borderTopColor: colors.border }]}>
+        <Text style={[styles.supportTitle, { color: colors.textMuted }]}>{t('profile.support_title')}</Text>
+        <TouchableOpacity
+          style={styles.supportRow}
+          onPress={() => Linking.openURL('mailto:support@playoneword.app')}
+          activeOpacity={0.7}
+        >
+          <Text style={[styles.supportLabel, { color: colors.textSecondary }]}>{t('profile.contact_us')}</Text>
+          <Text style={[styles.supportValue, { color: colors.textMuted }]}>support@playoneword.app</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.supportRow}
+          onPress={() => Linking.openURL(language === 'es' ? 'https://playoneword.app/es' : 'https://playoneword.app')}
+          activeOpacity={0.7}
+        >
+          <Text style={[styles.supportLabel, { color: colors.textSecondary }]}>{t('profile.website')}</Text>
+          <Text style={[styles.supportValue, { color: colors.textMuted }]}>playoneword.app</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.supportRow}
+          onPress={() => Linking.openURL(language === 'es' ? 'https://playoneword.app/es/privacy' : 'https://playoneword.app/privacy')}
+          activeOpacity={0.7}
+        >
+          <Text style={[styles.supportLabel, { color: colors.textSecondary }]}>{t('profile.privacy_policy')}</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.supportRow}
+          onPress={() => Linking.openURL(language === 'es' ? 'https://playoneword.app/es/terms' : 'https://playoneword.app/terms')}
+          activeOpacity={0.7}
+        >
+          <Text style={[styles.supportLabel, { color: colors.textSecondary }]}>{t('profile.terms_of_use')}</Text>
+        </TouchableOpacity>
+      </View>
+
       {/* Language – small, at the very bottom */}
       <View style={styles.langFooter}>
         <Text style={[styles.langFooterLabel, { color: colors.textMuted }]}>{t('profile.language')}</Text>
@@ -413,5 +448,30 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     fontWeight: '600',
     paddingVertical: spacing.sm,
+  },
+  supportSection: {
+    marginTop: spacing.xl,
+    paddingTop: spacing.lg,
+    borderTopWidth: 1,
+  },
+  supportTitle: {
+    fontSize: fontSize.xs - 1,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    textAlign: 'center',
+    marginBottom: spacing.md,
+  },
+  supportRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: spacing.sm + 2,
+  },
+  supportLabel: {
+    fontSize: fontSize.sm,
+    fontWeight: '500',
+  },
+  supportValue: {
+    fontSize: fontSize.xs,
   },
 });

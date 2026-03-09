@@ -133,6 +133,11 @@ export default {
     delete_confirm_title: '\u00BFEst\u00E1s completamente seguro?',
     delete_confirm_message: 'Todas tus descripciones, votos y estad\u00EDsticas desaparecer\u00E1n para siempre.',
     delete_error: 'Error al eliminar la cuenta. Int\u00E9ntalo de nuevo.',
+    support_title: 'Soporte e Info',
+    contact_us: 'Cont\u00E1ctanos',
+    website: 'Sitio Web',
+    privacy_policy: 'Pol\u00EDtica de Privacidad',
+    terms_of_use: 'T\u00E9rminos de Uso',
   },
 
   // Share card

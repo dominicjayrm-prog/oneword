@@ -133,6 +133,11 @@ export default {
     delete_confirm_title: 'Are you absolutely sure?',
     delete_confirm_message: 'All your descriptions, votes, and stats will be gone forever.',
     delete_error: 'Failed to delete account. Please try again.',
+    support_title: 'Support & Info',
+    contact_us: 'Contact Us',
+    website: 'Website',
+    privacy_policy: 'Privacy Policy',
+    terms_of_use: 'Terms of Use',
   },
 
   // Share card

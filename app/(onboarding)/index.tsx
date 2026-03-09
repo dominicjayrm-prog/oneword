@@ -15,6 +15,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTranslation } from 'react-i18next';
 
+import { haptic } from '../../src/lib/haptics';
 import { OnboardingScreen1 } from '../../src/components/onboarding/OnboardingScreen1';
 import { OnboardingScreen2 } from '../../src/components/onboarding/OnboardingScreen2';
 import { OnboardingScreen3 } from '../../src/components/onboarding/OnboardingScreen3';
@@ -37,12 +38,14 @@ export default function OnboardingScreen() {
     const x = e.nativeEvent.contentOffset.x;
     const index = Math.round(x / containerWidth);
     if (index !== currentIndex) {
+      haptic.light();
       setCurrentIndex(index);
     }
   };
 
   const goNext = () => {
     if (currentIndex < 2 && containerWidth) {
+      haptic.light();
       const next = currentIndex + 1;
       scrollRef.current?.scrollTo({ x: next * containerWidth, animated: true });
       setCurrentIndex(next);
@@ -51,6 +54,7 @@ export default function OnboardingScreen() {
 
   const goBack = () => {
     if (currentIndex > 0 && containerWidth) {
+      haptic.light();
       const prev = currentIndex - 1;
       scrollRef.current?.scrollTo({ x: prev * containerWidth, animated: true });
       setCurrentIndex(prev);
@@ -58,6 +62,7 @@ export default function OnboardingScreen() {
   };
 
   const handleFinish = async () => {
+    haptic.heavy();
     await AsyncStorage.setItem('hasSeenOnboarding', 'true');
     if (Platform.OS === 'web') {
       window.location.href = '/';

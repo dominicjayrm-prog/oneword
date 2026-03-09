@@ -2,6 +2,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../contexts/ThemeContext';
 import { fontSize, spacing, borderRadius } from '../constants/theme';
+import { haptic } from '../lib/haptics';
 import type { PendingRequest } from '../lib/friends';
 
 interface Props {
@@ -35,13 +36,13 @@ export function FriendRequests({ requests, onAccept, onDecline }: Props) {
           <View style={styles.actions}>
             <TouchableOpacity
               style={[styles.acceptBtn, { backgroundColor: colors.primary }]}
-              onPress={() => onAccept(req.friendship_id)}
+              onPress={() => { haptic.success(); onAccept(req.friendship_id); }}
               activeOpacity={0.7}
             >
               <Text style={styles.acceptText}>{t('friends.accept')}</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              onPress={() => onDecline(req.friendship_id)}
+              onPress={() => { haptic.light(); onDecline(req.friendship_id); }}
               activeOpacity={0.7}
             >
               <Text style={[styles.declineText, { color: colors.textMuted }]}>{t('friends.decline')}</Text>

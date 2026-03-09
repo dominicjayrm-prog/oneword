@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../src/contexts/ThemeContext';
 import { useAuthContext } from '../../src/contexts/AuthContext';
 import { getPendingRequests } from '../../src/lib/friends';
+import { haptic } from '../../src/lib/haptics';
 
 function TabIcon({ emoji }: { emoji: string }) {
   return <Text style={styles.tabIcon}>{emoji}</Text>;
@@ -49,6 +50,11 @@ export default function GameLayout() {
 
   return (
     <Tabs
+      screenListeners={{
+        tabPress: () => {
+          haptic.selection();
+        },
+      }}
       screenOptions={{
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textMuted,

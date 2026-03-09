@@ -16,6 +16,7 @@ import { useTranslation } from 'react-i18next';
 import { useTheme } from '../contexts/ThemeContext';
 import { searchUsers, sendFriendRequest, type UserSearchResult } from '../lib/friends';
 import { fontSize, spacing, borderRadius } from '../constants/theme';
+import { haptic } from '../lib/haptics';
 
 interface Props {
   visible: boolean;
@@ -96,6 +97,7 @@ export function AddFriendModal({ visible, onClose, currentUserId, onRequestSent 
   }
 
   async function handleSendRequest(userId: string, username: string) {
+    haptic.medium();
     const { error } = await sendFriendRequest(currentUserId, userId);
     if (error) {
       const msg = error.message;

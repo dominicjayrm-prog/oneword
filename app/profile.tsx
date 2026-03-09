@@ -27,7 +27,7 @@ const AVATARS = ['\uD83C\uDFAD', '\uD83E\uDD8A', '\uD83D\uDC19', '\uD83C\uDF1F',
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const { colors } = useTheme();
   const { profile, signOut, updateAvatar, updateLanguage, deleteAccount, language } = useAuthContext();
   const { showToast } = useToast();
@@ -232,7 +232,7 @@ export default function ProfileScreen() {
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.supportRow}
-          onPress={() => Linking.openURL(i18n.language === 'es' ? 'https://playoneword.app/es' : 'https://playoneword.app')}
+          onPress={() => Linking.openURL(language === 'es' ? 'https://playoneword.app/es' : 'https://playoneword.app')}
           activeOpacity={0.7}
         >
           <Text style={[styles.supportLabel, { color: colors.textSecondary }]}>{t('profile.website')}</Text>
@@ -240,14 +240,14 @@ export default function ProfileScreen() {
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.supportRow}
-          onPress={() => Linking.openURL(i18n.language === 'es' ? 'https://playoneword.app/es/privacy' : 'https://playoneword.app/privacy')}
+          onPress={() => Linking.openURL(language === 'es' ? 'https://playoneword.app/es/privacy' : 'https://playoneword.app/privacy')}
           activeOpacity={0.7}
         >
           <Text style={[styles.supportLabel, { color: colors.textSecondary }]}>{t('profile.privacy_policy')}</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.supportRow}
-          onPress={() => Linking.openURL(i18n.language === 'es' ? 'https://playoneword.app/es/terms' : 'https://playoneword.app/terms')}
+          onPress={() => Linking.openURL(language === 'es' ? 'https://playoneword.app/es/terms' : 'https://playoneword.app/terms')}
           activeOpacity={0.7}
         >
           <Text style={[styles.supportLabel, { color: colors.textSecondary }]}>{t('profile.terms_of_use')}</Text>

@@ -1,6 +1,7 @@
 import { Component, type ReactNode } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Sentry } from '../lib/sentry';
+import i18next from 'i18next';
 
 interface Props {
   children: ReactNode;
@@ -30,13 +31,13 @@ export class ErrorBoundary extends Component<Props, State> {
       return (
         <View style={styles.container}>
           <Text style={styles.emoji}>{'\uD83D\uDE05'}</Text>
-          <Text style={styles.title}>Oops! Something broke</Text>
-          <Text style={styles.subtitle}>The app crashed unexpectedly. Try restarting.</Text>
+          <Text style={styles.title}>{i18next.t('errors.crash_title')}</Text>
+          <Text style={styles.subtitle}>{i18next.t('errors.crash_subtitle')}</Text>
           <TouchableOpacity
             style={styles.button}
             onPress={() => this.setState({ hasError: false })}
           >
-            <Text style={styles.buttonText}>Try Again</Text>
+            <Text style={styles.buttonText}>{i18next.t('errors.try_again')}</Text>
           </TouchableOpacity>
         </View>
       );

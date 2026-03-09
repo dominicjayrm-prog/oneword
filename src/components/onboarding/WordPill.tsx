@@ -7,7 +7,7 @@ import Animated, {
   withDelay,
   withTiming,
 } from 'react-native-reanimated';
-import * as Haptics from 'expo-haptics';
+import { haptic } from '../../lib/haptics';
 
 interface WordPillProps {
   word: string;
@@ -32,7 +32,7 @@ export function WordPill({ word, index, isActive, baseDelay = 2400 }: WordPillPr
       opacity.value = withDelay(delay, withTiming(1, { duration: 200 }));
       // Haptic on pop
       const timer = setTimeout(() => {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        haptic.light();
       }, delay);
       return () => clearTimeout(timer);
     } else {

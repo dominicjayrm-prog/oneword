@@ -1,13 +1,14 @@
 import { TouchableOpacity, Text, StyleSheet } from 'react-native';
 import { useTheme } from '../contexts/ThemeContext';
 import { fontSize } from '../constants/theme';
+import { haptic } from '../lib/haptics';
 
 export function ThemeToggle() {
   const { mode, toggleTheme, colors } = useTheme();
 
   return (
     <TouchableOpacity
-      onPress={toggleTheme}
+      onPress={() => { haptic.light(); toggleTheme(); }}
       style={[styles.toggle, { backgroundColor: colors.surface, borderColor: colors.border }]}
       activeOpacity={0.7}
     >

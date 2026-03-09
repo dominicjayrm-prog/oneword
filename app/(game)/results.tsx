@@ -26,6 +26,7 @@ import { LoadingSpinner } from '../../src/components/LoadingSpinner';
 import { ErrorState } from '../../src/components/ErrorState';
 import { EmptyState } from '../../src/components/EmptyState';
 import { fontSize, spacing, borderRadius } from '../../src/constants/theme';
+import { haptic } from '../../src/lib/haptics';
 import type { LeaderboardEntry } from '../../src/types/database';
 
 export default function ResultsScreen() {
@@ -68,7 +69,15 @@ export default function ResultsScreen() {
 
   const myEntry = leaderboard.find((e) => e.username === profile?.username);
 
+  // Haptic when user's rank appears
+  useEffect(() => {
+    if (myEntry && !loading) {
+      haptic.success();
+    }
+  }, [myEntry?.rank, loading]);
+
   const handleSharePress = () => {
+    haptic.medium();
     setShowPreview(true);
   };
 
@@ -106,7 +115,7 @@ export default function ResultsScreen() {
       <View style={[styles.segmentedControl, { backgroundColor: colors.surface, borderColor: colors.border }]}>
         <TouchableOpacity
           style={[styles.segment, tab === 'global' && { backgroundColor: colors.primary }]}
-          onPress={() => setTab('global')}
+          onPress={() => { haptic.light(); setTab('global'); }}
           activeOpacity={0.7}
         >
           <Text style={[styles.segmentText, { color: tab === 'global' ? '#FFFFFF' : colors.textMuted }]}>
@@ -115,7 +124,7 @@ export default function ResultsScreen() {
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.segment, tab === 'friends' && { backgroundColor: colors.primary }]}
-          onPress={() => setTab('friends')}
+          onPress={() => { haptic.light(); setTab('friends'); }}
           activeOpacity={0.7}
         >
           <Text style={[styles.segmentText, { color: tab === 'friends' ? '#FFFFFF' : colors.textMuted }]}>

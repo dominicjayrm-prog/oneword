@@ -2,6 +2,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Alert, Platform } from 'react
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../contexts/ThemeContext';
 import { fontSize, spacing, borderRadius } from '../constants/theme';
+import { haptic } from '../lib/haptics';
 import type { Friend } from '../lib/friends';
 
 interface Props {
@@ -15,6 +16,7 @@ export function FriendsList({ friends, onRemove, onAddPress }: Props) {
   const { colors } = useTheme();
 
   function handleRemove(friend: Friend) {
+    haptic.warning();
     if (Platform.OS === 'web') {
       if (window.confirm(t('friends.remove_confirm'))) {
         onRemove(friend.friendship_id);

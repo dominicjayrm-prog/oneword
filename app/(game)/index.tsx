@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -24,6 +24,7 @@ import { EmptyState } from '../../src/components/EmptyState';
 import { ErrorState } from '../../src/components/ErrorState';
 import { useToast } from '../../src/components/Toast';
 import { fontSize, spacing, borderRadius } from '../../src/constants/theme';
+import { haptic } from '../../src/lib/haptics';
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -58,6 +59,17 @@ export default function HomeScreen() {
 
   const wordCount = input.trim().split(/\s+/).filter(Boolean).length;
   const isExactlyFive = wordCount === 5;
+  const prevWordCount = useRef(0);
+
+  useEffect(() => {
+    if (wordCount > 0 && wordCount <= 5 && wordCount > prevWordCount.current) {
+      haptic.light();
+    }
+    if (wordCount === 5 && prevWordCount.current !== 5) {
+      haptic.success();
+    }
+    prevWordCount.current = wordCount;
+  }, [wordCount]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -69,6 +81,7 @@ export default function HomeScreen() {
 
   async function handleSubmit() {
     if (!isExactlyFive || submitting) return;
+    haptic.heavy();
     setSubmitting(true);
     try {
       const { error } = await submitDescription(input);
@@ -449,11 +462,11 @@ export default function HomeScreen() {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} colors={[colors.primary]} />}
       >
         <ThemeToggle />
-        <TouchableOpacity style={styles.header} onPress={() => router.push('/profile')} activeOpacity={0.7}>
+        <TouchableOpacity style={styles.header} onPress={() => { haptic.light(); router.push('/profile'); }} activeOpacity={0.7}>
           <View style={[styles.avatarSmall, { backgroundColor: colors.primaryFaded, borderColor: colors.primary }]}>
             <Text style={styles.avatarSmallText}>{profile?.avatar_url || '\uD83C\uDFAD'}</Text>
           </View>
-          <Text style={[styles.greeting, { color: colors.textSecondary }]}>Hi, {profile?.username ?? 'player'}</Text>
+          <Text style={[styles.greeting, { color: colors.textSecondary }]}>{t('game.greeting', { username: profile?.username ?? 'player' })}</Text>
           {profile && profile.current_streak > 0 && (
             <Text style={[styles.streak, { color: colors.primary }]}>
               {t('game.day_streak', { count: profile.current_streak })}
@@ -471,8 +484,8 @@ export default function HomeScreen() {
         </View>
 
         <View style={styles.actions}>
-          <Button title={t('game.vote_others')} onPress={() => router.push('/vote')} />
-          <Button title={t('game.see_results')} onPress={() => router.push('/results')} variant="outline" />
+          <Button title={t('game.vote_others')} onPress={() => { haptic.medium(); router.push('/vote'); }} />
+          <Button title={t('game.see_results')} onPress={() => { haptic.medium(); router.push('/results'); }} variant="outline" />
         </View>
       </ScrollView>
     );
@@ -484,11 +497,11 @@ export default function HomeScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <ThemeToggle />
-      <TouchableOpacity style={styles.header} onPress={() => router.push('/profile')} activeOpacity={0.7}>
+      <TouchableOpacity style={styles.header} onPress={() => { haptic.light(); router.push('/profile'); }} activeOpacity={0.7}>
         <View style={[styles.avatarSmall, { backgroundColor: colors.primaryFaded, borderColor: colors.primary }]}>
           <Text style={styles.avatarSmallText}>{profile?.avatar_url || '\uD83C\uDFAD'}</Text>
         </View>
-        <Text style={[styles.greeting, { color: colors.textSecondary }]}>Hi, {profile?.username ?? 'player'}</Text>
+        <Text style={[styles.greeting, { color: colors.textSecondary }]}>{t('game.greeting', { username: profile?.username ?? 'player' })}</Text>
         <Text style={[styles.todayLabel, { color: colors.textMuted }]}>{t('game.todays_word')}</Text>
       </TouchableOpacity>
 

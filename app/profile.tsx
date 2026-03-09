@@ -9,6 +9,7 @@ import { ThemeToggle } from '../src/components/ThemeToggle';
 import { LoadingSpinner } from '../src/components/LoadingSpinner';
 import { useToast } from '../src/components/Toast';
 import { fontSize, spacing, borderRadius } from '../src/constants/theme';
+import { haptic } from '../src/lib/haptics';
 
 function confirm(title: string, message: string): Promise<boolean> {
   if (Platform.OS === 'web') {
@@ -56,6 +57,7 @@ export default function ProfileScreen() {
   });
 
   async function handleAvatarSelect(emoji: string) {
+    haptic.light();
     try {
       const { error } = await updateAvatar(emoji);
       if (error) {
@@ -69,6 +71,7 @@ export default function ProfileScreen() {
   }
 
   async function handleLanguageSwitch(lang: string) {
+    haptic.medium();
     const prevLang = language;
     try {
       const { error } = await updateLanguage(lang);
@@ -83,6 +86,7 @@ export default function ProfileScreen() {
   }
 
   async function handleLogout() {
+    haptic.warning();
     const ok = await confirm(t('profile.log_out_title'), t('profile.log_out_message'));
     if (ok) {
       signOut();
@@ -90,6 +94,7 @@ export default function ProfileScreen() {
   }
 
   async function handleDeleteAccount() {
+    haptic.error();
     const ok = await confirm(t('profile.delete_title'), t('errors.delete_confirm'));
     if (!ok) return;
 
@@ -126,7 +131,7 @@ export default function ProfileScreen() {
       <View style={styles.profileHeader}>
         <TouchableOpacity
           style={[styles.avatarContainer, { backgroundColor: colors.primaryFaded, borderColor: colors.primary }]}
-          onPress={() => setShowAvatarPicker(!showAvatarPicker)}
+          onPress={() => { haptic.light(); setShowAvatarPicker(!showAvatarPicker); }}
           activeOpacity={0.7}
         >
           <Text style={styles.avatarText}>{profile.avatar_url || '\uD83C\uDFAD'}</Text>

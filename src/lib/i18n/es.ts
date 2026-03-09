@@ -76,6 +76,7 @@ export default {
     no_word: 'A\u00FAn no hay palabra para hoy.',
     no_word_sub: '\u00A1Vuelve pronto!',
     day_streak: 'racha de {{count}} d\u00EDas',
+    greeting: 'Hola, {{username}}',
   },
 
   // Voting

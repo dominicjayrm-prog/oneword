@@ -1,18 +1,28 @@
-import { useEffect, useState, useCallback } from 'react';
-import { View, Text, StyleSheet, Alert, Platform } from 'react-native';
+import { useEffect, useState, useCallback, useRef } from 'react';
+import { View, Text, StyleSheet, Alert, Platform, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  withSpring,
+  withDelay,
+  withSequence,
+  runOnJS,
+  Easing,
+} from 'react-native-reanimated';
 import { useAuthContext } from '../../src/contexts/AuthContext';
 import { useGameContext } from '../../src/contexts/GameContext';
 import { useTheme } from '../../src/contexts/ThemeContext';
 import { WordDisplay } from '../../src/components/WordDisplay';
-import { VoteCard } from '../../src/components/VoteCard';
 import { Button } from '../../src/components/Button';
 import { ThemeToggle } from '../../src/components/ThemeToggle';
 import { LoadingSpinner } from '../../src/components/LoadingSpinner';
 import { EmptyState } from '../../src/components/EmptyState';
 import { useToast } from '../../src/components/Toast';
-import { fontSize, spacing } from '../../src/constants/theme';
+import { fontSize, spacing, borderRadius } from '../../src/constants/theme';
+import { haptic } from '../../src/lib/haptics';
 import type { VotePair } from '../../src/types/database';
 
 const MAX_VOTES = 15;
@@ -32,10 +42,48 @@ export default function VoteScreen() {
   const [noMorePairs, setNoMorePairs] = useState(false);
   const [voting, setVoting] = useState(false);
   const [loadError, setLoadError] = useState(false);
+  const [selectedCard, setSelectedCard] = useState<1 | 2 | null>(null);
+
+  // Animation shared values
+  const card1TranslateX = useSharedValue(-300);
+  const card1Opacity = useSharedValue(0);
+  const card1Scale = useSharedValue(1);
+  const card2TranslateX = useSharedValue(300);
+  const card2Opacity = useSharedValue(0);
+  const card2Scale = useSharedValue(1);
+  const vsOpacity = useSharedValue(0);
+  const badgeScale = useSharedValue(0);
+  const progressBarWidth = useSharedValue(0);
+  const voteCountScale = useSharedValue(1);
+
+  // Done screen animations
+  const doneEmojiScale = useSharedValue(0);
+  const doneTextOpacity = useSharedValue(0);
+
+  const animatePairIn = useCallback(() => {
+    'worklet';
+    card1TranslateX.value = -300;
+    card1Opacity.value = 0;
+    card1Scale.value = 1;
+    card2TranslateX.value = 300;
+    card2Opacity.value = 0;
+    card2Scale.value = 1;
+    vsOpacity.value = 0;
+    badgeScale.value = 0;
+
+    card1TranslateX.value = withSpring(0, { damping: 15, stiffness: 150 });
+    card1Opacity.value = withTiming(1, { duration: 300 });
+
+    card2TranslateX.value = withSpring(0, { damping: 15, stiffness: 150 });
+    card2Opacity.value = withTiming(1, { duration: 300 });
+
+    vsOpacity.value = withDelay(200, withTiming(1, { duration: 200 }));
+  }, []);
 
   const loadPair = useCallback(async () => {
     setLoading(true);
     setLoadError(false);
+    setSelectedCard(null);
     try {
       const p = await getVotePair();
       if (!p) {
@@ -48,18 +96,52 @@ export default function VoteScreen() {
     setLoading(false);
   }, [getVotePair]);
 
+  // Animate pair in when pair changes and loading finishes
+  useEffect(() => {
+    if (pair && !loading) {
+      animatePairIn();
+      haptic.light();
+    }
+  }, [pair, loading, animatePairIn]);
+
+  // Animate progress bar
+  useEffect(() => {
+    const targetWidth = (voteCount / MAX_VOTES) * 100;
+    progressBarWidth.value = withTiming(targetWidth, { duration: 300, easing: Easing.out(Easing.cubic) });
+    if (voteCount > 0) {
+      voteCountScale.value = withSequence(
+        withTiming(1.15, { duration: 100 }),
+        withTiming(1, { duration: 100 })
+      );
+    }
+  }, [voteCount]);
+
   useEffect(() => {
     loadPair();
   }, [loadPair]);
 
-  async function handleVote(winnerId: string, loserId: string) {
+  async function handleVote(winnerId: string, loserId: string, winnerIsCard1: boolean) {
     if (voting) return;
+    haptic.medium();
     setVoting(true);
+    setSelectedCard(winnerIsCard1 ? 1 : 2);
+
+    const winnerScale = winnerIsCard1 ? card1Scale : card2Scale;
+    const loserScale = winnerIsCard1 ? card2Scale : card1Scale;
+    const loserOpacity = winnerIsCard1 ? card2Opacity : card1Opacity;
+
+    // Winner pops up
+    winnerScale.value = withSpring(1.04, { damping: 10, stiffness: 200 });
+    // Loser shrinks and fades
+    loserScale.value = withTiming(0.96, { duration: 300 });
+    loserOpacity.value = withTiming(0.3, { duration: 300 });
+    // Badge springs in
+    badgeScale.value = withSpring(1, { damping: 8, stiffness: 200 });
 
     const newCount = voteCount + 1;
     setVoteCount(newCount);
 
-    // Submit vote first, then fetch next pair
+    // Submit vote
     try {
       const { error } = await submitVote(winnerId, loserId);
       if (error) {
@@ -69,13 +151,32 @@ export default function VoteScreen() {
       showToast(t('errors.vote_failed'), 'error');
     }
 
+    // Wait for visual feedback
+    await new Promise((r) => setTimeout(r, 600));
+
+    // Slide out
+    if (winnerIsCard1) {
+      card1TranslateX.value = withTiming(300, { duration: 250 });
+      card1Opacity.value = withTiming(0, { duration: 250 });
+    } else {
+      card2TranslateX.value = withTiming(300, { duration: 250 });
+      card2Opacity.value = withTiming(0, { duration: 250 });
+    }
+    const otherOpacity = winnerIsCard1 ? card2Opacity : card1Opacity;
+    otherOpacity.value = withTiming(0, { duration: 200 });
+    vsOpacity.value = withTiming(0, { duration: 200 });
+
+    await new Promise((r) => setTimeout(r, 300));
+
     if (newCount >= MAX_VOTES) {
+      haptic.success();
       setNoMorePairs(true);
     } else {
       await loadPair();
     }
 
     setVoting(false);
+    setSelectedCard(null);
   }
 
   async function handleReport(descriptionId: string) {
@@ -99,6 +200,48 @@ export default function VoteScreen() {
     }
   }
 
+  // Animated styles
+  const card1Style = useAnimatedStyle(() => ({
+    transform: [
+      { translateX: card1TranslateX.value },
+      { scale: card1Scale.value },
+    ],
+    opacity: card1Opacity.value,
+  }));
+
+  const card2Style = useAnimatedStyle(() => ({
+    transform: [
+      { translateX: card2TranslateX.value },
+      { scale: card2Scale.value },
+    ],
+    opacity: card2Opacity.value,
+  }));
+
+  const vsStyle = useAnimatedStyle(() => ({
+    opacity: vsOpacity.value,
+  }));
+
+  const badgeStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: badgeScale.value }],
+    opacity: badgeScale.value,
+  }));
+
+  const progressFillStyle = useAnimatedStyle(() => ({
+    width: `${progressBarWidth.value}%`,
+  }));
+
+  const voteCountAnimStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: voteCountScale.value }],
+  }));
+
+  const doneEmojiStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: doneEmojiScale.value }],
+  }));
+
+  const doneTextStyle = useAnimatedStyle(() => ({
+    opacity: doneTextOpacity.value,
+  }));
+
   if (noMorePairs || voteCount >= MAX_VOTES) {
     if (voteCount === 0) {
       return (
@@ -114,6 +257,11 @@ export default function VoteScreen() {
         </View>
       );
     }
+
+    // Trigger done animation
+    doneEmojiScale.value = withSpring(1, { damping: 8, stiffness: 150 });
+    doneTextOpacity.value = withDelay(200, withTiming(1, { duration: 300 }));
+
     const votedText = voteCount === 1
       ? t('vote.voted_on', { count: voteCount })
       : t('vote.voted_on_plural', { count: voteCount });
@@ -121,17 +269,19 @@ export default function VoteScreen() {
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <ThemeToggle />
         <View style={[styles.center, { backgroundColor: colors.background }]}>
-          <Text style={styles.doneEmoji}>{'\uD83C\uDF89'}</Text>
-          <Text style={[styles.doneTitle, { color: colors.text }]}>
-            {voteCount >= MAX_VOTES ? t('vote.done_title') : t('vote.no_more')}
-          </Text>
-          <Text style={[styles.doneSubtitle, { color: colors.textSecondary }]}>
-            {votedText}
-          </Text>
+          <Animated.Text style={[styles.doneEmoji, doneEmojiStyle]}>{'\uD83C\uDF89'}</Animated.Text>
+          <Animated.View style={doneTextStyle}>
+            <Text style={[styles.doneTitle, { color: colors.text }]}>
+              {voteCount >= MAX_VOTES ? t('vote.done_title') : t('vote.no_more')}
+            </Text>
+            <Text style={[styles.doneSubtitle, { color: colors.textSecondary }]}>
+              {votedText}
+            </Text>
+          </Animated.View>
         </View>
         <View style={styles.actions}>
-          <Button title={t('vote.see_results')} onPress={() => router.replace('/results')} />
-          <Button title={t('vote.back_home')} onPress={() => router.replace('/')} variant="outline" />
+          <Button title={t('vote.see_results')} onPress={() => { haptic.medium(); router.replace('/results'); }} />
+          <Button title={t('vote.back_home')} onPress={() => { haptic.medium(); router.replace('/'); }} variant="outline" />
         </View>
       </View>
     );
@@ -142,9 +292,17 @@ export default function VoteScreen() {
       <ThemeToggle />
       <View style={styles.header}>
         {todayWord && <WordDisplay word={todayWord.word} category={todayWord.category} />}
-        <Text style={[styles.progress, { color: colors.textSecondary }]}>
-          {t('vote.of', { current: voteCount + 1, total: MAX_VOTES })}
-        </Text>
+
+        {/* Progress bar */}
+        <View style={styles.progressRow}>
+          <Animated.Text style={[styles.progress, { color: colors.textSecondary }, voteCountAnimStyle]}>
+            {t('vote.of', { current: voteCount + 1, total: MAX_VOTES })}
+          </Animated.Text>
+        </View>
+        <View style={[styles.progressTrack, { backgroundColor: colors.surfaceLight || colors.border }]}>
+          <Animated.View style={[styles.progressFill, { backgroundColor: colors.primary }, progressFillStyle]} />
+        </View>
+
         <Text style={[styles.instruction, { color: colors.textMuted }]}>{t('vote.tap_prefer')}</Text>
       </View>
 
@@ -163,19 +321,67 @@ export default function VoteScreen() {
           </View>
         ) : (
           <>
-            <VoteCard
-              description={pair.desc1_text}
-              onPress={() => handleVote(pair.desc1_id, pair.desc2_id)}
-              onReport={() => handleReport(pair.desc1_id)}
-              disabled={voting}
-            />
-            <Text style={[styles.vs, { color: colors.textMuted }]}>VS</Text>
-            <VoteCard
-              description={pair.desc2_text}
-              onPress={() => handleVote(pair.desc2_id, pair.desc1_id)}
-              onReport={() => handleReport(pair.desc2_id)}
-              disabled={voting}
-            />
+            {/* Card 1 */}
+            <View>
+              <Animated.View style={card1Style}>
+                <TouchableOpacity
+                  style={[
+                    styles.card,
+                    { backgroundColor: colors.surface, borderColor: selectedCard === 1 ? colors.primary : colors.border },
+                    selectedCard === 1 && { backgroundColor: colors.primary + '10' },
+                  ]}
+                  onPress={() => handleVote(pair.desc1_id, pair.desc2_id, true)}
+                  activeOpacity={0.85}
+                  disabled={voting}
+                >
+                  <Text style={[styles.cardText, { color: colors.text }]}>{pair.desc1_text}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.reportButton}
+                  onPress={() => handleReport(pair.desc1_id)}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                >
+                  <Text style={[styles.reportText, { color: colors.textMuted }]}>Report</Text>
+                </TouchableOpacity>
+              </Animated.View>
+              {selectedCard === 1 && (
+                <Animated.View style={[styles.pickBadge, { backgroundColor: colors.primary }, badgeStyle]}>
+                  <Text style={styles.pickBadgeText}>YOUR PICK {'\u2713'}</Text>
+                </Animated.View>
+              )}
+            </View>
+
+            <Animated.Text style={[styles.vs, { color: colors.textMuted }, vsStyle]}>VS</Animated.Text>
+
+            {/* Card 2 */}
+            <View>
+              <Animated.View style={card2Style}>
+                <TouchableOpacity
+                  style={[
+                    styles.card,
+                    { backgroundColor: colors.surface, borderColor: selectedCard === 2 ? colors.primary : colors.border },
+                    selectedCard === 2 && { backgroundColor: colors.primary + '10' },
+                  ]}
+                  onPress={() => handleVote(pair.desc2_id, pair.desc1_id, false)}
+                  activeOpacity={0.85}
+                  disabled={voting}
+                >
+                  <Text style={[styles.cardText, { color: colors.text }]}>{pair.desc2_text}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.reportButton}
+                  onPress={() => handleReport(pair.desc2_id)}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                >
+                  <Text style={[styles.reportText, { color: colors.textMuted }]}>Report</Text>
+                </TouchableOpacity>
+              </Animated.View>
+              {selectedCard === 2 && (
+                <Animated.View style={[styles.pickBadge, { backgroundColor: colors.primary }, badgeStyle]}>
+                  <Text style={styles.pickBadgeText}>YOUR PICK {'\u2713'}</Text>
+                </Animated.View>
+              )}
+            </View>
           </>
         )}
       </View>
@@ -197,9 +403,22 @@ const styles = StyleSheet.create({
   header: {
     alignItems: 'center',
   },
+  progressRow: {
+    marginTop: spacing.sm,
+  },
   progress: {
     fontSize: fontSize.sm,
-    marginTop: spacing.sm,
+  },
+  progressTrack: {
+    width: '60%',
+    height: 4,
+    borderRadius: 2,
+    marginTop: spacing.xs,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    borderRadius: 2,
   },
   instruction: {
     fontSize: fontSize.md,
@@ -209,6 +428,44 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     gap: spacing.md,
+  },
+  card: {
+    borderRadius: borderRadius.lg,
+    padding: spacing.lg,
+    borderWidth: 1,
+    minHeight: 100,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  cardText: {
+    fontSize: fontSize.lg,
+    textAlign: 'center',
+    lineHeight: 30,
+    fontWeight: '500',
+  },
+  reportButton: {
+    alignSelf: 'flex-end',
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    marginTop: 4,
+  },
+  reportText: {
+    fontSize: 11,
+    textDecorationLine: 'underline',
+  },
+  pickBadge: {
+    position: 'absolute',
+    top: -10,
+    right: -4,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 10,
+  },
+  pickBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 0.5,
   },
   vs: {
     textAlign: 'center',
@@ -228,9 +485,11 @@ const styles = StyleSheet.create({
     fontSize: fontSize.xl,
     fontWeight: '700',
     marginBottom: spacing.sm,
+    textAlign: 'center',
   },
   doneSubtitle: {
     fontSize: fontSize.md,
+    textAlign: 'center',
   },
   actions: {
     gap: spacing.md,

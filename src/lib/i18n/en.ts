@@ -76,6 +76,7 @@ export default {
     no_word: 'No word for today yet.',
     no_word_sub: 'Check back soon!',
     day_streak: '{{count}} day streak',
+    greeting: 'Hi, {{username}}',
   },
 
   // Voting

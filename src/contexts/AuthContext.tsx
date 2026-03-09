@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { Linking } from 'react-native';
 import { supabase } from '../lib/supabase';
+import { rateLimits, resetRateLimit } from '../lib/rateLimit';
 import i18n from '../lib/i18n';
 import type { Session } from '@supabase/supabase-js';
 import type { Profile } from '../types/database';
@@ -160,6 +161,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function signUp(email: string, password: string, username: string, lang?: string) {
+    if (!rateLimits.signUp()) {
+      return { error: new Error('Too many attempts. Please wait a moment.') };
+    }
     const userLang = lang || language;
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -234,7 +238,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function signIn(email: string, password: string) {
+    if (!rateLimits.signIn()) {
+      return { error: new Error('Too many login attempts. Please wait a moment.') };
+    }
     const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (!error) resetRateLimit('signIn');
     return { error };
   }
 
@@ -285,6 +293,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function resetPassword(email: string) {
+    if (!rateLimits.resetPassword()) {
+      return { error: new Error('Too many attempts. Please wait a moment.') };
+    }
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: 'oneword://reset-password',
     });

@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect, useCallback, type React
 import { supabase } from '../lib/supabase';
 import { checkProfanity } from '../lib/profanityFilter';
 import { withTimeout } from '../lib/withTimeout';
+import { rateLimits } from '../lib/rateLimit';
 import { useAuthContext } from './AuthContext';
 import type { DailyWord, VotePair, LeaderboardEntry } from '../types/database';
 
@@ -145,6 +146,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   async function submitVote(winnerId: string, loserId: string) {
     if (!todayWord || !userId) return { error: new Error('Not ready') };
+    if (!rateLimits.vote()) {
+      return { error: new Error('Voting too fast. Please slow down.') };
+    }
     try {
       const { error } = await withTimeout(supabase.rpc('submit_vote', {
         p_voter_id: userId,
@@ -174,6 +178,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   async function reportDescription(descriptionId: string) {
     if (!todayWord || !userId) return { error: new Error('Not ready') };
+    if (!rateLimits.report()) {
+      return { error: new Error('Too many reports. Please wait a moment.') };
+    }
     try {
       const { error } = await withTimeout(supabase.rpc('submit_report', {
         p_reporter_id: userId,

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,7 @@ import {
   Platform,
   ScrollView,
   TouchableOpacity,
+  RefreshControl,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -53,8 +54,16 @@ export default function HomeScreen() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [resetError, setResetError] = useState('');
 
+  const [refreshing, setRefreshing] = useState(false);
+
   const wordCount = input.trim().split(/\s+/).filter(Boolean).length;
   const isExactlyFive = wordCount === 5;
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await refresh();
+    setRefreshing(false);
+  }, [refresh]);
 
   const loading = authLoading || gameLoading;
 
@@ -78,8 +87,8 @@ export default function HomeScreen() {
     if (!emailRegex.test(email)) return t('errors.invalid_email');
     if (password.length < 6) return t('errors.password_short');
     if (authMode === 'signup') {
-      if (username.length < 3 || username.length > 20) return t('errors.username_taken');
-      if (!/^[a-zA-Z0-9_]+$/.test(username)) return t('errors.username_taken');
+      if (username.length < 3 || username.length > 20) return t('errors.username_length');
+      if (!/^[a-zA-Z0-9_]+$/.test(username)) return t('errors.username_format');
     }
     return null;
   }
@@ -434,7 +443,11 @@ export default function HomeScreen() {
 
   if (hasSubmitted) {
     return (
-      <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <ScrollView
+        style={[styles.container, { backgroundColor: colors.background }]}
+        contentContainerStyle={styles.scrollContent}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} colors={[colors.primary]} />}
+      >
         <ThemeToggle />
         <TouchableOpacity style={styles.header} onPress={() => router.push('/profile')} activeOpacity={0.7}>
           <View style={[styles.avatarSmall, { backgroundColor: colors.primaryFaded, borderColor: colors.primary }]}>
@@ -461,7 +474,7 @@ export default function HomeScreen() {
           <Button title={t('game.vote_others')} onPress={() => router.push('/vote')} />
           <Button title={t('game.see_results')} onPress={() => router.push('/results')} variant="outline" />
         </View>
-      </View>
+      </ScrollView>
     );
   }
 
@@ -512,6 +525,9 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.xxl,
+  },
+  scrollContent: {
+    flexGrow: 1,
   },
   center: {
     flex: 1,

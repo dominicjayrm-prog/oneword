@@ -194,14 +194,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // Ensure the profile exists with the correct username
     if (data?.user) {
-      // Small delay to let the trigger complete first
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
-      const { data: existingProfile } = await supabase
-        .from('profiles')
-        .select('id, username')
-        .eq('id', data.user.id)
-        .single();
+      // Poll for the profile (trigger may take a moment to complete)
+      let existingProfile = null;
+      for (let attempt = 0; attempt < 5; attempt++) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('id, username')
+          .eq('id', data.user.id)
+          .single();
+        if (profile) {
+          existingProfile = profile;
+          break;
+        }
+        await new Promise((resolve) => setTimeout(resolve, 200 * (attempt + 1)));
+      }
 
       if (!existingProfile) {
         // Trigger didn't create the profile — create it manually

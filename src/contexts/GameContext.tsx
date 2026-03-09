@@ -92,6 +92,16 @@ export function GameProvider({ children }: { children: ReactNode }) {
       return { error: new Error('Your description must be exactly 5 words.') };
     }
 
+    // Each word must contain at least 2 letters and no repeated char spam (e.g. "aaaa")
+    for (const w of words) {
+      if (!/[a-zA-ZÀ-ÿ]{2,}/.test(w)) {
+        return { error: new Error('Each word must contain at least 2 letters.') };
+      }
+      if (/^(.)\1+$/.test(w)) {
+        return { error: new Error('Please use real words in your description.') };
+      }
+    }
+
     const profanityCheck = checkProfanity(description);
     if (!profanityCheck.clean) {
       return { error: new Error('Your description contains inappropriate language. Please try again.') };
@@ -120,19 +130,17 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   async function getVotePair(): Promise<VotePair | null> {
     if (!todayWord || !userId) return null;
-    try {
-      const { data } = await withTimeout(supabase.rpc('get_vote_pair', {
-        p_word_id: todayWord.id,
-        p_voter_id: userId,
-      }));
-      if (data && data.length > 0 && data[0].desc1_id && data[0].desc2_id) {
-        return data[0];
-      }
-      return null;
-    } catch (err) {
-      console.error('Failed to get vote pair:', err);
-      return null;
+    const { data, error } = await withTimeout(supabase.rpc('get_vote_pair', {
+      p_word_id: todayWord.id,
+      p_voter_id: userId,
+    }));
+    if (error) {
+      throw error;
     }
+    if (data && data.length > 0 && data[0].desc1_id && data[0].desc2_id) {
+      return data[0];
+    }
+    return null;
   }
 
   async function submitVote(winnerId: string, loserId: string) {

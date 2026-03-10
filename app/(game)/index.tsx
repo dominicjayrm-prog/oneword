@@ -29,16 +29,8 @@ import { useToast } from '../../src/components/Toast';
 import { fontSize, spacing, borderRadius } from '../../src/constants/theme';
 import { DESCRIPTION_WORD_COUNT, DESCRIPTION_MAX_LENGTH, TOAST_DURATION_MS, USERNAME_MIN_LENGTH, USERNAME_MAX_LENGTH, PASSWORD_MIN_LENGTH } from '../../src/constants/app';
 import { haptic } from '../../src/lib/haptics';
+import { getGameDate, getGameDay, getGameMonday } from '../../src/lib/gameDate';
 import type { YesterdayWinner, WeeklyRecap } from '../../src/types/database';
-
-/** Get the Monday of the week containing the given date */
-function getMonday(date: Date): Date {
-  const d = new Date(date);
-  const day = d.getDay();
-  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
-  d.setDate(diff);
-  return d;
-}
 
 const STORAGE_KEY_RECAP = 'recap_dismissed_week';
 const STORAGE_KEY_WINNER = 'winner_dismissed_date';
@@ -96,12 +88,11 @@ export default function HomeScreen() {
     let cancelled = false;
     (async () => {
       try {
-        const today = new Date();
-        const todayStr = today.toISOString().split('T')[0];
+        const gameDateStr = getGameDate();
 
-        // Check recap first (Mondays only)
-        if (today.getDay() === 1) {
-          const thisMonday = getMonday(today).toISOString().split('T')[0];
+        // Check recap first (Mondays only, based on game day)
+        if (getGameDay() === 1) {
+          const thisMonday = getGameMonday(gameDateStr);
           const dismissedWeek = await AsyncStorage.getItem(STORAGE_KEY_RECAP);
           if (dismissedWeek !== thisMonday) {
             const recap = await getWeeklyRecap();
@@ -114,7 +105,7 @@ export default function HomeScreen() {
 
         // Always pre-fetch yesterday's winner (won't display until recap is dismissed)
         const lastDismissed = await AsyncStorage.getItem(STORAGE_KEY_WINNER);
-        if (lastDismissed !== todayStr) {
+        if (lastDismissed !== gameDateStr) {
           const winner = await getYesterdayWinner();
           if (!cancelled && winner) {
             setYesterdayData(winner);
@@ -132,16 +123,14 @@ export default function HomeScreen() {
   const dismissWeeklyRecap = useCallback(async () => {
     setShowWeeklyRecap(false);
     try {
-      const thisMonday = getMonday(new Date()).toISOString().split('T')[0];
-      await AsyncStorage.setItem(STORAGE_KEY_RECAP, thisMonday);
+      await AsyncStorage.setItem(STORAGE_KEY_RECAP, getGameMonday());
     } catch { /* non-critical */ }
   }, []);
 
   const dismissYesterdayWinner = useCallback(async () => {
     setShowYesterdayWinner(false);
     try {
-      const today = new Date().toISOString().split('T')[0];
-      await AsyncStorage.setItem(STORAGE_KEY_WINNER, today);
+      await AsyncStorage.setItem(STORAGE_KEY_WINNER, getGameDate());
     } catch { /* non-critical */ }
   }, []);
 
@@ -175,10 +164,10 @@ export default function HomeScreen() {
       const { error } = await submitDescription(input);
       if (error) {
         showToast(error.message, 'error');
-        setSubmitting(false);
       }
     } catch {
       showToast(t('errors.submit_failed'), 'error');
+    } finally {
       setSubmitting(false);
     }
   }

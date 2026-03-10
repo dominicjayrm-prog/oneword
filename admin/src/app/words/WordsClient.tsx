@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { getGameDate } from '@/lib/gameDate';
 import { addWord, updateWord, deleteWord, bulkUploadWords } from './actions';
 
 interface Word {
@@ -33,7 +34,7 @@ export function WordsClient({ words }: { words: Word[] }) {
   // Calendar helpers
   const daysInMonth = new Date(calMonth.year, calMonth.month + 1, 0).getDate();
   const firstDay = new Date(calMonth.year, calMonth.month, 1).getDay();
-  const today = new Date().toISOString().split('T')[0];
+  const today = getGameDate();
   const monthName = new Date(calMonth.year, calMonth.month).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 
   const prevMonth = () => setCalMonth((p) => p.month === 0 ? { year: p.year - 1, month: 11 } : { ...p, month: p.month - 1 });

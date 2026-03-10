@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase';
 import { checkProfanity } from '../lib/profanityFilter';
 import { withTimeout } from '../lib/withTimeout';
 import { rateLimits } from '../lib/rateLimit';
+import { getGameDate, hasWordRolledOver } from '../lib/gameDate';
 import { DESCRIPTION_WORD_COUNT, LEADERBOARD_LIMIT } from '../constants/app';
 import { useAuthContext } from './AuthContext';
 import type { DailyWord, VotePair, LeaderboardEntry, YesterdayWinner, WeeklyRecap } from '../types/database';
@@ -78,20 +79,30 @@ export function GameProvider({ children }: { children: ReactNode }) {
     fetchTodayWord();
   }, [fetchTodayWord]);
 
-  // Re-fetch today's word when app returns to foreground after midnight
-  const lastDateRef = useRef(new Date().toISOString().split('T')[0]);
+  // Re-fetch today's word when the game date rolls over (5am UTC).
+  // Handles both: (1) app returning from background, (2) app left open across rollover.
+  const lastGameDateRef = useRef(getGameDate());
   useEffect(() => {
-    const handleAppState = (next: AppStateStatus) => {
-      if (next === 'active') {
-        const now = new Date().toISOString().split('T')[0];
-        if (now !== lastDateRef.current) {
-          lastDateRef.current = now;
-          fetchTodayWord();
-        }
+    const checkRollover = () => {
+      if (hasWordRolledOver(lastGameDateRef.current)) {
+        lastGameDateRef.current = getGameDate();
+        fetchTodayWord();
       }
     };
+
+    // Check on app foreground
+    const handleAppState = (next: AppStateStatus) => {
+      if (next === 'active') checkRollover();
+    };
     const sub = AppState.addEventListener('change', handleAppState);
-    return () => sub.remove();
+
+    // Also poll every 60s in case app stays open across the rollover boundary
+    const interval = setInterval(checkRollover, 60_000);
+
+    return () => {
+      sub.remove();
+      clearInterval(interval);
+    };
   }, [fetchTodayWord]);
 
   const submitDescription = useCallback(async (description: string) => {

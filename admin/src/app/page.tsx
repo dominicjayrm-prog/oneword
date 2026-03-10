@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import { isAuthenticated } from '@/lib/auth';
 import { createAdminClient } from '@/lib/supabase';
+import { getGameDate } from '@/lib/gameDate';
 import { NavBar } from '@/components/NavBar';
 
 export const dynamic = 'force-dynamic';
@@ -9,7 +10,7 @@ export default async function DashboardPage() {
   if (!(await isAuthenticated())) redirect('/login');
   const supabase = createAdminClient();
 
-  const today = new Date().toISOString().split('T')[0];
+  const today = getGameDate();
   const [wordsRes, profilesRes, descriptionsRes, votesRes, todayWordsRes, upcomingRes] = await Promise.all([
     supabase.from('daily_words').select('*', { count: 'exact', head: true }),
     supabase.from('profiles').select('*', { count: 'exact', head: true }),

@@ -83,7 +83,6 @@ export default function HomeScreen() {
   // Priority: Weekly Recap (Mondays only) → Yesterday's Winner → Today's Word.
   useEffect(() => {
     if (!auth.session || !auth.profile || gameLoading) return;
-    if (hasSubmitted) return;
 
     let cancelled = false;
     (async () => {
@@ -118,7 +117,7 @@ export default function HomeScreen() {
     })();
 
     return () => { cancelled = true; };
-  }, [auth.session, auth.profile, gameLoading, hasSubmitted, getWeeklyRecap, getYesterdayWinner]);
+  }, [auth.session, auth.profile, gameLoading, getWeeklyRecap, getYesterdayWinner]);
 
   const dismissWeeklyRecap = useCallback(async () => {
     setShowWeeklyRecap(false);

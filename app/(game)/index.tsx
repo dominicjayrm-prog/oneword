@@ -12,7 +12,6 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuthContext } from '../../src/contexts/AuthContext';
 import { useGameContext } from '../../src/contexts/GameContext';
 import { useTheme } from '../../src/contexts/ThemeContext';
@@ -33,10 +32,8 @@ import { DESCRIPTION_WORD_COUNT, DESCRIPTION_MAX_LENGTH, TOAST_DURATION_MS, USER
 import { haptic } from '../../src/lib/haptics';
 import { getGameDate, getGameDay, getGameMonday } from '../../src/lib/gameDate';
 import { getCurrentBadge, type BadgeTier } from '../../src/lib/badges';
+import { supabase } from '../../src/lib/supabase';
 import type { YesterdayWinner, WeeklyRecap } from '../../src/types/database';
-
-const STORAGE_KEY_RECAP = 'recap_dismissed_week';
-const STORAGE_KEY_WINNER = 'winner_dismissed_date';
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -109,11 +106,16 @@ export default function HomeScreen() {
       try {
         const gameDateStr = getGameDate();
 
+        // Fetch server-side dismissal state (works across devices)
+        const { data: dismissals } = await supabase.rpc('get_dismissals', {
+          p_user_id: auth.session!.user.id,
+        });
+        const d = dismissals && dismissals.length > 0 ? dismissals[0] : null;
+
         // Check recap first (Mondays only, based on game day)
         if (getGameDay() === 1) {
           const thisMonday = getGameMonday(gameDateStr);
-          const dismissedWeek = await AsyncStorage.getItem(STORAGE_KEY_RECAP);
-          if (dismissedWeek !== thisMonday) {
+          if (d?.recap_dismissed_week !== thisMonday) {
             const recap = await getWeeklyRecapRef.current();
             if (recap) {
               setRecapData(recap);
@@ -123,11 +125,10 @@ export default function HomeScreen() {
         }
 
         // Always pre-fetch yesterday's winner (won't display until recap is dismissed)
-        const lastDismissed = await AsyncStorage.getItem(STORAGE_KEY_WINNER);
-        if (lastDismissed !== gameDateStr) {
+        if (d?.winner_dismissed_date !== gameDateStr) {
           const winner = await getYesterdayWinnerRef.current();
           if (__DEV__) {
-            console.log('[Interstitial] gameDate:', gameDateStr, 'lastDismissed:', lastDismissed, 'winner:', winner);
+            console.log('[Interstitial] gameDate:', gameDateStr, 'lastDismissed:', d?.winner_dismissed_date, 'winner:', winner);
           }
           if (winner) {
             setYesterdayData(winner);
@@ -147,16 +148,24 @@ export default function HomeScreen() {
   const dismissWeeklyRecap = useCallback(async () => {
     setShowWeeklyRecap(false);
     try {
-      await AsyncStorage.setItem(STORAGE_KEY_RECAP, getGameMonday());
+      await supabase.rpc('set_dismissal', {
+        p_user_id: auth.session!.user.id,
+        p_field: 'recap_dismissed_week',
+        p_value: getGameMonday(),
+      });
     } catch { /* non-critical */ }
-  }, []);
+  }, [auth.session]);
 
   const dismissYesterdayWinner = useCallback(async () => {
     setShowYesterdayWinner(false);
     try {
-      await AsyncStorage.setItem(STORAGE_KEY_WINNER, getGameDate());
+      await supabase.rpc('set_dismissal', {
+        p_user_id: auth.session!.user.id,
+        p_field: 'winner_dismissed_date',
+        p_value: getGameDate(),
+      });
     } catch { /* non-critical */ }
-  }, []);
+  }, [auth.session]);
 
   const wordCount = input.trim().split(/\s+/).filter(Boolean).length;
   const isExactlyFive = wordCount === DESCRIPTION_WORD_COUNT;
@@ -194,16 +203,21 @@ export default function HomeScreen() {
         const oldBadge = getCurrentBadge(oldStreak);
         const newBadge = getCurrentBadge(newStreak);
         if (newBadge && (!oldBadge || newBadge.streak !== oldBadge.streak)) {
-          // Check AsyncStorage to avoid re-showing
-          const key = `milestone_shown_${newBadge.streak}`;
-          const shown = await AsyncStorage.getItem(key);
-          if (!shown) {
+          // Check server-side to avoid re-showing across devices
+          const { data: dismissals } = await supabase.rpc('get_dismissals', {
+            p_user_id: auth.session!.user.id,
+          });
+          const milestones = dismissals?.[0]?.milestones_shown ?? [];
+          if (!milestones.includes(newBadge.streak)) {
             // Delay celebration 500ms after "locked in" appears
             setTimeout(() => {
               setCelebrationStreak(newStreak);
               setCelebrationBadge(newBadge);
             }, 500);
-            await AsyncStorage.setItem(key, 'true');
+            await supabase.rpc('add_milestone_shown', {
+              p_user_id: auth.session!.user.id,
+              p_streak: newBadge.streak,
+            });
           }
         }
       }

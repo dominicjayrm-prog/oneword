@@ -32,51 +32,68 @@ BEGIN
   v_prev_week_start := v_prev_week_end - 6;
 
   RETURN QUERY
-  WITH last_week_entries AS (
+  -- Rank ALL descriptions for each word in last week, then pick the user's rows
+  WITH all_last_week AS (
     SELECT
       d.id,
       d.description,
       d.vote_count,
+      d.user_id,
       dw.word,
       dw.date,
       ROW_NUMBER() OVER (PARTITION BY d.word_id ORDER BY d.vote_count DESC, d.created_at ASC) AS rank_in_word,
       COUNT(*) OVER (PARTITION BY d.word_id) AS total_in_word
     FROM descriptions d
     JOIN daily_words dw ON d.word_id = dw.id
-    WHERE d.user_id = p_user_id
-      AND dw.language = p_language
+    WHERE dw.language = p_language
       AND dw.date BETWEEN v_week_start AND v_week_end
   ),
+  user_last_week AS (
+    SELECT * FROM all_last_week WHERE user_id = p_user_id
+  ),
   best AS (
-    SELECT * FROM last_week_entries
+    SELECT * FROM user_last_week
     ORDER BY rank_in_word ASC, total_in_word DESC
     LIMIT 1
   ),
-  prev_week_entries AS (
+  all_prev_week AS (
     SELECT
+      d.user_id,
       ROW_NUMBER() OVER (PARTITION BY d.word_id ORDER BY d.vote_count DESC, d.created_at ASC) AS rank_in_word
     FROM descriptions d
     JOIN daily_words dw ON d.word_id = dw.id
-    WHERE d.user_id = p_user_id
-      AND dw.language = p_language
+    WHERE dw.language = p_language
       AND dw.date BETWEEN v_prev_week_start AND v_prev_week_end
+  ),
+  user_prev_week AS (
+    SELECT * FROM all_prev_week WHERE user_id = p_user_id
+  ),
+  -- Aggregate user stats in one pass
+  user_stats AS (
+    SELECT
+      COUNT(DISTINCT ulw.date)::INTEGER AS v_days_played,
+      COALESCE(SUM(ulw.vote_count), 0)::INTEGER AS v_total_votes,
+      ROUND(AVG(ulw.rank_in_word), 0) AS v_avg_rank,
+      COUNT(*)::INTEGER AS v_total_descs
+    FROM user_last_week ulw
   ),
   user_profile AS (
     SELECT p.current_streak FROM profiles p WHERE p.id = p_user_id
   )
   SELECT
-    (SELECT COUNT(DISTINCT lwe.date)::INTEGER FROM last_week_entries lwe),
-    (SELECT COALESCE(SUM(lwe.vote_count), 0)::INTEGER FROM last_week_entries lwe),
+    us.v_days_played,
+    us.v_total_votes,
     (SELECT b.rank_in_word::INTEGER FROM best b),
     (SELECT b.word FROM best b),
     (SELECT b.description FROM best b),
     (SELECT b.total_in_word FROM best b),
-    (SELECT ROUND(AVG(lwe.rank_in_word), 0) FROM last_week_entries lwe),
-    (SELECT ROUND(AVG(pwe.rank_in_word), 0) FROM prev_week_entries pwe),
+    us.v_avg_rank,
+    (SELECT ROUND(AVG(upw.rank_in_word), 0) FROM user_prev_week upw),
     (SELECT up.current_streak FROM user_profile up),
-    (SELECT COUNT(*)::INTEGER FROM last_week_entries lwe),
-    (SELECT COUNT(DISTINCT lwe.date) = 7 FROM last_week_entries lwe),
+    us.v_total_descs,
+    (us.v_days_played = 7),
     v_week_start,
-    v_week_end;
+    v_week_end
+  FROM user_stats us;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;

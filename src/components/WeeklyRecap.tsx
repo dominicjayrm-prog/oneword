@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Modal } from 'react-native';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { captureRef } from 'react-native-view-shot';
 import * as Sharing from 'expo-sharing';
@@ -14,6 +14,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { Button } from './Button';
 import { WeeklyRecapShareCard } from './WeeklyRecapShareCard';
+import { getRankEmoji } from '../lib/format';
 import { fontSize, spacing, borderRadius } from '../constants/theme';
 import { haptic } from '../lib/haptics';
 import type { WeeklyRecap as WeeklyRecapType } from '../types/database';
@@ -48,7 +49,7 @@ export function WeeklyRecapCard({ data, onDismiss }: Props) {
   const dateRange = formatDateRange(data.week_start, data.week_end);
   const dayCircles = getDayCircles(data.days_played);
 
-  const rankEmoji = data.best_rank === 1 ? '\u{1F947}' : data.best_rank === 2 ? '\u{1F948}' : data.best_rank === 3 ? '\u{1F949}' : '\u{1F4CA}';
+  const rankEmoji = getRankEmoji(data.best_rank);
   const improved = data.previous_week_average_rank != null && data.average_rank != null && data.average_rank < data.previous_week_average_rank;
 
   // ── Animations ──

@@ -1,6 +1,7 @@
 import { forwardRef } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { getRankEmoji } from '../lib/format';
 import type { WeeklyRecap } from '../types/database';
 
 interface Props {
@@ -10,7 +11,7 @@ interface Props {
 
 export const WeeklyRecapShareCard = forwardRef<View, Props>(({ data, dateRange }, ref) => {
   const { t } = useTranslation();
-  const rankEmoji = data.best_rank === 1 ? '\u{1F947}' : data.best_rank === 2 ? '\u{1F948}' : data.best_rank === 3 ? '\u{1F949}' : '\u{1F4CA}';
+  const rankEmoji = getRankEmoji(data.best_rank);
 
   return (
     <View ref={ref} style={styles.card} collapsable={false}>

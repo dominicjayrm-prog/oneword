@@ -117,7 +117,12 @@ export default function FriendsScreen() {
   async function handleRemove(friendshipId: string) {
     if (processingRef.current.has(friendshipId)) return;
     processingRef.current.add(friendshipId);
+    const friendToRemove = friends.find((f) => f.friendship_id === friendshipId);
     setFriends((prev) => prev.filter((f) => f.friendship_id !== friendshipId));
+    // Also remove from descriptions so FriendsToday updates immediately
+    if (friendToRemove) {
+      setDescriptions((prev) => prev.filter((d) => d.friend_id !== friendToRemove.friend_id));
+    }
     try {
       const { error } = await removeFriend(friendshipId);
       if (error) {

@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuthContext } from '../../src/contexts/AuthContext';
 import { useGameContext } from '../../src/contexts/GameContext';
 import { useTheme } from '../../src/contexts/ThemeContext';
@@ -22,22 +23,26 @@ import { ThemeToggle } from '../../src/components/ThemeToggle';
 import { LoadingSpinner } from '../../src/components/LoadingSpinner';
 import { EmptyState } from '../../src/components/EmptyState';
 import { ErrorState } from '../../src/components/ErrorState';
+import { YesterdayWinnerCard } from '../../src/components/YesterdayWinnerCard';
 import { useToast } from '../../src/components/Toast';
 import { fontSize, spacing, borderRadius } from '../../src/constants/theme';
 import { DESCRIPTION_WORD_COUNT, DESCRIPTION_MAX_LENGTH, TOAST_DURATION_MS, USERNAME_MIN_LENGTH, USERNAME_MAX_LENGTH, PASSWORD_MIN_LENGTH } from '../../src/constants/app';
 import { haptic } from '../../src/lib/haptics';
+import type { YesterdayWinner } from '../../src/types/database';
 
 export default function HomeScreen() {
   const router = useRouter();
   const { t } = useTranslation();
   const { colors } = useTheme();
   const auth = useAuthContext();
-  const { todayWord, hasSubmitted, userDescription, loading: gameLoading, loadError: gameError, submitDescription, refresh } = useGameContext();
+  const { todayWord, hasSubmitted, userDescription, loading: gameLoading, loadError: gameError, submitDescription, getYesterdayWinner, refresh } = useGameContext();
 
   const { showToast } = useToast();
 
   const [input, setInput] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [showYesterdayWinner, setShowYesterdayWinner] = useState(false);
+  const [yesterdayData, setYesterdayData] = useState<YesterdayWinner | null>(null);
   const [showAuth, setShowAuth] = useState(false);
   const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
   const [email, setEmail] = useState('');
@@ -65,6 +70,34 @@ export default function HomeScreen() {
     return () => {
       if (resentTimerRef.current) clearTimeout(resentTimerRef.current);
     };
+  }, []);
+
+  // Fetch yesterday's winner once per day (skip if already dismissed or already submitted today)
+  useEffect(() => {
+    if (!auth.session || !auth.profile || gameLoading) return;
+    if (hasSubmitted) return; // Already submitted today — skip winner card
+
+    (async () => {
+      try {
+        const today = new Date().toISOString().split('T')[0];
+        const lastDismissed = await AsyncStorage.getItem('winner_dismissed_date');
+        if (lastDismissed === today) return; // Already dismissed today
+
+        const data = await getYesterdayWinner();
+        if (data) {
+          setYesterdayData(data);
+          setShowYesterdayWinner(true);
+        }
+      } catch {
+        // Non-critical — just skip the winner card
+      }
+    })();
+  }, [auth.session, auth.profile, gameLoading, hasSubmitted, getYesterdayWinner]);
+
+  const dismissYesterdayWinner = useCallback(async () => {
+    const today = new Date().toISOString().split('T')[0];
+    await AsyncStorage.setItem('winner_dismissed_date', today);
+    setShowYesterdayWinner(false);
   }, []);
 
   const wordCount = input.trim().split(/\s+/).filter(Boolean).length;
@@ -449,6 +482,16 @@ export default function HomeScreen() {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+    );
+  }
+
+  // Yesterday's Winner card — shown once per day before today's word
+  if (showYesterdayWinner && yesterdayData) {
+    return (
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <ThemeToggle />
+        <YesterdayWinnerCard data={yesterdayData} onDismiss={dismissYesterdayWinner} />
+      </View>
     );
   }
 

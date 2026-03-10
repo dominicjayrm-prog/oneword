@@ -36,7 +36,14 @@
       "expo-sharing",
       "expo-font",
       "expo-localization",
-      "@sentry/react-native"
+      "@sentry/react-native",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#FF6B4A"
+        }
+      ]
     ]
   }
 }

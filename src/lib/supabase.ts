@@ -16,25 +16,40 @@ if (!supabaseUrl || !supabaseAnonKey) {
 // so stolen tokens have a shorter window of exploitation.
 // Native: use SecureStore (encrypted keychain / keystore).
 const ExpoSecureStoreAdapter = {
-  getItem: (key: string) => {
+  getItem: async (key: string) => {
     if (Platform.OS === 'web') {
       return sessionStorage.getItem(key);
     }
-    return SecureStore.getItemAsync(key);
+    try {
+      return await SecureStore.getItemAsync(key);
+    } catch {
+      return null;
+    }
   },
-  setItem: (key: string, value: string) => {
+  setItem: async (key: string, value: string) => {
     if (Platform.OS === 'web') {
       sessionStorage.setItem(key, value);
       return;
     }
-    return SecureStore.setItemAsync(key, value);
+    try {
+      await SecureStore.setItemAsync(key, value);
+    } catch {
+      // SecureStore has a 2048-byte limit per value; large session tokens
+      // may exceed this. Swallow the error so the app doesn't crash —
+      // the session will still work in-memory for this app session.
+      console.warn(`SecureStore: failed to persist key "${key}" (${value.length} bytes)`);
+    }
   },
-  removeItem: (key: string) => {
+  removeItem: async (key: string) => {
     if (Platform.OS === 'web') {
       sessionStorage.removeItem(key);
       return;
     }
-    return SecureStore.deleteItemAsync(key);
+    try {
+      await SecureStore.deleteItemAsync(key);
+    } catch {
+      // ignore
+    }
   },
 };
 

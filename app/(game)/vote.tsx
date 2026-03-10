@@ -197,6 +197,8 @@ export default function VoteScreen() {
   }
 
   async function handleReport(descriptionId: string) {
+    if (voting) return;
+
     const ok = Platform.OS === 'web'
       ? window.confirm(`${t('vote.report_title')}\n\n${t('vote.report_message')}`)
       : await new Promise<boolean>((resolve) => {
@@ -207,7 +209,11 @@ export default function VoteScreen() {
         });
 
     if (ok) {
-      await reportDescription(descriptionId);
+      const { error } = await reportDescription(descriptionId);
+      if (error) {
+        showToast(t('errors.generic'), 'error');
+        return;
+      }
       if (Platform.OS === 'web') {
         window.alert(t('vote.reported_message'));
       } else {
@@ -255,6 +261,14 @@ export default function VoteScreen() {
     opacity: doneTextOpacity.value,
   }));
 
+  // Trigger done-screen animations only once when state changes
+  useEffect(() => {
+    if (noMorePairs || batchExhausted) {
+      doneEmojiScale.value = withSpring(1, { damping: 8, stiffness: 150 });
+      doneTextOpacity.value = withDelay(200, withTiming(1, { duration: 300 }));
+    }
+  }, [noMorePairs, batchExhausted]);
+
   // "No pairs available" screen — server returned no more unseen pairs
   if (noMorePairs) {
     if (voteCount === 0) {
@@ -272,11 +286,7 @@ export default function VoteScreen() {
       );
     }
 
-    // Trigger done animation
-    doneEmojiScale.value = withSpring(1, { damping: 8, stiffness: 150 });
-    doneTextOpacity.value = withDelay(200, withTiming(1, { duration: 300 }));
-
-    const votedText = voteCount === 1
+    const votedText1 = voteCount === 1
       ? t('vote.voted_on', { count: voteCount })
       : t('vote.voted_on_plural', { count: voteCount });
     return (
@@ -289,7 +299,7 @@ export default function VoteScreen() {
               {t('vote.all_caught_up')}
             </Text>
             <Text style={[styles.doneSubtitle, { color: colors.textSecondary }]}>
-              {votedText}
+              {votedText1}
             </Text>
             <Text style={[styles.doneHint, { color: colors.textMuted }]}>
               {t('vote.all_caught_up_subtitle')}
@@ -306,9 +316,6 @@ export default function VoteScreen() {
 
   // "Batch limit reached" screen — more pairs may exist, come back later
   if (batchExhausted) {
-    doneEmojiScale.value = withSpring(1, { damping: 8, stiffness: 150 });
-    doneTextOpacity.value = withDelay(200, withTiming(1, { duration: 300 }));
-
     const votedText = voteCount === 1
       ? t('vote.voted_on', { count: voteCount })
       : t('vote.voted_on_plural', { count: voteCount });

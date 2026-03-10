@@ -187,16 +187,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   const getLeaderboard = useCallback(async (): Promise<LeaderboardEntry[]> => {
     if (!todayWord) return [];
-    try {
-      const { data } = await withTimeout(supabase.rpc('get_leaderboard', {
-        p_word_id: todayWord.id,
-        p_limit: LEADERBOARD_LIMIT,
-      }));
-      return data ?? [];
-    } catch {
-      console.error('Failed to get leaderboard');
-      return [];
-    }
+    const { data, error } = await withTimeout(supabase.rpc('get_leaderboard', {
+      p_word_id: todayWord.id,
+      p_limit: LEADERBOARD_LIMIT,
+    }));
+    if (error) throw error;
+    return data ?? [];
   }, [todayWord]);
 
   const reportDescription = useCallback(async (descriptionId: string) => {

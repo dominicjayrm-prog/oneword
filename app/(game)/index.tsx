@@ -212,11 +212,16 @@ export default function HomeScreen() {
   async function handleResend() {
     if (resending) return;
     setResending(true);
-    await auth.resendVerification();
-    setResending(false);
-    setResent(true);
-    if (resentTimerRef.current) clearTimeout(resentTimerRef.current);
-    resentTimerRef.current = setTimeout(() => setResent(false), TOAST_DURATION_MS);
+    try {
+      await auth.resendVerification();
+      setResent(true);
+      if (resentTimerRef.current) clearTimeout(resentTimerRef.current);
+      resentTimerRef.current = setTimeout(() => setResent(false), TOAST_DURATION_MS);
+    } catch {
+      showToast(t('errors.network_retry'), 'error');
+    } finally {
+      setResending(false);
+    }
   }
 
   async function handleForgotPassword() {
@@ -227,12 +232,17 @@ export default function HomeScreen() {
       return;
     }
     setResetLoading(true);
-    const { error } = await auth.resetPassword(resetEmail);
-    setResetLoading(false);
-    if (error) {
-      setResetError(error.message);
-    } else {
-      setResetSent(true);
+    try {
+      const { error } = await auth.resetPassword(resetEmail);
+      if (error) {
+        setResetError(error.message);
+      } else {
+        setResetSent(true);
+      }
+    } catch {
+      setResetError(t('errors.network_retry'));
+    } finally {
+      setResetLoading(false);
     }
   }
 
@@ -247,13 +257,18 @@ export default function HomeScreen() {
       return;
     }
     setResetLoading(true);
-    const { error } = await auth.updatePassword(newPassword);
-    setResetLoading(false);
-    if (error) {
-      setResetError(error.message);
-    } else {
-      setNewPassword('');
-      setConfirmPassword('');
+    try {
+      const { error } = await auth.updatePassword(newPassword);
+      if (error) {
+        setResetError(error.message);
+      } else {
+        setNewPassword('');
+        setConfirmPassword('');
+      }
+    } catch {
+      setResetError(t('errors.network_retry'));
+    } finally {
+      setResetLoading(false);
     }
   }
 

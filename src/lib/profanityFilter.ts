@@ -111,6 +111,12 @@ function stripAccents(s: string): string {
   return s.replace(/á/g, 'a').replace(/é/g, 'e').replace(/í/g, 'i').replace(/ó/g, 'o').replace(/ú/g, 'u').replace(/ü/g, 'u').replace(/ñ/g, 'n');
 }
 
+// Pre-compute accent-stripped Spanish blocked set so that stripped input
+// is compared against stripped blocked words (not the accented originals).
+const BLOCKED_WORDS_ES_STRIPPED = new Set(
+  [...BLOCKED_WORDS_ES].map(stripAccents)
+);
+
 /**
  * Check if a description contains profanity.
  * Checks against both English and Spanish blocked word lists.
@@ -129,7 +135,7 @@ export function checkProfanity(text: string): { clean: boolean; flaggedWord?: st
     }
     // Check accent-stripped version against Spanish list (catches "maricon" for "maricón")
     const stripped = stripAccents(word);
-    if (BLOCKED_WORDS_ES.has(stripped)) {
+    if (BLOCKED_WORDS_ES_STRIPPED.has(stripped)) {
       return { clean: false, flaggedWord: word };
     }
   }
@@ -153,7 +159,7 @@ export function checkProfanity(text: string): { clean: boolean; flaggedWord?: st
       return { clean: false, flaggedWord: word };
     }
     const stripped = stripAccents(word);
-    if (BLOCKED_WORDS_ES.has(stripped)) {
+    if (BLOCKED_WORDS_ES_STRIPPED.has(stripped)) {
       return { clean: false, flaggedWord: word };
     }
   }

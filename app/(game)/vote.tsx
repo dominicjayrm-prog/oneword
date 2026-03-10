@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import { View, Text, StyleSheet, Alert, Platform, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -22,7 +23,12 @@ import { useToast } from '../../src/components/Toast';
 import { VOTE_BATCH_SIZE } from '../../src/constants/app';
 import { fontSize, spacing, borderRadius } from '../../src/constants/theme';
 import { haptic } from '../../src/lib/haptics';
+import { getGameDate } from '../../src/lib/gameDate';
 import type { VotePair } from '../../src/types/database';
+
+function voteStorageKey(wordId: string): string {
+  return `vote_progress_${wordId}_${getGameDate()}`;
+}
 
 export default function VoteScreen() {
   const router = useRouter();
@@ -41,13 +47,37 @@ export default function VoteScreen() {
   const [voting, setVoting] = useState(false);
   const [loadError, setLoadError] = useState(false);
   const [selectedCard, setSelectedCard] = useState<1 | 2 | null>(null);
-  // How many pairs we've shown this session (caps at VOTE_BATCH_SIZE per visit)
+  // How many pairs we've shown (persisted across visits via AsyncStorage)
   const pairsShownRef = useRef(0);
+  const storageKeyRef = useRef<string | null>(null);
 
   const mountedRef = useRef(true);
   useEffect(() => {
     return () => { mountedRef.current = false; };
   }, []);
+
+  // Restore vote progress from AsyncStorage on mount
+  useEffect(() => {
+    if (!todayWord) return;
+    const key = voteStorageKey(todayWord.id);
+    storageKeyRef.current = key;
+    (async () => {
+      try {
+        const stored = await AsyncStorage.getItem(key);
+        if (stored && mountedRef.current) {
+          const count = parseInt(stored, 10);
+          if (!isNaN(count) && count > 0) {
+            setVoteCount(count);
+            pairsShownRef.current = count;
+            // If they already hit the batch limit, show the done screen
+            if (count >= VOTE_BATCH_SIZE) {
+              setBatchExhausted(true);
+            }
+          }
+        }
+      } catch { /* non-critical */ }
+    })();
+  }, [todayWord]);
 
   // Animation shared values
   const card1TranslateX = useSharedValue(-300);
@@ -162,7 +192,14 @@ export default function VoteScreen() {
       return;
     }
 
-    setVoteCount((c) => c + 1);
+    setVoteCount((c) => {
+      const next = c + 1;
+      // Persist vote count so it survives app restarts
+      if (storageKeyRef.current) {
+        AsyncStorage.setItem(storageKeyRef.current, String(next)).catch(() => {});
+      }
+      return next;
+    });
 
     // Wait for visual feedback
     await new Promise((r) => setTimeout(r, 600));

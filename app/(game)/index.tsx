@@ -72,6 +72,13 @@ export default function HomeScreen() {
 
   const resentTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Keep stable refs to the callbacks so the interstitial effect doesn't
+  // restart every time userId/language changes recreate these functions.
+  const getWeeklyRecapRef = useRef(getWeeklyRecap);
+  getWeeklyRecapRef.current = getWeeklyRecap;
+  const getYesterdayWinnerRef = useRef(getYesterdayWinner);
+  getYesterdayWinnerRef.current = getYesterdayWinner;
+
   // Cleanup timers on unmount
   useEffect(() => {
     return () => {
@@ -81,6 +88,8 @@ export default function HomeScreen() {
 
   // Fetch interstitial cards (recap + winner) in a single effect to avoid double API calls.
   // Priority: Weekly Recap (Mondays only) → Yesterday's Winner → Today's Word.
+  // Deps intentionally exclude the RPC callbacks (accessed via refs) to prevent
+  // cancellation races when userId/language stabilise during initial load.
   useEffect(() => {
     if (!auth.session || !auth.profile || gameLoading) return;
 
@@ -94,7 +103,7 @@ export default function HomeScreen() {
           const thisMonday = getGameMonday(gameDateStr);
           const dismissedWeek = await AsyncStorage.getItem(STORAGE_KEY_RECAP);
           if (dismissedWeek !== thisMonday) {
-            const recap = await getWeeklyRecap();
+            const recap = await getWeeklyRecapRef.current();
             if (!cancelled && recap) {
               setRecapData(recap);
               setShowWeeklyRecap(true);
@@ -105,7 +114,7 @@ export default function HomeScreen() {
         // Always pre-fetch yesterday's winner (won't display until recap is dismissed)
         const lastDismissed = await AsyncStorage.getItem(STORAGE_KEY_WINNER);
         if (lastDismissed !== gameDateStr) {
-          const winner = await getYesterdayWinner();
+          const winner = await getYesterdayWinnerRef.current();
           if (!cancelled && winner) {
             setYesterdayData(winner);
             setShowYesterdayWinner(true);
@@ -117,7 +126,7 @@ export default function HomeScreen() {
     })();
 
     return () => { cancelled = true; };
-  }, [auth.session, auth.profile, gameLoading, getWeeklyRecap, getYesterdayWinner]);
+  }, [auth.session, auth.profile, gameLoading]);
 
   const dismissWeeklyRecap = useCallback(async () => {
     setShowWeeklyRecap(false);

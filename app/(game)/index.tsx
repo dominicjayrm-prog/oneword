@@ -91,6 +91,10 @@ export default function HomeScreen() {
   // auth.profile can change reference multiple times during login (fetchProfile runs
   // from both getSession and onAuthStateChange), which would cancel in-flight fetches.
   const interstitialStartedRef = useRef(false);
+  // Reset the guard on logout so re-login shows interstitials again
+  useEffect(() => {
+    if (!auth.session) interstitialStartedRef.current = false;
+  }, [auth.session]);
   useEffect(() => {
     if (!auth.session || !auth.profile || gameLoading) return;
     if (interstitialStartedRef.current) return;

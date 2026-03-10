@@ -56,7 +56,7 @@ export default function VoteScreen() {
 
   // Restore vote progress from AsyncStorage on mount
   useEffect(() => {
-    if (!todayWord) return;
+    if (!todayWord || !hasSubmitted) return;
     const key = voteStorageKey(todayWord.id);
     storageKeyRef.current = key;
     (async () => {
@@ -75,7 +75,7 @@ export default function VoteScreen() {
         }
       } catch { /* non-critical */ }
     })();
-  }, [todayWord]);
+  }, [todayWord, hasSubmitted]);
 
   // Animation shared values
   const card1TranslateX = useSharedValue(-300);
@@ -149,8 +149,8 @@ export default function VoteScreen() {
   }, [voteCount]);
 
   useEffect(() => {
-    loadPair();
-  }, [loadPair]);
+    if (hasSubmitted) loadPair();
+  }, [loadPair, hasSubmitted]);
 
   async function handleVote(winnerId: string, loserId: string, winnerIsCard1: boolean) {
     if (voting) return;

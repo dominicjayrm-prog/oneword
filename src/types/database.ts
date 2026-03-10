@@ -65,6 +65,22 @@ export interface YesterdayWinner {
   user_was_winner: boolean;
 }
 
+export interface WeeklyRecap {
+  days_played: number;
+  total_votes_received: number;
+  best_rank: number | null;
+  best_rank_word: string | null;
+  best_rank_description: string | null;
+  best_rank_total_players: number | null;
+  average_rank: number | null;
+  previous_week_average_rank: number | null;
+  current_streak: number;
+  total_descriptions_submitted: number;
+  perfect_week: boolean;
+  week_start: string;
+  week_end: string;
+}
+
 export interface LeaderboardEntry {
   description_id: string;
   description_text: string;

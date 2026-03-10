@@ -1,6 +1,7 @@
 import { forwardRef } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { getRankEmoji } from '../lib/format';
 
 interface ShareCardProps {
   word: string;
@@ -13,7 +14,7 @@ interface ShareCardProps {
 export const ShareCard = forwardRef<View, ShareCardProps>(
   ({ word, description, rank, votes, streak }, ref) => {
     const { t } = useTranslation();
-    const rankEmoji = rank === 1 ? '\u{1F947}' : rank === 2 ? '\u{1F948}' : rank === 3 ? '\u{1F949}' : '\u{1F4CA}';
+    const rankEmoji = getRankEmoji(rank);
 
     return (
       <View ref={ref} style={styles.card} collapsable={false}>

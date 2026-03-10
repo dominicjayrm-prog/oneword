@@ -40,6 +40,9 @@ function getMonday(date: Date): Date {
   return d;
 }
 
+const STORAGE_KEY_RECAP = 'recap_dismissed_week';
+const STORAGE_KEY_WINNER = 'winner_dismissed_date';
+
 export default function HomeScreen() {
   const router = useRouter();
   const { t } = useTranslation();
@@ -84,65 +87,62 @@ export default function HomeScreen() {
     };
   }, []);
 
-  // Weekly Recap — shows on Mondays if user played at least 1 day last week
+  // Fetch interstitial cards (recap + winner) in a single effect to avoid double API calls.
+  // Priority: Weekly Recap (Mondays only) → Yesterday's Winner → Today's Word.
   useEffect(() => {
     if (!auth.session || !auth.profile || gameLoading) return;
     if (hasSubmitted) return;
 
+    let cancelled = false;
     (async () => {
       try {
         const today = new Date();
-        if (today.getDay() !== 1) return; // Only on Mondays
+        const todayStr = today.toISOString().split('T')[0];
 
-        const thisMonday = getMonday(today).toISOString().split('T')[0];
-        const dismissedWeek = await AsyncStorage.getItem('recap_dismissed_week');
-        if (dismissedWeek === thisMonday) return;
+        // Check recap first (Mondays only)
+        if (today.getDay() === 1) {
+          const thisMonday = getMonday(today).toISOString().split('T')[0];
+          const dismissedWeek = await AsyncStorage.getItem(STORAGE_KEY_RECAP);
+          if (dismissedWeek !== thisMonday) {
+            const recap = await getWeeklyRecap();
+            if (!cancelled && recap) {
+              setRecapData(recap);
+              setShowWeeklyRecap(true);
+            }
+          }
+        }
 
-        const data = await getWeeklyRecap();
-        if (data) {
-          setRecapData(data);
-          setShowWeeklyRecap(true);
+        // Always pre-fetch yesterday's winner (won't display until recap is dismissed)
+        const lastDismissed = await AsyncStorage.getItem(STORAGE_KEY_WINNER);
+        if (lastDismissed !== todayStr) {
+          const winner = await getYesterdayWinner();
+          if (!cancelled && winner) {
+            setYesterdayData(winner);
+            setShowYesterdayWinner(true);
+          }
         }
       } catch {
-        // Non-critical
+        // Non-critical — just skip interstitial cards
       }
     })();
-  }, [auth.session, auth.profile, gameLoading, hasSubmitted, getWeeklyRecap]);
 
-  // Fetch yesterday's winner once per day (skip if recap is showing or already dismissed)
-  useEffect(() => {
-    if (!auth.session || !auth.profile || gameLoading) return;
-    if (hasSubmitted) return;
-    if (showWeeklyRecap) return; // Recap takes priority; winner loads after recap dismisses
-
-    (async () => {
-      try {
-        const today = new Date().toISOString().split('T')[0];
-        const lastDismissed = await AsyncStorage.getItem('winner_dismissed_date');
-        if (lastDismissed === today) return;
-
-        const data = await getYesterdayWinner();
-        if (data) {
-          setYesterdayData(data);
-          setShowYesterdayWinner(true);
-        }
-      } catch {
-        // Non-critical — just skip the winner card
-      }
-    })();
-  }, [auth.session, auth.profile, gameLoading, hasSubmitted, showWeeklyRecap, getYesterdayWinner]);
+    return () => { cancelled = true; };
+  }, [auth.session, auth.profile, gameLoading, hasSubmitted, getWeeklyRecap, getYesterdayWinner]);
 
   const dismissWeeklyRecap = useCallback(async () => {
-    const thisMonday = getMonday(new Date()).toISOString().split('T')[0];
-    await AsyncStorage.setItem('recap_dismissed_week', thisMonday);
     setShowWeeklyRecap(false);
-    // Yesterday winner useEffect will now run since showWeeklyRecap becomes false
+    try {
+      const thisMonday = getMonday(new Date()).toISOString().split('T')[0];
+      await AsyncStorage.setItem(STORAGE_KEY_RECAP, thisMonday);
+    } catch { /* non-critical */ }
   }, []);
 
   const dismissYesterdayWinner = useCallback(async () => {
-    const today = new Date().toISOString().split('T')[0];
-    await AsyncStorage.setItem('winner_dismissed_date', today);
     setShowYesterdayWinner(false);
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      await AsyncStorage.setItem(STORAGE_KEY_WINNER, today);
+    } catch { /* non-critical */ }
   }, []);
 
   const wordCount = input.trim().split(/\s+/).filter(Boolean).length;

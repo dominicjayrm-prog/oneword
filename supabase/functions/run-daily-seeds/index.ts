@@ -127,12 +127,13 @@ Deno.serve(async (req) => {
       }
 
       // Mark seed description as used
-      await supabaseAdmin.rpc("mark_seed_used", { p_seed_desc_id: seedDesc.id });
+      const { error: markError } = await supabaseAdmin.rpc("mark_seed_used", { p_seed_desc_id: seedDesc.id });
 
       submissions.push({
         username: account.username,
-        status: "submitted",
+        status: markError ? "submitted_mark_failed" : "submitted",
         description: seedDesc.description,
+        ...(markError && { markError: markError.message }),
       });
     }
 

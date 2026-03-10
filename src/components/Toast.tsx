@@ -56,7 +56,7 @@ function ToastBanner({ toast, onDismiss }: { toast: ToastMessage; onDismiss: () 
 
   const bgColors: Record<ToastType, string> = {
     success: colors.success,
-    error: colors.primary,
+    error: colors.error,
     info: colors.secondary,
   };
 

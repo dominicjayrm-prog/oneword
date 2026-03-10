@@ -153,7 +153,9 @@ export async function searchUsers(
   currentUserId: string,
   offset = 0,
 ): Promise<UserSearchResult[]> {
-  if (!rateLimits.search()) return [];
+  if (!rateLimits.search()) {
+    throw new Error('Too many searches. Please slow down.');
+  }
 
   // Try RPC first (has server-side escaping)
   const { data, error } = await supabase.rpc('search_users', {

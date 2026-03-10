@@ -1,7 +1,8 @@
 import { Component, type ReactNode } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, useColorScheme } from 'react-native';
 import { Sentry } from '../lib/sentry';
 import i18next from 'i18next';
+import { lightColors, darkColors } from '../constants/theme';
 
 interface Props {
   children: ReactNode;
@@ -30,23 +31,30 @@ export class ErrorBoundary extends Component<Props, State> {
 
   render() {
     if (this.state.hasError) {
-      return (
-        <View style={styles.container}>
-          <Text style={styles.emoji}>{'\uD83D\uDE05'}</Text>
-          <Text style={styles.title}>{i18next.t('errors.crash_title')}</Text>
-          <Text style={styles.subtitle}>{i18next.t('errors.crash_subtitle')}</Text>
-          <TouchableOpacity
-            style={styles.button}
-            onPress={() => this.setState({ hasError: false })}
-          >
-            <Text style={styles.buttonText}>{i18next.t('errors.try_again')}</Text>
-          </TouchableOpacity>
-        </View>
-      );
+      return <ErrorFallback onRetry={() => this.setState({ hasError: false })} />;
     }
 
     return this.props.children;
   }
+}
+
+function ErrorFallback({ onRetry }: { onRetry: () => void }) {
+  const colorScheme = useColorScheme();
+  const colors = colorScheme === 'dark' ? darkColors : lightColors;
+
+  return (
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <Text style={styles.emoji}>{'\uD83D\uDE05'}</Text>
+      <Text style={[styles.title, { color: colors.text }]}>{i18next.t('errors.crash_title')}</Text>
+      <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{i18next.t('errors.crash_subtitle')}</Text>
+      <TouchableOpacity
+        style={[styles.button, { backgroundColor: colors.primary }]}
+        onPress={onRetry}
+      >
+        <Text style={styles.buttonText}>{i18next.t('errors.try_again')}</Text>
+      </TouchableOpacity>
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
@@ -54,7 +62,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#FFFDF7',
     padding: 32,
   },
   emoji: {
@@ -64,17 +71,14 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#1A1A2E',
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 14,
-    color: '#6B7280',
     textAlign: 'center',
     marginBottom: 24,
   },
   button: {
-    backgroundColor: '#FF6B4A',
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 12,

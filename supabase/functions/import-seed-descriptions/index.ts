@@ -53,7 +53,7 @@ Deno.serve(async (req) => {
     const item = items[i];
 
     // Validate required fields
-    if (!item.word || !item.language || !item.description || !item.seed_account_index) {
+    if (!item.word || !item.language || !item.description || item.seed_account_index == null) {
       errors.push({ index: i, reason: "Missing required field", item });
       skipped++;
       continue;

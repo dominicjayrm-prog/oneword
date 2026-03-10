@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Animated } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { useTheme } from '../../contexts/ThemeContext';
 
 interface Props {
   isActive: boolean;
@@ -8,6 +9,7 @@ interface Props {
 
 export function OnboardingScreen2({ isActive }: Props) {
   const { t } = useTranslation();
+  const { colors } = useTheme();
 
   const labelOpacity = useRef(new Animated.Value(0)).current;
   const titleOpacity = useRef(new Animated.Value(0)).current;
@@ -92,23 +94,23 @@ export function OnboardingScreen2({ isActive }: Props) {
 
   const card1BorderColor = card1Selected.interpolate({
     inputRange: [0, 1],
-    outputRange: ['#E8E3D9', '#FF6B4A'],
+    outputRange: [colors.border, colors.primary],
   });
 
   const card1Bg = card1Selected.interpolate({
     inputRange: [0, 1],
-    outputRange: ['#FFFFFF', '#FFF0EC'],
+    outputRange: [colors.surface, colors.primaryLight],
   });
 
   return (
     <View style={styles.container}>
-      <Animated.Text style={[styles.label, { opacity: labelOpacity }]}>
+      <Animated.Text style={[styles.label, { color: colors.textMuted, opacity: labelOpacity }]}>
         {t('onboarding.screen2_label')}
       </Animated.Text>
-      <Animated.Text style={[styles.title, { opacity: titleOpacity }]}>
+      <Animated.Text style={[styles.title, { color: colors.text, opacity: titleOpacity }]}>
         {t('onboarding.screen2_title')}
       </Animated.Text>
-      <Animated.Text style={[styles.subtitle, { opacity: subtitleOpacity }]}>
+      <Animated.Text style={[styles.subtitle, { color: colors.textMuted, opacity: subtitleOpacity }]}>
         {t('onboarding.screen2_subtitle')}
       </Animated.Text>
 
@@ -118,19 +120,20 @@ export function OnboardingScreen2({ isActive }: Props) {
           style={[
             styles.card,
             {
+              backgroundColor: card1Bg,
+              borderColor: card1BorderColor,
               opacity: card1Opacity,
               transform: [{ translateX: card1TranslateX }, { scale: card1Scale }],
-              borderColor: card1BorderColor,
-              backgroundColor: card1Bg,
             },
           ]}
         >
-          <Text style={styles.cardText}>{'\u201C'}{t('onboarding.screen2_desc1')}{'\u201D'}</Text>
+          <Text style={[styles.cardText, { color: colors.text }]}>{'\u201C'}{t('onboarding.screen2_desc1')}{'\u201D'}</Text>
         </Animated.View>
         <Animated.View
           style={[
             styles.badge,
             {
+              backgroundColor: colors.primary,
               transform: [{ scale: badgeScale }],
               opacity: badgeScale,
             },
@@ -146,22 +149,25 @@ export function OnboardingScreen2({ isActive }: Props) {
           styles.card,
           styles.card2,
           {
+            backgroundColor: colors.surface,
+            borderColor: colors.border,
             opacity: Animated.multiply(card2Opacity, card2Fade),
             transform: [{ translateX: card2TranslateX }, { scale: card2Scale }],
           },
         ]}
       >
-        <Text style={styles.cardText}>{'\u201C'}{t('onboarding.screen2_desc2')}{'\u201D'}</Text>
+        <Text style={[styles.cardText, { color: colors.text }]}>{'\u201C'}{t('onboarding.screen2_desc2')}{'\u201D'}</Text>
       </Animated.View>
 
       {/* Progress */}
       <Animated.View style={[styles.progressContainer, { opacity: progressOpacity }]}>
-        <Text style={styles.progressText}>{t('onboarding.screen2_progress')}</Text>
-        <View style={styles.progressTrack}>
+        <Text style={[styles.progressText, { color: colors.textMuted }]}>{t('onboarding.screen2_progress')}</Text>
+        <View style={[styles.progressTrack, { backgroundColor: colors.border }]}>
           <Animated.View
             style={[
               styles.progressFill,
               {
+                backgroundColor: colors.primary,
                 width: progressWidth.interpolate({
                   inputRange: [0, 100],
                   outputRange: ['0%', '100%'],
@@ -185,18 +191,15 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 12,
     letterSpacing: 3,
-    color: '#8B8697',
     marginBottom: 12,
   },
   title: {
     fontSize: 28,
     fontFamily: 'PlayfairDisplay_700Bold',
-    color: '#1A1A2E',
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 15,
-    color: '#8B8697',
     textAlign: 'center',
     marginBottom: 28,
     lineHeight: 22,
@@ -207,10 +210,8 @@ const styles = StyleSheet.create({
   },
   card: {
     width: '100%',
-    backgroundColor: '#FFFFFF',
     borderRadius: 16,
     borderWidth: 1.5,
-    borderColor: '#E8E3D9',
     paddingVertical: 24,
     paddingHorizontal: 20,
     alignItems: 'center',
@@ -221,7 +222,6 @@ const styles = StyleSheet.create({
   cardText: {
     fontSize: 17,
     fontFamily: 'DMSans_500Medium',
-    color: '#1A1A2E',
     fontStyle: 'italic',
     textAlign: 'center',
   },
@@ -229,7 +229,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: -10,
     right: -4,
-    backgroundColor: '#FF6B4A',
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 10,
@@ -248,18 +247,15 @@ const styles = StyleSheet.create({
   progressText: {
     fontSize: 13,
     fontFamily: 'DMMono_400Regular',
-    color: '#8B8697',
   },
   progressTrack: {
     width: 60,
     height: 6,
-    backgroundColor: '#E8E3D9',
     borderRadius: 3,
     overflow: 'hidden',
   },
   progressFill: {
     height: '100%',
-    backgroundColor: '#FF6B4A',
     borderRadius: 3,
   },
 });

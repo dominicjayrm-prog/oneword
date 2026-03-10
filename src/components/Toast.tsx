@@ -74,7 +74,7 @@ function ToastBanner({ toast, onDismiss }: { toast: ToastMessage; onDismiss: () 
     }, 3000);
 
     return () => clearTimeout(timer);
-  }, []);
+  }, [onDismiss]);
 
   return (
     <Animated.View

@@ -104,16 +104,24 @@ export function AddFriendModal({ visible, onClose, currentUserId, onRequestSent 
     if (offset === 0) setSearching(true);
     else setLoadingMore(true);
 
-    const data = await searchUsers(text.trim(), currentUserId, offset);
+    try {
+      const data = await searchUsers(text.trim(), currentUserId, offset);
 
-    if (offset === 0) {
-      setResults(data);
-    } else {
-      setResults((prev) => [...prev, ...data]);
+      if (offset === 0) {
+        setResults(data);
+      } else {
+        setResults((prev) => [...prev, ...data]);
+      }
+      setHasMore(data.length >= SEARCH_PAGE_SIZE);
+    } catch (err) {
+      if (err instanceof Error && err.message.includes('slow down')) {
+        showToast(err.message, 'error');
+      }
+      if (offset === 0) setResults([]);
+    } finally {
+      setSearching(false);
+      setLoadingMore(false);
     }
-    setHasMore(data.length >= SEARCH_PAGE_SIZE);
-    setSearching(false);
-    setLoadingMore(false);
   }, [currentUserId]);
 
   function handleChangeText(text: string) {

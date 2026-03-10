@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Animated } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { useTheme } from '../../contexts/ThemeContext';
 
 interface Props {
   isActive: boolean;
@@ -8,6 +9,7 @@ interface Props {
 
 export function OnboardingScreen1({ isActive }: Props) {
   const { t } = useTranslation();
+  const { colors } = useTheme();
   const words = t('onboarding.screen1_example', { returnObjects: true }) as unknown as string[];
 
   const labelOpacity = useRef(new Animated.Value(0)).current;
@@ -77,19 +79,19 @@ export function OnboardingScreen1({ isActive }: Props) {
 
   return (
     <View style={styles.container}>
-      <Animated.Text style={[styles.label, { opacity: labelOpacity }]}>
+      <Animated.Text style={[styles.label, { color: colors.textMuted, opacity: labelOpacity }]}>
         {t('onboarding.screen1_label')}
       </Animated.Text>
 
       <Animated.View style={{ opacity: wordOpacity, transform: [{ scale: wordScale }] }}>
-        <Text style={styles.word}>{t('onboarding.screen1_example_word')}</Text>
+        <Text style={[styles.word, { color: colors.text }]}>{t('onboarding.screen1_example_word')}</Text>
       </Animated.View>
 
-      <Animated.Text style={[styles.subtitle, { opacity: subtitleOpacity }]}>
+      <Animated.Text style={[styles.subtitle, { color: colors.textMuted, opacity: subtitleOpacity }]}>
         {t('onboarding.screen1_subtitle')}
       </Animated.Text>
 
-      <Animated.Text style={[styles.prompt, { opacity: promptOpacity }]}>
+      <Animated.Text style={[styles.prompt, { color: colors.textMuted, opacity: promptOpacity }]}>
         {t('onboarding.screen1_prompt')}
       </Animated.Text>
 
@@ -100,17 +102,19 @@ export function OnboardingScreen1({ isActive }: Props) {
             style={[
               styles.pill,
               {
+                borderColor: colors.primary,
+                backgroundColor: colors.primaryFaded,
                 opacity: pillOpacities[i],
                 transform: [{ scale: pillScales[i] }],
               },
             ]}
           >
-            <Text style={styles.pillText}>{word}</Text>
+            <Text style={[styles.pillText, { color: colors.primary }]}>{word}</Text>
           </Animated.View>
         ))}
       </View>
 
-      <Animated.Text style={[styles.counter, { opacity: counterOpacity }]}>
+      <Animated.Text style={[styles.counter, { color: colors.primary, opacity: counterOpacity }]}>
         {t('onboarding.screen1_counter')}
       </Animated.Text>
     </View>
@@ -127,25 +131,21 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 12,
     letterSpacing: 3,
-    color: '#8B8697',
     marginBottom: 16,
   },
   word: {
     fontSize: 64,
     fontFamily: 'PlayfairDisplay_700Bold',
-    color: '#1A1A2E',
     textAlign: 'center',
   },
   subtitle: {
     fontSize: 14,
-    color: '#8B8697',
     marginTop: 8,
     marginBottom: 32,
   },
   prompt: {
     fontSize: 11,
     letterSpacing: 2.5,
-    color: '#8B8697',
     marginBottom: 20,
   },
   pillsContainer: {
@@ -160,20 +160,16 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 20,
     borderWidth: 1.5,
-    borderColor: '#FF6B4A',
-    backgroundColor: '#FF6B4A14',
     marginHorizontal: 4,
     marginVertical: 4,
   },
   pillText: {
-    color: '#FF6B4A',
     fontSize: 16,
     fontWeight: '600',
   },
   counter: {
     fontSize: 15,
     fontFamily: 'DMMono_400Regular',
-    color: '#FF6B4A',
     marginTop: 4,
   },
 });

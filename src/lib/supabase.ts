@@ -5,6 +5,12 @@ import { Platform } from 'react-native';
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL ?? '';
 const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '';
 
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.error(
+    'Missing Supabase configuration. Set EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY environment variables.',
+  );
+}
+
 // Web: use sessionStorage instead of localStorage to limit XSS exposure.
 // sessionStorage is scoped to the tab and cleared when the tab closes,
 // so stolen tokens have a shorter window of exploitation.

@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Animated } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { useTheme } from '../../contexts/ThemeContext';
 
 interface Props {
   isActive: boolean;
@@ -11,6 +12,7 @@ const STAT_EMOJIS = ['\uD83D\uDD25', '\uD83C\uDFC6', '\uD83D\uDCE4'];
 
 export function OnboardingScreen3({ isActive }: Props) {
   const { t } = useTranslation();
+  const { colors } = useTheme();
   const entries = t('onboarding.screen3_entries', { returnObjects: true }) as unknown as Array<{ desc: string; user: string; votes: number }>;
   const stats = t('onboarding.screen3_stats', { returnObjects: true }) as unknown as Array<{ label: string; value: string }>;
 
@@ -68,13 +70,13 @@ export function OnboardingScreen3({ isActive }: Props) {
 
   return (
     <View style={styles.container}>
-      <Animated.Text style={[styles.label, { opacity: labelOpacity }]}>
+      <Animated.Text style={[styles.label, { color: colors.textMuted, opacity: labelOpacity }]}>
         {t('onboarding.screen3_label')}
       </Animated.Text>
-      <Animated.Text style={[styles.title, { opacity: titleOpacity }]}>
+      <Animated.Text style={[styles.title, { color: colors.text, opacity: titleOpacity }]}>
         {t('onboarding.screen3_title')}
       </Animated.Text>
-      <Animated.Text style={[styles.subtitle, { opacity: subtitleOpacity }]}>
+      <Animated.Text style={[styles.subtitle, { color: colors.textMuted, opacity: subtitleOpacity }]}>
         {t('onboarding.screen3_subtitle')}
       </Animated.Text>
 
@@ -85,8 +87,9 @@ export function OnboardingScreen3({ isActive }: Props) {
             key={i}
             style={[
               styles.entry,
-              i === 0 && styles.entryGold,
               {
+                backgroundColor: i === 0 ? colors.gold + '1A' : colors.surface,
+                borderColor: i === 0 ? colors.gold : colors.border,
                 opacity: entryOpacities[i],
                 transform: [{ translateY: entryTranslateYs[i] }],
               },
@@ -94,10 +97,10 @@ export function OnboardingScreen3({ isActive }: Props) {
           >
             <Text style={styles.entryEmoji}>{EMOJIS[i]}</Text>
             <View style={styles.entryInfo}>
-              <Text style={styles.entryDesc}>{entry.desc}</Text>
-              <Text style={styles.entryUser}>{entry.user}</Text>
+              <Text style={[styles.entryDesc, { color: colors.text }]}>{entry.desc}</Text>
+              <Text style={[styles.entryUser, { color: colors.textMuted }]}>{entry.user}</Text>
             </View>
-            <Text style={styles.entryVotes}>{entry.votes}</Text>
+            <Text style={[styles.entryVotes, { color: colors.primary }]}>{entry.votes}</Text>
           </Animated.View>
         ))}
       </View>
@@ -107,16 +110,18 @@ export function OnboardingScreen3({ isActive }: Props) {
         style={[
           styles.statsRow,
           {
+            backgroundColor: colors.surface,
+            borderColor: colors.border,
             opacity: statsOpacity,
             transform: [{ translateY: statsTranslateY }],
           },
         ]}
       >
         {stats.map((stat, i) => (
-          <View key={stat.label} style={[styles.statItem, i < stats.length - 1 && styles.statBorder]}>
+          <View key={stat.label} style={[styles.statItem, i < stats.length - 1 && { borderRightWidth: 1, borderRightColor: colors.border }]}>
             <Text style={styles.statEmoji}>{STAT_EMOJIS[i]}</Text>
-            <Text style={styles.statValue}>{stat.value}</Text>
-            <Text style={styles.statLabel}>{stat.label}</Text>
+            <Text style={[styles.statValue, { color: colors.text }]}>{stat.value}</Text>
+            <Text style={[styles.statLabel, { color: colors.textMuted }]}>{stat.label}</Text>
           </View>
         ))}
       </Animated.View>
@@ -134,18 +139,15 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 12,
     letterSpacing: 3,
-    color: '#8B8697',
     marginBottom: 12,
   },
   title: {
     fontSize: 26,
     fontFamily: 'PlayfairDisplay_700Bold',
-    color: '#1A1A2E',
     marginBottom: 6,
   },
   subtitle: {
     fontSize: 14,
-    color: '#8B8697',
     textAlign: 'center',
     marginBottom: 18,
     lineHeight: 20,
@@ -158,17 +160,11 @@ const styles = StyleSheet.create({
   entry: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
     borderRadius: 12,
     borderWidth: 1.5,
-    borderColor: '#E8E3D9',
     paddingVertical: 12,
     paddingHorizontal: 12,
     gap: 12,
-  },
-  entryGold: {
-    backgroundColor: '#FFFBEB',
-    borderColor: '#FFE082',
   },
   entryEmoji: {
     fontSize: 28,
@@ -179,37 +175,28 @@ const styles = StyleSheet.create({
   entryDesc: {
     fontSize: 15,
     fontFamily: 'DMSans_500Medium',
-    color: '#1A1A2E',
     fontStyle: 'italic',
   },
   entryUser: {
     fontSize: 13,
-    color: '#8B8697',
     marginTop: 2,
   },
   entryVotes: {
     fontSize: 18,
     fontFamily: 'DMMono_500Medium',
-    color: '#FF6B4A',
     fontWeight: '600',
   },
   statsRow: {
     flexDirection: 'row',
     width: '100%',
     justifyContent: 'space-around',
-    backgroundColor: '#FFFFFF',
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#E8E3D9',
     paddingVertical: 16,
   },
   statItem: {
     flex: 1,
     alignItems: 'center',
-  },
-  statBorder: {
-    borderRightWidth: 1,
-    borderRightColor: '#E8E3D9',
   },
   statEmoji: {
     fontSize: 24,
@@ -218,13 +205,11 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 22,
     fontFamily: 'DMMono_500Medium',
-    color: '#1A1A2E',
     fontWeight: '700',
   },
   statLabel: {
     fontSize: 10,
     letterSpacing: 1.5,
-    color: '#8B8697',
     marginTop: 2,
   },
 });

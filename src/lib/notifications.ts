@@ -5,16 +5,19 @@ import Constants from 'expo-constants';
 import { supabase } from './supabase';
 
 // Configure how notifications are handled when the app is in the foreground
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: true,
-    shouldShowBanner: true,
-    shouldShowList: true,
-    priority: Notifications.AndroidNotificationPriority.HIGH,
-  }),
-});
+// Guard: expo-notifications handler is only meaningful on native platforms
+if (Platform.OS !== 'web') {
+  Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+      shouldShowAlert: true,
+      shouldPlaySound: true,
+      shouldSetBadge: true,
+      shouldShowBanner: true,
+      shouldShowList: true,
+      priority: Notifications.AndroidNotificationPriority.HIGH,
+    }),
+  });
+}
 
 /**
  * Register for push notifications and save the token to the user's profile.
@@ -149,4 +152,24 @@ export async function setBadgeCount(count: number) {
 export async function getNotificationPermissionStatus(): Promise<string> {
   const { status } = await Notifications.getPermissionsAsync();
   return status;
+}
+
+/**
+ * Parse a time string that may be "HH:MM" or "HH:MM:SS" (Supabase TIME type).
+ * Returns [hour, minute] with safe defaults.
+ */
+export function parseTimeString(timeStr: string | null | undefined): [number, number] {
+  if (!timeStr) return [9, 0];
+  const parts = timeStr.split(':').map(Number);
+  const h = Number.isFinite(parts[0]) ? parts[0] : 9;
+  const m = Number.isFinite(parts[1]) ? parts[1] : 0;
+  return [h, m];
+}
+
+/**
+ * Normalize a time string to "HH:MM" format (strips seconds if present).
+ */
+export function normalizeTimeString(timeStr: string | null | undefined): string {
+  const [h, m] = parseTimeString(timeStr);
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
 }

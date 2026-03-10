@@ -11,6 +11,8 @@ import {
   scheduleStreakRisk,
   cancelDailyReminder,
   cancelStreakRisk,
+  normalizeTimeString,
+  parseTimeString,
 } from '../src/lib/notifications';
 import { haptic } from '../src/lib/haptics';
 import { fontSize, spacing, borderRadius } from '../src/constants/theme';
@@ -61,7 +63,7 @@ export default function NotificationsScreen() {
         if (data) {
           setPrefs({
             notify_daily: data.notify_daily ?? true,
-            notify_daily_time: data.notify_daily_time ?? '09:00',
+            notify_daily_time: normalizeTimeString(data.notify_daily_time),
             notify_streak_risk: data.notify_streak_risk ?? true,
             notify_results: data.notify_results ?? true,
             notify_friend_requests: data.notify_friend_requests ?? true,
@@ -91,7 +93,7 @@ export default function NotificationsScreen() {
     // Handle local scheduling for daily reminder and streak risk
     if (field === 'notify_daily') {
       if (value) {
-        const [h, m] = prefs.notify_daily_time.split(':').map(Number);
+        const [h, m] = parseTimeString(prefs.notify_daily_time);
         await scheduleDailyReminder(h, m, t('notifications.daily_title'), t('notifications.daily_body'));
       } else {
         await cancelDailyReminder();
@@ -117,7 +119,7 @@ export default function NotificationsScreen() {
   }, [prefs.notify_daily, saveField, t]);
 
   function formatTime(timeStr: string): string {
-    const [h, m] = timeStr.split(':').map(Number);
+    const [h, m] = parseTimeString(timeStr);
     const ampm = h >= 12 ? 'PM' : 'AM';
     const hour12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
     return `${hour12}:${String(m).padStart(2, '0')} ${ampm}`;
@@ -139,7 +141,7 @@ export default function NotificationsScreen() {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} activeOpacity={0.7}>
-          <Text style={[styles.backBtn, { color: colors.primary }]}>{'\u2190'} Back</Text>
+          <Text style={[styles.backBtn, { color: colors.primary }]}>{'\u2190'} {t('nav_back')}</Text>
         </TouchableOpacity>
         <Text style={[styles.title, { color: colors.text }]}>{t('notifications.settings_title')}</Text>
       </View>
@@ -234,7 +236,7 @@ export default function NotificationsScreen() {
           activeOpacity={1}
           onPress={() => setShowTimePicker(false)}
         >
-          <View style={[styles.pickerCard, { backgroundColor: colors.background, borderColor: colors.border }]}>
+          <TouchableOpacity activeOpacity={1} style={[styles.pickerCard, { backgroundColor: colors.background, borderColor: colors.border }]}>
             <Text style={[styles.pickerTitle, { color: colors.text }]}>{t('notifications.daily_time')}</Text>
             <ScrollView style={styles.pickerScroll} contentContainerStyle={styles.pickerGrid}>
               {HOURS.map((h) =>
@@ -264,7 +266,7 @@ export default function NotificationsScreen() {
                 })
               )}
             </ScrollView>
-          </View>
+          </TouchableOpacity>
         </TouchableOpacity>
       </Modal>
     </ScrollView>

@@ -39,6 +39,7 @@ import {
   scheduleDailyReminder,
   scheduleStreakRisk,
   triggerMilestoneNotification,
+  parseTimeString,
 } from '../../src/lib/notifications';
 import { NotificationPermissionPrompt, shouldShowNotificationPrompt } from '../../src/components/NotificationPermissionPrompt';
 import type { YesterdayWinner, WeeklyRecap } from '../../src/types/database';
@@ -224,7 +225,7 @@ export default function HomeScreen() {
 
               // Reschedule tomorrow's daily reminder
               if (auth.profile?.notify_daily) {
-                const [h, m] = (auth.profile.notify_daily_time || '09:00').split(':').map(Number);
+                const [h, m] = parseTimeString(auth.profile.notify_daily_time);
                 await scheduleDailyReminder(h, m, t('notifications.daily_title'), t('notifications.daily_body'));
               }
               // Reschedule streak risk for tomorrow evening

@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuthContext } from '../contexts/AuthContext';
 import { Button } from './Button';
-import { registerForPushNotifications, scheduleDailyReminder, scheduleStreakRisk } from '../lib/notifications';
+import { registerForPushNotifications, scheduleDailyReminder, scheduleStreakRisk, getNotificationPermissionStatus } from '../lib/notifications';
 import { haptic } from '../lib/haptics';
 import { fontSize, spacing, borderRadius } from '../constants/theme';
 
@@ -93,6 +93,10 @@ export async function shouldShowNotificationPrompt(): Promise<boolean> {
   if (Platform.OS === 'web') return false;
 
   try {
+    // If permission is already granted, no need to prompt
+    const status = await getNotificationPermissionStatus();
+    if (status === 'granted') return false;
+
     const permanentlyDismissed = await AsyncStorage.getItem(PERMANENTLY_DISMISSED_KEY);
     if (permanentlyDismissed === 'true') return false;
 

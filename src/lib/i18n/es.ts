@@ -79,6 +79,23 @@ export default {
     greeting: 'Hola, {{username}}',
   },
 
+  // Weekly Recap
+  weekly_recap: {
+    label: 'TU SEMANA EN RESUMEN',
+    best_label: 'LO MEJOR DE LA SEMANA',
+    days_played: '{{count}} de 7 d\u00EDas jugados',
+    perfect_week: 'SEMANA PERFECTA',
+    votes_received: 'votos recibidos',
+    avg_rank: 'puesto medio',
+    improved_from: '\u2191 antes #{{prev}}',
+    best_rank: 'mejor puesto',
+    day_streak: 'racha de d\u00EDas',
+    share_week: 'Comparte Tu Semana',
+    see_today: 'Ver la Palabra de Hoy \u2192',
+    closer: 'Nueva semana, nuevas palabras. Vamos.',
+    rank_label: '#{{rank}} de {{total}}',
+  },
+
   // Yesterday's Winner
   yesterday_winner: {
     label: 'GANADOR DE AYER',

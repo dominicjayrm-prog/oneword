@@ -24,23 +24,35 @@ import { LoadingSpinner } from '../../src/components/LoadingSpinner';
 import { EmptyState } from '../../src/components/EmptyState';
 import { ErrorState } from '../../src/components/ErrorState';
 import { YesterdayWinnerCard } from '../../src/components/YesterdayWinnerCard';
+import { WeeklyRecapCard } from '../../src/components/WeeklyRecap';
 import { useToast } from '../../src/components/Toast';
 import { fontSize, spacing, borderRadius } from '../../src/constants/theme';
 import { DESCRIPTION_WORD_COUNT, DESCRIPTION_MAX_LENGTH, TOAST_DURATION_MS, USERNAME_MIN_LENGTH, USERNAME_MAX_LENGTH, PASSWORD_MIN_LENGTH } from '../../src/constants/app';
 import { haptic } from '../../src/lib/haptics';
-import type { YesterdayWinner } from '../../src/types/database';
+import type { YesterdayWinner, WeeklyRecap } from '../../src/types/database';
+
+/** Get the Monday of the week containing the given date */
+function getMonday(date: Date): Date {
+  const d = new Date(date);
+  const day = d.getDay();
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+  d.setDate(diff);
+  return d;
+}
 
 export default function HomeScreen() {
   const router = useRouter();
   const { t } = useTranslation();
   const { colors } = useTheme();
   const auth = useAuthContext();
-  const { todayWord, hasSubmitted, userDescription, loading: gameLoading, loadError: gameError, submitDescription, getYesterdayWinner, refresh } = useGameContext();
+  const { todayWord, hasSubmitted, userDescription, loading: gameLoading, loadError: gameError, submitDescription, getYesterdayWinner, getWeeklyRecap, refresh } = useGameContext();
 
   const { showToast } = useToast();
 
   const [input, setInput] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [showWeeklyRecap, setShowWeeklyRecap] = useState(false);
+  const [recapData, setRecapData] = useState<WeeklyRecap | null>(null);
   const [showYesterdayWinner, setShowYesterdayWinner] = useState(false);
   const [yesterdayData, setYesterdayData] = useState<YesterdayWinner | null>(null);
   const [showAuth, setShowAuth] = useState(false);
@@ -72,16 +84,42 @@ export default function HomeScreen() {
     };
   }, []);
 
-  // Fetch yesterday's winner once per day (skip if already dismissed or already submitted today)
+  // Weekly Recap — shows on Mondays if user played at least 1 day last week
   useEffect(() => {
     if (!auth.session || !auth.profile || gameLoading) return;
-    if (hasSubmitted) return; // Already submitted today — skip winner card
+    if (hasSubmitted) return;
+
+    (async () => {
+      try {
+        const today = new Date();
+        if (today.getDay() !== 1) return; // Only on Mondays
+
+        const thisMonday = getMonday(today).toISOString().split('T')[0];
+        const dismissedWeek = await AsyncStorage.getItem('recap_dismissed_week');
+        if (dismissedWeek === thisMonday) return;
+
+        const data = await getWeeklyRecap();
+        if (data) {
+          setRecapData(data);
+          setShowWeeklyRecap(true);
+        }
+      } catch {
+        // Non-critical
+      }
+    })();
+  }, [auth.session, auth.profile, gameLoading, hasSubmitted, getWeeklyRecap]);
+
+  // Fetch yesterday's winner once per day (skip if recap is showing or already dismissed)
+  useEffect(() => {
+    if (!auth.session || !auth.profile || gameLoading) return;
+    if (hasSubmitted) return;
+    if (showWeeklyRecap) return; // Recap takes priority; winner loads after recap dismisses
 
     (async () => {
       try {
         const today = new Date().toISOString().split('T')[0];
         const lastDismissed = await AsyncStorage.getItem('winner_dismissed_date');
-        if (lastDismissed === today) return; // Already dismissed today
+        if (lastDismissed === today) return;
 
         const data = await getYesterdayWinner();
         if (data) {
@@ -92,7 +130,14 @@ export default function HomeScreen() {
         // Non-critical — just skip the winner card
       }
     })();
-  }, [auth.session, auth.profile, gameLoading, hasSubmitted, getYesterdayWinner]);
+  }, [auth.session, auth.profile, gameLoading, hasSubmitted, showWeeklyRecap, getYesterdayWinner]);
+
+  const dismissWeeklyRecap = useCallback(async () => {
+    const thisMonday = getMonday(new Date()).toISOString().split('T')[0];
+    await AsyncStorage.setItem('recap_dismissed_week', thisMonday);
+    setShowWeeklyRecap(false);
+    // Yesterday winner useEffect will now run since showWeeklyRecap becomes false
+  }, []);
 
   const dismissYesterdayWinner = useCallback(async () => {
     const today = new Date().toISOString().split('T')[0];
@@ -483,6 +528,11 @@ export default function HomeScreen() {
         </ScrollView>
       </KeyboardAvoidingView>
     );
+  }
+
+  // Weekly Recap — shown on Mondays before everything else
+  if (showWeeklyRecap && recapData) {
+    return <WeeklyRecapCard data={recapData} onDismiss={dismissWeeklyRecap} />;
   }
 
   // Yesterday's Winner card — shown once per day before today's word

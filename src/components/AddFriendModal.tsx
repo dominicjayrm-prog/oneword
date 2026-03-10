@@ -14,6 +14,7 @@ import { useTranslation } from 'react-i18next';
 import { useTheme } from '../contexts/ThemeContext';
 import { useToast } from './Toast';
 import { searchUsers, sendFriendRequest, SEARCH_PAGE_SIZE, type UserSearchResult } from '../lib/friends';
+import { getCurrentBadge } from '../lib/badges';
 import { fontSize, spacing, borderRadius } from '../constants/theme';
 import { haptic } from '../lib/haptics';
 
@@ -201,7 +202,7 @@ export function AddFriendModal({ visible, onClose, currentUserId, onRequestSent 
             <Text style={[styles.resultName, { color: colors.text }]}>@{item.username}</Text>
             {item.current_streak > 0 && (
               <Text style={[styles.resultStreak, { color: colors.textMuted }]}>
-                {'\uD83D\uDD25'} {t('game.day_streak', { count: item.current_streak })}
+                {getCurrentBadge(item.current_streak)?.emoji || '\uD83D\uDD25'} {t('game.day_streak', { count: item.current_streak })}
               </Text>
             )}
           </View>

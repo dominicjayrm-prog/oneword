@@ -113,6 +113,8 @@ export default {
     tap_prefer: 'Tap the one you prefer',
     all_caught_up: 'All Caught Up!',
     all_caught_up_subtitle: 'Check back later as more players submit.',
+    batch_done: 'Nice voting session!',
+    batch_done_subtitle: 'Come back later for more pairs.',
     voted_on: 'You voted on {{count}} pair',
     voted_on_plural: 'You voted on {{count}} pairs',
     see_results: 'SEE RESULTS',

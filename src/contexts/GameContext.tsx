@@ -1,8 +1,10 @@
-import { createContext, useContext, useState, useEffect, useCallback, useMemo, type ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef, type ReactNode } from 'react';
+import { AppState, type AppStateStatus } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { checkProfanity } from '../lib/profanityFilter';
 import { withTimeout } from '../lib/withTimeout';
 import { rateLimits } from '../lib/rateLimit';
+import { getGameDate, hasWordRolledOver } from '../lib/gameDate';
 import { DESCRIPTION_WORD_COUNT, LEADERBOARD_LIMIT } from '../constants/app';
 import { useAuthContext } from './AuthContext';
 import type { DailyWord, VotePair, LeaderboardEntry, YesterdayWinner, WeeklyRecap } from '../types/database';
@@ -75,6 +77,32 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     fetchTodayWord();
+  }, [fetchTodayWord]);
+
+  // Re-fetch today's word when the game date rolls over (5am UTC).
+  // Handles both: (1) app returning from background, (2) app left open across rollover.
+  const lastGameDateRef = useRef(getGameDate());
+  useEffect(() => {
+    const checkRollover = () => {
+      if (hasWordRolledOver(lastGameDateRef.current)) {
+        lastGameDateRef.current = getGameDate();
+        fetchTodayWord();
+      }
+    };
+
+    // Check on app foreground
+    const handleAppState = (next: AppStateStatus) => {
+      if (next === 'active') checkRollover();
+    };
+    const sub = AppState.addEventListener('change', handleAppState);
+
+    // Also poll every 60s in case app stays open across the rollover boundary
+    const interval = setInterval(checkRollover, 60_000);
+
+    return () => {
+      sub.remove();
+      clearInterval(interval);
+    };
   }, [fetchTodayWord]);
 
   const submitDescription = useCallback(async (description: string) => {

@@ -113,6 +113,8 @@ export default {
     tap_prefer: 'Toca el que prefieras',
     all_caught_up: '\u00A1Todo al d\u00EDa!',
     all_caught_up_subtitle: 'Vuelve m\u00E1s tarde cuando m\u00E1s jugadores env\u00EDen.',
+    batch_done: '\u00A1Buena sesi\u00F3n de votos!',
+    batch_done_subtitle: 'Vuelve m\u00E1s tarde para m\u00E1s pares.',
     voted_on: 'Votaste {{count}} par',
     voted_on_plural: 'Votaste {{count}} pares',
     see_results: 'VER RESULTADOS',

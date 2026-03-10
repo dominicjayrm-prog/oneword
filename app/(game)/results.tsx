@@ -34,7 +34,7 @@ export default function ResultsScreen() {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const { profile } = useAuthContext();
-  const { todayWord, userDescription, getLeaderboard } = useGameContext();
+  const { todayWord, hasSubmitted, userDescription, getLeaderboard } = useGameContext();
 
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -182,7 +182,7 @@ export default function ResultsScreen() {
       )}
 
       <View style={styles.actions}>
-        {tab !== 'friends' && (
+        {tab !== 'friends' && hasSubmitted && (
           <>
             <Button title={t('results.share_results')} onPress={handleSharePress} variant="primary" />
             <View style={{ height: spacing.sm }} />

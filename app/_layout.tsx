@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
-import { View, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, ActivityIndicator, StyleSheet, Platform } from 'react-native';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Notifications from 'expo-notifications';
 import {
   useFonts,
   PlayfairDisplay_400Regular,
@@ -61,6 +62,33 @@ function InnerLayout() {
     }
   }, [onboardingChecked, hasSeenOnboarding, segments]);
 
+  // Handle notification taps — navigate to the relevant screen
+  useEffect(() => {
+    if (Platform.OS === 'web') return;
+    const subscription = Notifications.addNotificationResponseReceivedListener((response) => {
+      const data = response.notification.request.content.data;
+      switch (data?.type) {
+        case 'daily_reminder':
+        case 'streak_risk':
+        case 'milestone':
+        case 'welcome_back':
+        case 'weekly_recap':
+          router.push('/(game)');
+          break;
+        case 'results_ready':
+          router.push('/(game)/results');
+          break;
+        case 'friend_request':
+        case 'friend_activity':
+          router.push('/(game)/friends');
+          break;
+        default:
+          router.push('/(game)');
+      }
+    });
+    return () => subscription.remove();
+  }, []);
+
   if (!onboardingChecked) {
     return (
       <View style={[styles.loading, { backgroundColor: colors.background }]}>
@@ -83,6 +111,13 @@ function InnerLayout() {
         <Stack.Screen name="(onboarding)" />
         <Stack.Screen
           name="profile"
+          options={{
+            presentation: 'modal',
+            animation: 'slide_from_bottom',
+          }}
+        />
+        <Stack.Screen
+          name="notifications"
           options={{
             presentation: 'modal',
             animation: 'slide_from_bottom',

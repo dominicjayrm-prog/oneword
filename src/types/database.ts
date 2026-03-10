@@ -21,6 +21,17 @@ export interface Profile {
   streak_badge_emoji: string | null;
   streak_badge_name: string | null;
   last_played_date: string | null;
+  push_token: string | null;
+  notifications_enabled: boolean;
+  notify_daily: boolean;
+  notify_daily_time: string;
+  notify_streak_risk: boolean;
+  notify_results: boolean;
+  notify_friend_requests: boolean;
+  notify_friend_activity: boolean;
+  notify_weekly_recap: boolean;
+  notify_welcome_back: boolean;
+  last_welcome_back_sent: string | null;
   created_at: string;
   updated_at: string;
 }

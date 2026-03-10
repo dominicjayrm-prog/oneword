@@ -33,6 +33,14 @@ import { haptic } from '../../src/lib/haptics';
 import { getGameDate, getGameDay, getGameMonday } from '../../src/lib/gameDate';
 import { getCurrentBadge, type BadgeTier } from '../../src/lib/badges';
 import { supabase } from '../../src/lib/supabase';
+import {
+  setBadgeCount,
+  cancelStreakRisk,
+  scheduleDailyReminder,
+  scheduleStreakRisk,
+  triggerMilestoneNotification,
+} from '../../src/lib/notifications';
+import { NotificationPermissionPrompt, shouldShowNotificationPrompt } from '../../src/components/NotificationPermissionPrompt';
 import type { YesterdayWinner, WeeklyRecap } from '../../src/types/database';
 
 export default function HomeScreen() {
@@ -71,6 +79,7 @@ export default function HomeScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [celebrationBadge, setCelebrationBadge] = useState<BadgeTier | null>(null);
   const [celebrationStreak, setCelebrationStreak] = useState(0);
+  const [showNotifPrompt, setShowNotifPrompt] = useState(false);
 
   const resentTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -145,6 +154,13 @@ export default function HomeScreen() {
     })();
   }, [auth.session, auth.profile, gameLoading]);
 
+  // Set/clear app badge based on whether the user has played today
+  useEffect(() => {
+    if (Platform.OS === 'web') return;
+    if (!auth.session || gameLoading) return;
+    setBadgeCount(hasSubmitted ? 0 : 1);
+  }, [auth.session, gameLoading, hasSubmitted]);
+
   const dismissWeeklyRecap = useCallback(async () => {
     setShowWeeklyRecap(false);
     try {
@@ -198,6 +214,29 @@ export default function HomeScreen() {
       if (error) {
         showToast(error.message, 'error');
       } else if (oldStreak !== undefined) {
+        // Post-submission notification logic (non-blocking)
+        if (Platform.OS !== 'web') {
+          (async () => {
+            try {
+              // Clear badge and cancel today's streak risk
+              await setBadgeCount(0);
+              await cancelStreakRisk();
+
+              // Reschedule tomorrow's daily reminder
+              if (auth.profile?.notify_daily) {
+                const [h, m] = (auth.profile.notify_daily_time || '09:00').split(':').map(Number);
+                await scheduleDailyReminder(h, m, t('notifications.daily_title'), t('notifications.daily_body'));
+              }
+              // Reschedule streak risk for tomorrow evening
+              if (auth.profile?.notify_streak_risk) {
+                await scheduleStreakRisk(20, 0, t('notifications.streak_risk_title'), t('notifications.streak_risk_body'));
+              }
+            } catch {
+              // Non-critical
+            }
+          })();
+        }
+
         // Check for milestone after successful submission
         const newStreak = oldStreak + 1;
         const oldBadge = getCurrentBadge(oldStreak);
@@ -218,6 +257,18 @@ export default function HomeScreen() {
               p_user_id: auth.session!.user.id,
               p_streak: newBadge.streak,
             });
+            // Also fire a local milestone notification
+            if (Platform.OS !== 'web') {
+              triggerMilestoneNotification(newBadge.emoji, newStreak, newBadge.name);
+            }
+          }
+        }
+
+        // Show notification permission prompt after first submission
+        if (Platform.OS !== 'web' && !auth.profile?.notifications_enabled) {
+          const shouldShow = await shouldShowNotificationPrompt();
+          if (shouldShow) {
+            setTimeout(() => setShowNotifPrompt(true), 1500);
           }
         }
       }
@@ -663,6 +714,12 @@ export default function HomeScreen() {
             onDismiss={() => setCelebrationBadge(null)}
           />
         )}
+
+        {/* Notification Permission Prompt */}
+        <NotificationPermissionPrompt
+          visible={showNotifPrompt}
+          onDismiss={() => setShowNotifPrompt(false)}
+        />
       </ScrollView>
     );
   }

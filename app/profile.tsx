@@ -244,6 +244,18 @@ export default function ProfileScreen() {
         </View>
       )}
 
+      {/* Notifications */}
+      <View style={[styles.supportSection, { borderTopColor: colors.border }]}>
+        <TouchableOpacity
+          style={styles.supportRow}
+          onPress={() => { haptic.light(); router.push('/notifications'); }}
+          activeOpacity={0.7}
+        >
+          <Text style={[styles.supportLabel, { color: colors.textSecondary }]}>{t('profile.notifications')}</Text>
+          <Text style={[styles.supportValue, { color: colors.textMuted }]}>{'\u2192'}</Text>
+        </TouchableOpacity>
+      </View>
+
       {/* Support & Info */}
       <View style={[styles.supportSection, { borderTopColor: colors.border }]}>
         <Text style={[styles.supportTitle, { color: colors.textMuted }]}>{t('profile.support_title')}</Text>

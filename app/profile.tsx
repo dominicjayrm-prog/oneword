@@ -89,7 +89,11 @@ export default function ProfileScreen() {
     haptic.warning();
     const ok = await confirmDialog(t('profile.log_out_title'), t('profile.log_out_message'), t('common.cancel'), t('common.ok'));
     if (ok) {
-      signOut();
+      try {
+        await signOut();
+      } catch {
+        showToast(t('errors.generic'), 'error');
+      }
     }
   }
 
@@ -103,11 +107,17 @@ export default function ProfileScreen() {
 
   async function confirmDelete() {
     if (!profile || deleteUsername !== profile.username) return;
-    setShowDeleteConfirm(false);
     setDeleting(true);
-    const { error } = await deleteAccount();
-    if (error) {
+    try {
+      const { error } = await deleteAccount();
+      if (error) {
+        showToast(t('profile.delete_error'), 'error');
+      } else {
+        setShowDeleteConfirm(false);
+      }
+    } catch {
       showToast(t('profile.delete_error'), 'error');
+    } finally {
       setDeleting(false);
     }
   }

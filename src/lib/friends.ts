@@ -112,7 +112,7 @@ export async function getFriendsDescriptions(userId: string, wordId: string): Pr
     p_user_id: userId,
     p_word_id: wordId,
   });
-  if (!error && data && data.length > 0) return data;
+  if (!error && data) return data;
 
   // Fallback: direct query if RPC doesn't exist or returns empty
   const friends = await getFriends(userId);
@@ -189,6 +189,9 @@ export async function searchUsers(
 }
 
 export async function sendFriendRequest(requesterId: string, addresseeId: string): Promise<{ error: Error | null }> {
+  if (requesterId === addresseeId) {
+    return { error: new Error('Cannot send friend request to yourself') };
+  }
   if (!rateLimits.friendRequest()) {
     return { error: new Error('Too many requests. Please wait a moment.') };
   }

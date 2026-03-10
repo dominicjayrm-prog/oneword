@@ -63,7 +63,11 @@ export default function OnboardingScreen() {
 
   const handleFinish = async () => {
     haptic.heavy();
-    await AsyncStorage.setItem('hasSeenOnboarding', 'true');
+    try {
+      await AsyncStorage.setItem('hasSeenOnboarding', 'true');
+    } catch {
+      // If storage write fails, continue anyway to avoid infinite onboarding loop
+    }
     if (Platform.OS === 'web') {
       window.location.href = '/';
     } else {

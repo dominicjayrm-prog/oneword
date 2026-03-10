@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -54,6 +54,10 @@ export default function OnboardingScreen() {
       const next = currentIndex + 1;
       scrollRef.current?.scrollTo({ x: next * containerWidth, animated: true });
       setCurrentIndex(next);
+      // onMomentumScrollEnd doesn't fire for programmatic scrolls on web
+      if (Platform.OS === 'web') {
+        setTimeout(() => setIsScrolling(false), 400);
+      }
     }
   };
 
@@ -64,10 +68,16 @@ export default function OnboardingScreen() {
       const prev = currentIndex - 1;
       scrollRef.current?.scrollTo({ x: prev * containerWidth, animated: true });
       setCurrentIndex(prev);
+      if (Platform.OS === 'web') {
+        setTimeout(() => setIsScrolling(false), 400);
+      }
     }
   };
 
+  const [finishing, setFinishing] = useState(false);
   const handleFinish = async () => {
+    if (finishing) return;
+    setFinishing(true);
     haptic.heavy();
     try {
       await AsyncStorage.setItem('hasSeenOnboarding', 'true');

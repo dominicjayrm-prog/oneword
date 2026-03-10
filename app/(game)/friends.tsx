@@ -44,9 +44,9 @@ export default function FriendsScreen() {
   const [showAddModal, setShowAddModal] = useState(false);
   const processingRef = useRef(new Set<string>());
 
-  const loadData = useCallback(async () => {
+  const loadData = useCallback(async (showFullLoading = true) => {
     if (!userId) return;
-    setLoading(true);
+    if (showFullLoading) setLoading(true);
     setLoadError(false);
     try {
       const [friendsData, requestsData] = await Promise.all([
@@ -63,7 +63,7 @@ export default function FriendsScreen() {
     } catch {
       setLoadError(true);
     }
-    setLoading(false);
+    if (showFullLoading) setLoading(false);
   }, [userId, todayWord?.id]);
 
   useEffect(() => {
@@ -72,7 +72,7 @@ export default function FriendsScreen() {
 
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
-    await loadData();
+    await loadData(false);
     setRefreshing(false);
   }, [loadData]);
 

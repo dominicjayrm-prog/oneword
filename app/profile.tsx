@@ -19,7 +19,7 @@ function confirmDialog(title: string, message: string, cancelText: string, okTex
     Alert.alert(title, message, [
       { text: cancelText, style: 'cancel', onPress: () => resolve(false) },
       { text: okText, onPress: () => resolve(true) },
-    ]);
+    ], { cancelable: true, onDismiss: () => resolve(false) });
   });
 }
 
@@ -77,11 +77,11 @@ export default function ProfileScreen() {
       const { error } = await updateLanguage(lang);
       if (error) {
         showToast(t('errors.generic'), 'error');
-        updateLanguage(prevLang);
+        await updateLanguage(prevLang);
       }
     } catch {
       showToast(t('errors.generic'), 'error');
-      updateLanguage(prevLang);
+      await updateLanguage(prevLang);
     }
   }
 

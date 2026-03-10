@@ -37,6 +37,7 @@ export default function VoteScreen() {
   const [voteCount, setVoteCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [noMorePairs, setNoMorePairs] = useState(false);
+  const [batchExhausted, setBatchExhausted] = useState(false);
   const [voting, setVoting] = useState(false);
   const [loadError, setLoadError] = useState(false);
   const [selectedCard, setSelectedCard] = useState<1 | 2 | null>(null);
@@ -141,18 +142,27 @@ export default function VoteScreen() {
     // Badge springs in
     badgeScale.value = withSpring(1, { damping: 8, stiffness: 200 });
 
-    const newCount = voteCount + 1;
-    setVoteCount(newCount);
-
     // Submit vote
+    let voteFailed = false;
     try {
       const { error } = await submitVote(winnerId, loserId);
-      if (error) {
-        showToast(t('errors.vote_failed'), 'error');
-      }
+      if (error) voteFailed = true;
     } catch {
-      showToast(t('errors.vote_failed'), 'error');
+      voteFailed = true;
     }
+
+    if (voteFailed) {
+      showToast(t('errors.vote_failed'), 'error');
+      // Reset animations — stay on the same pair so user can retry
+      await new Promise((r) => setTimeout(r, 400));
+      if (!mountedRef.current) return;
+      animatePairIn();
+      setVoting(false);
+      setSelectedCard(null);
+      return;
+    }
+
+    setVoteCount((c) => c + 1);
 
     // Wait for visual feedback
     await new Promise((r) => setTimeout(r, 600));
@@ -177,7 +187,7 @@ export default function VoteScreen() {
     // User can revisit the tab later when new descriptions come in.
     if (pairsShownRef.current >= VOTE_BATCH_SIZE) {
       haptic.success();
-      setNoMorePairs(true);
+      setBatchExhausted(true);
     } else {
       await loadPair();
     }
@@ -245,7 +255,7 @@ export default function VoteScreen() {
     opacity: doneTextOpacity.value,
   }));
 
-  // "All caught up" or "no pairs yet" screen
+  // "No pairs available" screen — server returned no more unseen pairs
   if (noMorePairs) {
     if (voteCount === 0) {
       return (
@@ -294,6 +304,39 @@ export default function VoteScreen() {
     );
   }
 
+  // "Batch limit reached" screen — more pairs may exist, come back later
+  if (batchExhausted) {
+    doneEmojiScale.value = withSpring(1, { damping: 8, stiffness: 150 });
+    doneTextOpacity.value = withDelay(200, withTiming(1, { duration: 300 }));
+
+    const votedText = voteCount === 1
+      ? t('vote.voted_on', { count: voteCount })
+      : t('vote.voted_on_plural', { count: voteCount });
+    return (
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <ThemeToggle />
+        <View style={[styles.center, { backgroundColor: colors.background }]}>
+          <Animated.Text style={[styles.doneEmoji, doneEmojiStyle]}>{'\uD83C\uDF1F'}</Animated.Text>
+          <Animated.View style={doneTextStyle}>
+            <Text style={[styles.doneTitle, { color: colors.text }]}>
+              {t('vote.batch_done')}
+            </Text>
+            <Text style={[styles.doneSubtitle, { color: colors.textSecondary }]}>
+              {votedText}
+            </Text>
+            <Text style={[styles.doneHint, { color: colors.textMuted }]}>
+              {t('vote.batch_done_subtitle')}
+            </Text>
+          </Animated.View>
+        </View>
+        <View style={styles.actions}>
+          <Button title={t('vote.see_results')} onPress={() => { haptic.medium(); router.replace('/results'); }} />
+          <Button title={t('vote.back_home')} onPress={() => { haptic.medium(); router.replace('/'); }} variant="outline" />
+        </View>
+      </View>
+    );
+  }
+
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <ThemeToggle />
@@ -304,7 +347,7 @@ export default function VoteScreen() {
         {voteCount > 0 && (
           <View style={styles.progressRow}>
             <Animated.Text style={[styles.progress, { color: colors.textSecondary }, voteCountAnimStyle]}>
-              {t('vote.pair_count', { current: voteCount, total: pairsShownRef.current })}
+              {t('vote.pair_count', { current: voteCount, total: VOTE_BATCH_SIZE })}
             </Animated.Text>
           </View>
         )}

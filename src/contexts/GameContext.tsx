@@ -1,4 +1,5 @@
-import { createContext, useContext, useState, useEffect, useCallback, useMemo, type ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef, type ReactNode } from 'react';
+import { AppState, type AppStateStatus } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { checkProfanity } from '../lib/profanityFilter';
 import { withTimeout } from '../lib/withTimeout';
@@ -75,6 +76,22 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     fetchTodayWord();
+  }, [fetchTodayWord]);
+
+  // Re-fetch today's word when app returns to foreground after midnight
+  const lastDateRef = useRef(new Date().toISOString().split('T')[0]);
+  useEffect(() => {
+    const handleAppState = (next: AppStateStatus) => {
+      if (next === 'active') {
+        const now = new Date().toISOString().split('T')[0];
+        if (now !== lastDateRef.current) {
+          lastDateRef.current = now;
+          fetchTodayWord();
+        }
+      }
+    };
+    const sub = AppState.addEventListener('change', handleAppState);
+    return () => sub.remove();
   }, [fetchTodayWord]);
 
   const submitDescription = useCallback(async (description: string) => {

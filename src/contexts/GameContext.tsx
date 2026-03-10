@@ -7,6 +7,7 @@ import { rateLimits } from '../lib/rateLimit';
 import { getGameDate, hasWordRolledOver } from '../lib/gameDate';
 import { DESCRIPTION_WORD_COUNT, LEADERBOARD_LIMIT } from '../constants/app';
 import { useAuthContext } from './AuthContext';
+import { getCurrentBadge } from '../lib/badges';
 import type { DailyWord, VotePair, LeaderboardEntry, YesterdayWinner, WeeklyRecap } from '../types/database';
 
 interface GameContextType {
@@ -15,7 +16,7 @@ interface GameContextType {
   userDescription: string | null;
   loading: boolean;
   loadError: boolean;
-  submitDescription: (description: string) => Promise<{ error: Error | null }>;
+  submitDescription: (description: string) => Promise<{ error: Error | null; oldStreak?: number }>;
   getVotePair: () => Promise<VotePair | null>;
   submitVote: (winnerId: string, loserId: string) => Promise<{ error: Error | null }>;
   getLeaderboard: () => Promise<LeaderboardEntry[]>;
@@ -29,7 +30,7 @@ interface GameContextType {
 const GameContext = createContext<GameContextType | null>(null);
 
 export function GameProvider({ children }: { children: ReactNode }) {
-  const { session, language } = useAuthContext();
+  const { session, language, profile: authProfile, refreshProfile } = useAuthContext();
   const userId = session?.user?.id;
 
   const [todayWord, setTodayWord] = useState<DailyWord | null>(null);
@@ -133,6 +134,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
     const cleaned = words.join(' ');
 
+    const oldStreak = authProfile?.current_streak ?? 0;
+
     try {
       const { error } = await withTimeout(supabase.from('descriptions').insert({
         user_id: userId,
@@ -144,13 +147,15 @@ export function GameProvider({ children }: { children: ReactNode }) {
         setHasSubmitted(true);
         setUserDescription(cleaned);
         await withTimeout(supabase.rpc('update_streak', { p_user_id: userId }));
+        // Refresh profile so badge fields + streak are up to date
+        await refreshProfile();
       }
 
-      return { error };
+      return { error, oldStreak };
     } catch (err) {
       return { error: err instanceof Error ? err : new Error('Network error. Please try again.') };
     }
-  }, [todayWord, userId]);
+  }, [todayWord, userId, authProfile?.current_streak, refreshProfile]);
 
   const getVotePair = useCallback(async (): Promise<VotePair | null> => {
     if (!todayWord || !userId) return null;

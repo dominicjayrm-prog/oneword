@@ -188,6 +188,7 @@ export default function ResultsScreen() {
               description={item.description_text}
               votes={item.votes}
               isCurrentUser={item.username === profile?.username}
+              badgeEmoji={item.streak_badge_emoji}
             />
           )}
           contentContainerStyle={styles.list}

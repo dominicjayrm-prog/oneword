@@ -7,6 +7,7 @@ export interface Friend {
   friend_username: string;
   friend_avatar_url: string | null;
   friend_current_streak: number;
+  friend_badge_emoji: string | null;
   status: string;
 }
 
@@ -56,7 +57,7 @@ export async function getFriends(userId: string): Promise<Friend[]> {
 
   const { data: profiles } = await supabase
     .from('profiles')
-    .select('id, username, avatar_url, current_streak')
+    .select('id, username, avatar_url, current_streak, streak_badge_emoji')
     .in('id', friendIds);
 
   if (!profiles) return [];
@@ -70,6 +71,7 @@ export async function getFriends(userId: string): Promise<Friend[]> {
       friend_username: p?.username ?? 'unknown',
       friend_avatar_url: p?.avatar_url ?? null,
       friend_current_streak: p?.current_streak ?? 0,
+      friend_badge_emoji: p?.streak_badge_emoji ?? null,
       status: r.status,
     };
   });

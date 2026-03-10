@@ -25,11 +25,14 @@ import { EmptyState } from '../../src/components/EmptyState';
 import { ErrorState } from '../../src/components/ErrorState';
 import { YesterdayWinnerCard } from '../../src/components/YesterdayWinnerCard';
 import { WeeklyRecapCard } from '../../src/components/WeeklyRecap';
+import { StreakCelebration } from '../../src/components/StreakCelebration';
+import { BadgePill } from '../../src/components/BadgePill';
 import { useToast } from '../../src/components/Toast';
 import { fontSize, spacing, borderRadius } from '../../src/constants/theme';
 import { DESCRIPTION_WORD_COUNT, DESCRIPTION_MAX_LENGTH, TOAST_DURATION_MS, USERNAME_MIN_LENGTH, USERNAME_MAX_LENGTH, PASSWORD_MIN_LENGTH } from '../../src/constants/app';
 import { haptic } from '../../src/lib/haptics';
 import { getGameDate, getGameDay, getGameMonday } from '../../src/lib/gameDate';
+import { getCurrentBadge, type BadgeTier } from '../../src/lib/badges';
 import type { YesterdayWinner, WeeklyRecap } from '../../src/types/database';
 
 const STORAGE_KEY_RECAP = 'recap_dismissed_week';
@@ -69,6 +72,8 @@ export default function HomeScreen() {
   const [resetError, setResetError] = useState('');
 
   const [refreshing, setRefreshing] = useState(false);
+  const [celebrationBadge, setCelebrationBadge] = useState<BadgeTier | null>(null);
+  const [celebrationStreak, setCelebrationStreak] = useState(0);
 
   const resentTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -180,9 +185,27 @@ export default function HomeScreen() {
     haptic.heavy();
     setSubmitting(true);
     try {
-      const { error } = await submitDescription(input);
+      const { error, oldStreak } = await submitDescription(input);
       if (error) {
         showToast(error.message, 'error');
+      } else if (oldStreak !== undefined) {
+        // Check for milestone after successful submission
+        const newStreak = oldStreak + 1;
+        const oldBadge = getCurrentBadge(oldStreak);
+        const newBadge = getCurrentBadge(newStreak);
+        if (newBadge && (!oldBadge || newBadge.streak !== oldBadge.streak)) {
+          // Check AsyncStorage to avoid re-showing
+          const key = `milestone_shown_${newBadge.streak}`;
+          const shown = await AsyncStorage.getItem(key);
+          if (!shown) {
+            // Delay celebration 500ms after "locked in" appears
+            setTimeout(() => {
+              setCelebrationStreak(newStreak);
+              setCelebrationBadge(newBadge);
+            }, 500);
+            await AsyncStorage.setItem(key, 'true');
+          }
+        }
       }
     } catch {
       showToast(t('errors.submit_failed'), 'error');
@@ -595,9 +618,12 @@ export default function HomeScreen() {
           </View>
           <Text style={[styles.greeting, { color: colors.textSecondary }]}>{t('game.greeting', { username: auth.profile?.username ?? 'player' })}</Text>
           {auth.profile && auth.profile.current_streak > 0 && (
-            <Text style={[styles.streak, { color: colors.primary }]}>
-              {t('game.day_streak', { count: auth.profile.current_streak })}
-            </Text>
+            <View style={styles.streakRow}>
+              <BadgePill streak={auth.profile.current_streak} />
+              <Text style={[styles.streak, { color: colors.primary }]}>
+                {t('game.day_streak', { count: auth.profile.current_streak })}
+              </Text>
+            </View>
           )}
         </TouchableOpacity>
 
@@ -614,6 +640,15 @@ export default function HomeScreen() {
           <Button title={t('game.vote_others')} onPress={() => { haptic.medium(); router.push('/vote'); }} />
           <Button title={t('game.see_results')} onPress={() => { haptic.medium(); router.push('/results'); }} variant="outline" />
         </View>
+
+        {/* Streak Celebration Modal */}
+        {celebrationBadge && (
+          <StreakCelebration
+            streak={celebrationStreak}
+            badge={celebrationBadge}
+            onDismiss={() => setCelebrationBadge(null)}
+          />
+        )}
       </ScrollView>
     );
   }
@@ -693,6 +728,11 @@ const styles = StyleSheet.create({
   greeting: {
     fontSize: fontSize.sm,
     marginBottom: spacing.xs,
+  },
+  streakRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
   streak: {
     fontSize: fontSize.xs,

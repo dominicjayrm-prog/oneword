@@ -2,6 +2,7 @@ import { forwardRef } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { getRankEmoji } from '../lib/format';
+import { getCurrentBadge } from '../lib/badges';
 import type { WeeklyRecap } from '../types/database';
 
 interface Props {
@@ -41,7 +42,7 @@ export const WeeklyRecapShareCard = forwardRef<View, Props>(({ data, dateRange }
 
       {/* Stats line */}
       <Text style={styles.statsLine}>
-        {data.days_played}/7 days  {'\u00B7'}  {data.total_votes_received} votes  {'\u00B7'}  {'\uD83D\uDD25'} {data.current_streak} streak
+        {data.days_played}/7 days  {'\u00B7'}  {data.total_votes_received} votes  {'\u00B7'}  {getCurrentBadge(data.current_streak)?.emoji || '\uD83D\uDD25'} {data.current_streak} streak
       </Text>
 
       {/* Footer */}

@@ -1,6 +1,7 @@
 import { View, Text, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../contexts/ThemeContext';
+import { getCurrentBadge } from '../lib/badges';
 import { fontSize, spacing, borderRadius } from '../constants/theme';
 import type { FriendDescription } from '../lib/friends';
 
@@ -44,7 +45,7 @@ export function FriendsToday({ descriptions, wordText, userHasPlayed }: Props) {
             </View>
             {fd.friend_streak > 0 && (
               <Text style={[styles.streak, { color: colors.primary }]}>
-                {'\uD83D\uDD25'} {fd.friend_streak}
+                {getCurrentBadge(fd.friend_streak)?.emoji || '\uD83D\uDD25'} {fd.friend_streak}
               </Text>
             )}
           </View>

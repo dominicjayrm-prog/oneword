@@ -2,6 +2,7 @@ import { forwardRef } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { getRankEmoji } from '../lib/format';
+import { getCurrentBadge } from '../lib/badges';
 
 interface ShareCardProps {
   word: string;
@@ -15,6 +16,8 @@ export const ShareCard = forwardRef<View, ShareCardProps>(
   ({ word, description, rank, votes, streak }, ref) => {
     const { t } = useTranslation();
     const rankEmoji = getRankEmoji(rank);
+    const badge = getCurrentBadge(streak);
+    const streakIcon = badge ? badge.emoji : '\u{1F525}';
 
     return (
       <View ref={ref} style={styles.card} collapsable={false}>
@@ -64,7 +67,7 @@ export const ShareCard = forwardRef<View, ShareCardProps>(
           <View style={styles.statDivider} />
 
           <View style={styles.stat}>
-            <Text style={styles.statEmoji}>{'\u{1F525}'}</Text>
+            <Text style={styles.statEmoji}>{streakIcon}</Text>
             <Text style={styles.statNumber}>{streak}</Text>
             <Text style={styles.statLabel}>{t('share.streak')}</Text>
           </View>

@@ -5,6 +5,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { useAuthContext } from '../contexts/AuthContext';
 import { useGameContext } from '../contexts/GameContext';
 import { getFriendsDescriptions, type FriendDescription } from '../lib/friends';
+import { getCurrentBadge } from '../lib/badges';
 import { LeaderboardRow } from './LeaderboardRow';
 import { LoadingSpinner } from './LoadingSpinner';
 import { fontSize, spacing } from '../constants/theme';
@@ -78,6 +79,7 @@ export function FriendsLeaderboard() {
           description={fd.description_text ?? ''}
           votes={fd.vote_count ?? 0}
           isCurrentUser={false}
+          badgeEmoji={getCurrentBadge(fd.friend_streak)?.emoji}
         />
       ))}
       {notPlayed.map((fd) => (

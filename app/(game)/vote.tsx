@@ -448,6 +448,9 @@ export default function VoteScreen() {
                   disabled={voting}
                 >
                   <Text style={[styles.cardText, { color: colors.text }]}>{pair.desc1_text}</Text>
+                  <Text style={[styles.cardAuthor, { color: colors.textMuted }]}>
+                    @{pair.desc1_username}{pair.desc1_badge_emoji ? ` ${pair.desc1_badge_emoji}` : ''}
+                  </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.reportButton}
@@ -480,6 +483,9 @@ export default function VoteScreen() {
                   disabled={voting}
                 >
                   <Text style={[styles.cardText, { color: colors.text }]}>{pair.desc2_text}</Text>
+                  <Text style={[styles.cardAuthor, { color: colors.textMuted }]}>
+                    @{pair.desc2_username}{pair.desc2_badge_emoji ? ` ${pair.desc2_badge_emoji}` : ''}
+                  </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.reportButton}
@@ -544,6 +550,10 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 30,
     fontWeight: '500',
+  },
+  cardAuthor: {
+    fontSize: fontSize.xs,
+    marginTop: spacing.xs,
   },
   reportButton: {
     alignSelf: 'flex-end',

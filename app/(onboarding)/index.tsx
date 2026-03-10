@@ -16,6 +16,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTranslation } from 'react-i18next';
 
 import { haptic } from '../../src/lib/haptics';
+import { useTheme } from '../../src/contexts/ThemeContext';
 import { OnboardingScreen1 } from '../../src/components/onboarding/OnboardingScreen1';
 import { OnboardingScreen2 } from '../../src/components/onboarding/OnboardingScreen2';
 import { OnboardingScreen3 } from '../../src/components/onboarding/OnboardingScreen3';
@@ -24,10 +25,12 @@ import { DotIndicator } from '../../src/components/onboarding/DotIndicator';
 export default function OnboardingScreen() {
   const router = useRouter();
   const { t } = useTranslation();
+  const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [containerWidth, setContainerWidth] = useState(0);
   const scrollRef = useRef<ScrollView>(null);
+  const [isScrolling, setIsScrolling] = useState(false);
 
   const onLayout = (e: LayoutChangeEvent) => {
     setContainerWidth(e.nativeEvent.layout.width);
@@ -41,11 +44,13 @@ export default function OnboardingScreen() {
       haptic.light();
       setCurrentIndex(index);
     }
+    setIsScrolling(false);
   };
 
   const goNext = () => {
-    if (currentIndex < 2 && containerWidth) {
+    if (currentIndex < 2 && containerWidth && !isScrolling) {
       haptic.light();
+      setIsScrolling(true);
       const next = currentIndex + 1;
       scrollRef.current?.scrollTo({ x: next * containerWidth, animated: true });
       setCurrentIndex(next);
@@ -53,8 +58,9 @@ export default function OnboardingScreen() {
   };
 
   const goBack = () => {
-    if (currentIndex > 0 && containerWidth) {
+    if (currentIndex > 0 && containerWidth && !isScrolling) {
       haptic.light();
+      setIsScrolling(true);
       const prev = currentIndex - 1;
       scrollRef.current?.scrollTo({ x: prev * containerWidth, animated: true });
       setCurrentIndex(prev);
@@ -63,7 +69,11 @@ export default function OnboardingScreen() {
 
   const handleFinish = async () => {
     haptic.heavy();
-    await AsyncStorage.setItem('hasSeenOnboarding', 'true');
+    try {
+      await AsyncStorage.setItem('hasSeenOnboarding', 'true');
+    } catch {
+      // If storage write fails, continue anyway to avoid infinite onboarding loop
+    }
     if (Platform.OS === 'web') {
       window.location.href = '/';
     } else {
@@ -74,11 +84,11 @@ export default function OnboardingScreen() {
   const isLast = currentIndex === 2;
 
   return (
-    <View style={[styles.root, { paddingTop: insets.top + 16, paddingBottom: insets.bottom + 16 }]}>
+    <View style={[styles.root, { backgroundColor: colors.background, paddingTop: insets.top + 16, paddingBottom: insets.bottom + 16 }]}>
       {/* Logo */}
       <View style={styles.logoContainer}>
-        <Text style={styles.logoOne}>one</Text>
-        <Text style={styles.logoWord}>word</Text>
+        <Text style={[styles.logoOne, { color: colors.text }]}>one</Text>
+        <Text style={[styles.logoWord, { color: colors.primary }]}>word</Text>
       </View>
 
       {/* Screens */}
@@ -91,6 +101,7 @@ export default function OnboardingScreen() {
             showsHorizontalScrollIndicator={false}
             onMomentumScrollEnd={onMomentumScrollEnd}
             scrollEventThrottle={16}
+            scrollEnabled={!isScrolling}
           >
             <View style={{ width: containerWidth, flex: 1 }}>
               <OnboardingScreen1 isActive={currentIndex === 0} />
@@ -111,14 +122,14 @@ export default function OnboardingScreen() {
 
         <View style={styles.buttons}>
           {currentIndex > 0 && (
-            <TouchableOpacity style={styles.backButton} onPress={goBack} activeOpacity={0.7}>
-              <Text style={styles.backButtonText}>{t('nav_back')}</Text>
+            <TouchableOpacity style={[styles.backButton, { borderColor: colors.border }]} onPress={goBack} activeOpacity={0.7}>
+              <Text style={[styles.backButtonText, { color: colors.text }]}>{t('nav_back')}</Text>
             </TouchableOpacity>
           )}
 
           {isLast ? (
             <TouchableOpacity
-              style={styles.finishButton}
+              style={[styles.finishButton, { backgroundColor: colors.primary, shadowColor: colors.primary }]}
               onPress={handleFinish}
               activeOpacity={0.8}
             >
@@ -126,11 +137,11 @@ export default function OnboardingScreen() {
             </TouchableOpacity>
           ) : (
             <TouchableOpacity
-              style={styles.nextButton}
+              style={[styles.nextButton, { backgroundColor: colors.text }]}
               onPress={goNext}
               activeOpacity={0.8}
             >
-              <Text style={styles.nextButtonText}>{t('nav_next')}</Text>
+              <Text style={[styles.nextButtonText, { color: colors.background }]}>{t('nav_next')}</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -142,7 +153,6 @@ export default function OnboardingScreen() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: '#FFFDF7',
   },
   logoContainer: {
     flexDirection: 'row',
@@ -153,12 +163,10 @@ const styles = StyleSheet.create({
   logoOne: {
     fontSize: 24,
     fontFamily: 'PlayfairDisplay_700Bold',
-    color: '#1A1A2E',
   },
   logoWord: {
     fontSize: 24,
     fontFamily: 'PlayfairDisplay_700Bold',
-    color: '#FF6B4A',
   },
   scrollWrapper: {
     flex: 1,
@@ -177,36 +185,30 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderRadius: 12,
     borderWidth: 1.5,
-    borderColor: '#E8E3D9',
     alignItems: 'center',
     justifyContent: 'center',
   },
   backButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#1A1A2E',
   },
   nextButton: {
     flex: 1,
     paddingVertical: 14,
     borderRadius: 12,
-    backgroundColor: '#1A1A2E',
     alignItems: 'center',
     justifyContent: 'center',
   },
   nextButtonText: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#FFFFFF',
   },
   finishButton: {
     flex: 1,
     paddingVertical: 14,
     borderRadius: 12,
-    backgroundColor: '#FF6B4A',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#FF6B4A',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,

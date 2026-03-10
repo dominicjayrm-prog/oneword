@@ -67,7 +67,7 @@ Deno.serve(async (req) => {
 
   for (const account of allAccounts) {
     const email = `seed${account.language}${String(account.index).padStart(2, "0")}@oneword.internal`;
-    const password = `SeedAcc0unt!${account.language}${account.index}`;
+    const password = crypto.randomUUID() + crypto.randomUUID();
 
     try {
       // Check if profile with this username already exists

@@ -34,13 +34,19 @@ function InnerLayout() {
   const router = useRouter();
   const segments = useSegments();
   const [onboardingChecked, setOnboardingChecked] = useState(false);
-  const [hasSeenOnboarding, setHasSeenOnboarding] = useState(true);
+  const [hasSeenOnboarding, setHasSeenOnboarding] = useState(false);
 
   useEffect(() => {
-    AsyncStorage.getItem('hasSeenOnboarding').then((value) => {
-      setHasSeenOnboarding(value === 'true');
-      setOnboardingChecked(true);
-    });
+    AsyncStorage.getItem('hasSeenOnboarding')
+      .then((value) => {
+        setHasSeenOnboarding(value === 'true');
+      })
+      .catch(() => {
+        // If storage read fails, default to not seen
+      })
+      .finally(() => {
+        setOnboardingChecked(true);
+      });
   }, []);
 
   useEffect(() => {
@@ -53,7 +59,7 @@ function InnerLayout() {
     } else if (hasSeenOnboarding && inOnboarding) {
       router.replace('/');
     }
-  }, [onboardingChecked, hasSeenOnboarding]);
+  }, [onboardingChecked, hasSeenOnboarding, segments]);
 
   if (!onboardingChecked) {
     return (
@@ -83,6 +89,7 @@ function InnerLayout() {
           }}
         />
       </Stack>
+      <NetworkBanner />
     </MobileContainer>
   );
 }
@@ -113,7 +120,6 @@ export default function RootLayout() {
           <GameProvider>
             <ToastProvider>
               <InnerLayout />
-              <NetworkBanner />
             </ToastProvider>
           </GameProvider>
         </AuthProvider>

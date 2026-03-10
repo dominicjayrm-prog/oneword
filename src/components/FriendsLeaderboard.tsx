@@ -23,9 +23,14 @@ export function FriendsLeaderboard() {
         setLoading(false);
         return;
       }
-      const data = await getFriendsDescriptions(session.user.id, todayWord.id);
-      setDescriptions(data);
-      setLoading(false);
+      try {
+        const data = await getFriendsDescriptions(session.user.id, todayWord.id);
+        setDescriptions(data);
+      } catch {
+        // Non-critical — show empty state rather than stuck spinner
+      } finally {
+        setLoading(false);
+      }
     }
     load();
   }, [session?.user?.id, todayWord?.id]);

@@ -107,6 +107,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   const submitDescription = useCallback(async (description: string) => {
     if (!todayWord || !userId) return { error: new Error('Not ready') };
+    if (!rateLimits.submit()) {
+      return { error: new Error('Submitting too fast. Please wait a moment.') };
+    }
 
     const words = description.trim().split(/\s+/).filter(Boolean);
     if (words.length !== DESCRIPTION_WORD_COUNT) {

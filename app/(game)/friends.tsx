@@ -79,16 +79,18 @@ export default function FriendsScreen() {
   async function handleAccept(friendshipId: string) {
     if (processingRef.current.has(friendshipId)) return;
     processingRef.current.add(friendshipId);
-    // Optimistic: remove from requests immediately
     setRequests((prev) => prev.filter((r) => r.friendship_id !== friendshipId));
     try {
-      await acceptFriendRequest(friendshipId);
-      showToast(t('success.friend_accepted'), 'success');
-      // Reload to pick up the new friend in the friends list
+      const { error } = await acceptFriendRequest(friendshipId);
+      if (error) {
+        showToast(t('errors.generic'), 'error');
+      } else {
+        showToast(t('success.friend_accepted'), 'success');
+      }
       await loadData();
     } catch {
       showToast(t('errors.generic'), 'error');
-      await loadData(); // reload to restore state
+      await loadData();
     } finally {
       processingRef.current.delete(friendshipId);
     }
@@ -97,10 +99,13 @@ export default function FriendsScreen() {
   async function handleDecline(friendshipId: string) {
     if (processingRef.current.has(friendshipId)) return;
     processingRef.current.add(friendshipId);
-    // Optimistic: remove from requests immediately
     setRequests((prev) => prev.filter((r) => r.friendship_id !== friendshipId));
     try {
-      await declineFriendRequest(friendshipId);
+      const { error } = await declineFriendRequest(friendshipId);
+      if (error) {
+        showToast(t('errors.generic'), 'error');
+        await loadData();
+      }
     } catch {
       showToast(t('errors.generic'), 'error');
       await loadData();
@@ -112,10 +117,18 @@ export default function FriendsScreen() {
   async function handleRemove(friendshipId: string) {
     if (processingRef.current.has(friendshipId)) return;
     processingRef.current.add(friendshipId);
-    // Optimistic: remove from list immediately
+    const friendToRemove = friends.find((f) => f.friendship_id === friendshipId);
     setFriends((prev) => prev.filter((f) => f.friendship_id !== friendshipId));
+    // Also remove from descriptions so FriendsToday updates immediately
+    if (friendToRemove) {
+      setDescriptions((prev) => prev.filter((d) => d.friend_id !== friendToRemove.friend_id));
+    }
     try {
-      await removeFriend(friendshipId);
+      const { error } = await removeFriend(friendshipId);
+      if (error) {
+        showToast(t('errors.generic'), 'error');
+        await loadData();
+      }
     } catch {
       showToast(t('errors.generic'), 'error');
       await loadData();

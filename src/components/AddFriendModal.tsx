@@ -82,6 +82,7 @@ export function AddFriendModal({ visible, onClose, currentUserId, onRequestSent 
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(false);
   const [sentIds, setSentIds] = useState<Set<string>>(new Set());
+  const [sendingIds, setSendingIds] = useState<Set<string>>(new Set());
   const [toastUser, setToastUser] = useState<string | null>(null);
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -104,16 +105,24 @@ export function AddFriendModal({ visible, onClose, currentUserId, onRequestSent 
     if (offset === 0) setSearching(true);
     else setLoadingMore(true);
 
-    const data = await searchUsers(text.trim(), currentUserId, offset);
+    try {
+      const data = await searchUsers(text.trim(), currentUserId, offset);
 
-    if (offset === 0) {
-      setResults(data);
-    } else {
-      setResults((prev) => [...prev, ...data]);
+      if (offset === 0) {
+        setResults(data);
+      } else {
+        setResults((prev) => [...prev, ...data]);
+      }
+      setHasMore(data.length >= SEARCH_PAGE_SIZE);
+    } catch (err) {
+      if (err instanceof Error && err.message.includes('slow down')) {
+        showToast(err.message, 'error');
+      }
+      if (offset === 0) setResults([]);
+    } finally {
+      setSearching(false);
+      setLoadingMore(false);
     }
-    setHasMore(data.length >= SEARCH_PAGE_SIZE);
-    setSearching(false);
-    setLoadingMore(false);
   }, [currentUserId]);
 
   function handleChangeText(text: string) {
@@ -128,13 +137,19 @@ export function AddFriendModal({ visible, onClose, currentUserId, onRequestSent 
   }
 
   async function handleSendRequest(userId: string, username: string) {
+    if (sendingIds.has(userId)) return;
     haptic.medium();
-    const { error } = await sendFriendRequest(currentUserId, userId);
-    if (error) {
-      showToast(error.message, 'error');
-      return;
+    setSendingIds((prev) => new Set(prev).add(userId));
+    try {
+      const { error } = await sendFriendRequest(currentUserId, userId);
+      if (error) {
+        showToast(error.message, 'error');
+        return;
+      }
+      setSentIds((prev) => new Set(prev).add(userId));
+    } finally {
+      setSendingIds((prev) => { const next = new Set(prev); next.delete(userId); return next; });
     }
-    setSentIds((prev) => new Set(prev).add(userId));
     setToastUser(username);
     if (toastTimer.current) clearTimeout(toastTimer.current);
     toastTimer.current = setTimeout(() => setToastUser(null), 2500);
@@ -145,19 +160,26 @@ export function AddFriendModal({ visible, onClose, currentUserId, onRequestSent 
     setQuery('');
     setResults([]);
     setSentIds(new Set());
+    setSendingIds(new Set());
     setHasMore(false);
     onClose();
   }
 
   function renderResult({ item }: { item: UserSearchResult }) {
     const isSent = sentIds.has(item.user_id);
+    const isSending = sendingIds.has(item.user_id);
 
     let buttonLabel = t('friends.add');
     let buttonStyle: object = { backgroundColor: colors.primary };
     let textStyle: object = { color: '#FFFFFF' };
     let disabled = false;
 
-    if (item.is_friend) {
+    if (isSending) {
+      buttonLabel = '...';
+      buttonStyle = { backgroundColor: colors.textMuted + '30' };
+      textStyle = { color: colors.textMuted };
+      disabled = true;
+    } else if (item.is_friend) {
       buttonLabel = t('friends.already_friends') + ' \u2713';
       buttonStyle = { backgroundColor: 'transparent', borderWidth: 1, borderColor: colors.success };
       textStyle = { color: colors.success };

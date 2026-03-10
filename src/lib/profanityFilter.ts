@@ -117,7 +117,8 @@ function stripAccents(s: string): string {
  * Returns { clean: boolean, flaggedWord?: string }
  */
 export function checkProfanity(text: string): { clean: boolean; flaggedWord?: string } {
-  const lower = text.toLowerCase();
+  // Strip zero-width and invisible Unicode characters that could bypass the filter
+  const lower = text.toLowerCase().replace(/[\u200B-\u200D\uFEFF\u00AD\u034F\u061C\u2060-\u2064\u2066-\u206F]/g, '');
 
   // Split keeping Spanish characters intact
   const words = lower.replace(/[^a-záéíóúñü0-9\s]/g, '').split(/\s+/).filter(Boolean);

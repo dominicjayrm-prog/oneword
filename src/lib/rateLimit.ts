@@ -49,6 +49,8 @@ export const rateLimits = {
   friendRequest: () => rateLimit('friendRequest', 10, 60_000),
   /** Search: 15 per 10s */
   search: () => rateLimit('search', 15, 10_000),
+  /** Submit description: 5 per 30s */
+  submit: () => rateLimit('submit', 5, 30_000),
   /** Report: 5 per 60s */
   report: () => rateLimit('report', 5, 60_000),
   /** Password reset: 3 per 120s */

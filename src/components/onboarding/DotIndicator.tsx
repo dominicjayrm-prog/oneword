@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { View, StyleSheet, Animated } from 'react-native';
+import { useTheme } from '../../contexts/ThemeContext';
 
 interface DotIndicatorProps {
   total: number;
@@ -17,6 +18,7 @@ export function DotIndicator({ total, current }: DotIndicatorProps) {
 }
 
 function Dot({ active }: { active: boolean }) {
+  const { colors } = useTheme();
   const width = useRef(new Animated.Value(active ? 24 : 8)).current;
 
   useEffect(() => {
@@ -33,7 +35,7 @@ function Dot({ active }: { active: boolean }) {
         styles.dot,
         {
           width,
-          backgroundColor: active ? '#FF6B4A' : '#E8E3D9',
+          backgroundColor: active ? colors.primary : colors.border,
         },
       ]}
     />

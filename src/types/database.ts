@@ -53,6 +53,18 @@ export interface VotePair {
   desc2_username: string;
 }
 
+export interface YesterdayWinner {
+  word: string;
+  word_category: string;
+  winner_description: string;
+  winner_username: string;
+  winner_votes: number;
+  user_description: string | null;
+  user_rank: number | null;
+  total_descriptions: number;
+  user_was_winner: boolean;
+}
+
 export interface LeaderboardEntry {
   description_id: string;
   description_text: string;

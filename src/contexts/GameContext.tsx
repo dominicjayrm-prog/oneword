@@ -5,7 +5,7 @@ import { withTimeout } from '../lib/withTimeout';
 import { rateLimits } from '../lib/rateLimit';
 import { DESCRIPTION_WORD_COUNT, LEADERBOARD_LIMIT } from '../constants/app';
 import { useAuthContext } from './AuthContext';
-import type { DailyWord, VotePair, LeaderboardEntry } from '../types/database';
+import type { DailyWord, VotePair, LeaderboardEntry, YesterdayWinner } from '../types/database';
 
 interface GameContextType {
   todayWord: DailyWord | null;
@@ -18,6 +18,7 @@ interface GameContextType {
   submitVote: (winnerId: string, loserId: string) => Promise<{ error: Error | null }>;
   getLeaderboard: () => Promise<LeaderboardEntry[]>;
   reportDescription: (descriptionId: string) => Promise<{ error: Error | null }>;
+  getYesterdayWinner: () => Promise<YesterdayWinner | null>;
   refresh: () => Promise<void>;
 }
 
@@ -183,6 +184,24 @@ export function GameProvider({ children }: { children: ReactNode }) {
     }
   }, [todayWord, userId]);
 
+  const getYesterdayWinner = useCallback(async (): Promise<YesterdayWinner | null> => {
+    if (!userId) return null;
+    try {
+      const { data, error } = await withTimeout(supabase.rpc('get_yesterday_winner', {
+        p_user_id: userId,
+        p_language: language,
+      }));
+      if (error) throw error;
+      if (data && data.length > 0 && data[0].winner_description) {
+        return data[0];
+      }
+      return null;
+    } catch {
+      console.error('Failed to fetch yesterday winner');
+      return null;
+    }
+  }, [userId, language]);
+
   const value = useMemo(() => ({
     todayWord,
     hasSubmitted,
@@ -194,8 +213,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
     submitVote,
     getLeaderboard,
     reportDescription,
+    getYesterdayWinner,
     refresh: fetchTodayWord,
-  }), [todayWord, hasSubmitted, userDescription, loading, loadError, submitDescription, getVotePair, submitVote, getLeaderboard, reportDescription, fetchTodayWord]);
+  }), [todayWord, hasSubmitted, userDescription, loading, loadError, submitDescription, getVotePair, submitVote, getLeaderboard, reportDescription, getYesterdayWinner, fetchTodayWord]);
 
   return (
     <GameContext.Provider value={value}>

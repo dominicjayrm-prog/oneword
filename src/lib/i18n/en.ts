@@ -79,6 +79,17 @@ export default {
     greeting: 'Hi, {{username}}',
   },
 
+  // Yesterday's Winner
+  yesterday_winner: {
+    label: "YESTERDAY'S WINNER",
+    your_rank: 'Your rank: #{{rank}} of {{total}}',
+    didnt_play: "You didn't play yesterday. Don't miss today's word!",
+    you_won: 'YOU WON YESTERDAY!',
+    see_today: "See Today's Word \u2192",
+    beat_this: 'Can you beat this today?',
+    votes: '{{count}} votes',
+  },
+
   // Voting
   vote: {
     pair_count: '{{current}} of {{total}}',

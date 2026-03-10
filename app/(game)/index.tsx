@@ -121,10 +121,15 @@ export default function HomeScreen() {
         const lastDismissed = await AsyncStorage.getItem(STORAGE_KEY_WINNER);
         if (lastDismissed !== gameDateStr) {
           const winner = await getYesterdayWinnerRef.current();
+          if (__DEV__) {
+            console.log('[Interstitial] gameDate:', gameDateStr, 'lastDismissed:', lastDismissed, 'winner:', winner);
+          }
           if (winner) {
             setYesterdayData(winner);
             setShowYesterdayWinner(true);
           }
+        } else if (__DEV__) {
+          console.log('[Interstitial] Yesterday winner already dismissed for', gameDateStr);
         }
       } catch {
         // Non-critical — just skip interstitial cards

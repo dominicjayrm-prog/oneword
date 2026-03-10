@@ -220,12 +220,15 @@ export function GameProvider({ children }: { children: ReactNode }) {
         p_language: language,
       }));
       if (error) throw error;
+      if (__DEV__) {
+        console.log('[getYesterdayWinner] language:', language, 'data:', JSON.stringify(data));
+      }
       if (data && data.length > 0 && data[0].winner_description) {
         return data[0];
       }
       return null;
-    } catch {
-      console.error('Failed to fetch yesterday winner');
+    } catch (err) {
+      console.error('Failed to fetch yesterday winner', err);
       return null;
     }
   }, [userId, language]);

@@ -24,13 +24,14 @@ import { EmptyState } from '../../src/components/EmptyState';
 import { ErrorState } from '../../src/components/ErrorState';
 import { useToast } from '../../src/components/Toast';
 import { fontSize, spacing, borderRadius } from '../../src/constants/theme';
+import { DESCRIPTION_WORD_COUNT, DESCRIPTION_MAX_LENGTH, TOAST_DURATION_MS, USERNAME_MIN_LENGTH, USERNAME_MAX_LENGTH, PASSWORD_MIN_LENGTH } from '../../src/constants/app';
 import { haptic } from '../../src/lib/haptics';
 
 export default function HomeScreen() {
   const router = useRouter();
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const { session, profile, loading: authLoading, signIn, signUp, language, updateLanguage, pendingVerification, resendVerification, clearPendingVerification, passwordRecovery, resetPassword, updatePassword } = useAuthContext();
+  const auth = useAuthContext();
   const { todayWord, hasSubmitted, userDescription, loading: gameLoading, loadError: gameError, submitDescription, refresh } = useGameContext();
 
   const { showToast } = useToast();
@@ -43,8 +44,8 @@ export default function HomeScreen() {
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
   const [authError, setAuthError] = useState('');
-  const [authLoading2, setAuthLoading2] = useState(false);
-  const [selectedLang, setSelectedLang] = useState(language);
+  const [authSubmitting, setAuthSubmitting] = useState(false);
+  const [selectedLang, setSelectedLang] = useState(auth.language);
   const [resending, setResending] = useState(false);
   const [resent, setResent] = useState(false);
   const [forgotMode, setForgotMode] = useState(false);
@@ -67,14 +68,14 @@ export default function HomeScreen() {
   }, []);
 
   const wordCount = input.trim().split(/\s+/).filter(Boolean).length;
-  const isExactlyFive = wordCount === 5;
+  const isExactlyFive = wordCount === DESCRIPTION_WORD_COUNT;
   const prevWordCount = useRef(0);
 
   useEffect(() => {
-    if (wordCount > 0 && wordCount <= 5 && wordCount > prevWordCount.current) {
+    if (wordCount > 0 && wordCount <= DESCRIPTION_WORD_COUNT && wordCount > prevWordCount.current) {
       haptic.light();
     }
-    if (wordCount === 5 && prevWordCount.current !== 5) {
+    if (wordCount === DESCRIPTION_WORD_COUNT && prevWordCount.current !== DESCRIPTION_WORD_COUNT) {
       haptic.success();
     }
     prevWordCount.current = wordCount;
@@ -86,7 +87,7 @@ export default function HomeScreen() {
     setRefreshing(false);
   }, [refresh]);
 
-  const loading = authLoading || gameLoading;
+  const loading = auth.loading || gameLoading;
 
   async function handleSubmit() {
     if (!isExactlyFive || submitting) return;
@@ -107,9 +108,9 @@ export default function HomeScreen() {
   function validateAuth(): string | null {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) return t('errors.invalid_email');
-    if (password.length < 6) return t('errors.password_short');
+    if (password.length < PASSWORD_MIN_LENGTH) return t('errors.password_short');
     if (authMode === 'signup') {
-      if (username.length < 3 || username.length > 20) return t('errors.username_length');
+      if (username.length < USERNAME_MIN_LENGTH || username.length > USERNAME_MAX_LENGTH) return t('errors.username_length');
       if (!/^[a-zA-Z0-9_]+$/.test(username)) return t('errors.username_format');
     }
     return null;
@@ -122,33 +123,33 @@ export default function HomeScreen() {
       setAuthError(validationError);
       return;
     }
-    if (authLoading2) return;
-    setAuthLoading2(true);
+    if (authSubmitting) return;
+    setAuthSubmitting(true);
     try {
       if (authMode === 'signup') {
-        const { error } = await signUp(email, password, username, selectedLang);
+        const { error } = await auth.signUp(email, password, username, selectedLang);
         if (error) setAuthError(error.message);
         else setShowAuth(false);
       } else {
-        const { error } = await signIn(email, password);
+        const { error } = await auth.signIn(email, password);
         if (error) setAuthError(error.message);
         else setShowAuth(false);
       }
     } catch {
       setAuthError(t('errors.network_retry'));
     } finally {
-      setAuthLoading2(false);
+      setAuthSubmitting(false);
     }
   }
 
   async function handleResend() {
     if (resending) return;
     setResending(true);
-    await resendVerification();
+    await auth.resendVerification();
     setResending(false);
     setResent(true);
     if (resentTimerRef.current) clearTimeout(resentTimerRef.current);
-    resentTimerRef.current = setTimeout(() => setResent(false), 3000);
+    resentTimerRef.current = setTimeout(() => setResent(false), TOAST_DURATION_MS);
   }
 
   async function handleForgotPassword() {
@@ -159,7 +160,7 @@ export default function HomeScreen() {
       return;
     }
     setResetLoading(true);
-    const { error } = await resetPassword(resetEmail);
+    const { error } = await auth.resetPassword(resetEmail);
     setResetLoading(false);
     if (error) {
       setResetError(error.message);
@@ -170,7 +171,7 @@ export default function HomeScreen() {
 
   async function handleSetNewPassword() {
     setResetError('');
-    if (newPassword.length < 6) {
+    if (newPassword.length < PASSWORD_MIN_LENGTH) {
       setResetError(t('errors.password_short'));
       return;
     }
@@ -179,7 +180,7 @@ export default function HomeScreen() {
       return;
     }
     setResetLoading(true);
-    const { error } = await updatePassword(newPassword);
+    const { error } = await auth.updatePassword(newPassword);
     setResetLoading(false);
     if (error) {
       setResetError(error.message);
@@ -191,7 +192,7 @@ export default function HomeScreen() {
 
   function handleLangSwitch(lang: string) {
     setSelectedLang(lang);
-    updateLanguage(lang);
+    auth.updateLanguage(lang);
   }
 
   if (loading) {
@@ -202,7 +203,7 @@ export default function HomeScreen() {
     );
   }
 
-  if (gameError && session) {
+  if (gameError && auth.session) {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <ThemeToggle />
@@ -216,7 +217,7 @@ export default function HomeScreen() {
   }
 
   // User clicked the reset link in email — show "Set new password" form
-  if (passwordRecovery) {
+  if (auth.passwordRecovery) {
     return (
       <KeyboardAvoidingView
         style={[styles.container, { backgroundColor: colors.background }]}
@@ -257,7 +258,7 @@ export default function HomeScreen() {
     );
   }
 
-  if (pendingVerification) {
+  if (auth.pendingVerification) {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <ThemeToggle />
@@ -265,7 +266,7 @@ export default function HomeScreen() {
           <Text style={styles.verifyEmoji}>{'\u2709\uFE0F'}</Text>
           <Text style={[styles.verifyTitle, { color: colors.text }]}>{t('auth.verify_title')}</Text>
           <Text style={[styles.verifySubtitle, { color: colors.textSecondary }]}>
-            {t('auth.verify_subtitle', { email: pendingVerification })}
+            {t('auth.verify_subtitle', { email: auth.pendingVerification })}
           </Text>
           <View style={styles.verifyActions}>
             <Button
@@ -277,7 +278,7 @@ export default function HomeScreen() {
             />
             <Button
               title={t('auth.verify_back')}
-              onPress={() => clearPendingVerification()}
+              onPress={() => auth.clearPendingVerification()}
               variant="outline"
             />
           </View>
@@ -286,7 +287,7 @@ export default function HomeScreen() {
     );
   }
 
-  if (!session || showAuth) {
+  if (!auth.session || showAuth) {
     // "Reset link sent" confirmation screen
     if (resetSent) {
       return (
@@ -432,7 +433,7 @@ export default function HomeScreen() {
             <Button
               title={authMode === 'signin' ? t('auth.login_button') : t('auth.signup_button')}
               onPress={handleAuth}
-              loading={authLoading2}
+              loading={authSubmitting}
               disabled={!email || !password || (authMode === 'signup' && !username)}
             />
             {authMode === 'signin' && (
@@ -474,12 +475,12 @@ export default function HomeScreen() {
         <ThemeToggle />
         <TouchableOpacity style={styles.header} onPress={() => { haptic.light(); router.push('/profile'); }} activeOpacity={0.7}>
           <View style={[styles.avatarSmall, { backgroundColor: colors.primaryFaded, borderColor: colors.primary }]}>
-            <Text style={styles.avatarSmallText}>{profile?.avatar_url || '\uD83C\uDFAD'}</Text>
+            <Text style={styles.avatarSmallText}>{auth.profile?.avatar_url || '\uD83C\uDFAD'}</Text>
           </View>
-          <Text style={[styles.greeting, { color: colors.textSecondary }]}>{t('game.greeting', { username: profile?.username ?? 'player' })}</Text>
-          {profile && profile.current_streak > 0 && (
+          <Text style={[styles.greeting, { color: colors.textSecondary }]}>{t('game.greeting', { username: auth.profile?.username ?? 'player' })}</Text>
+          {auth.profile && auth.profile.current_streak > 0 && (
             <Text style={[styles.streak, { color: colors.primary }]}>
-              {t('game.day_streak', { count: profile.current_streak })}
+              {t('game.day_streak', { count: auth.profile.current_streak })}
             </Text>
           )}
         </TouchableOpacity>
@@ -509,9 +510,9 @@ export default function HomeScreen() {
       <ThemeToggle />
       <TouchableOpacity style={styles.header} onPress={() => { haptic.light(); router.push('/profile'); }} activeOpacity={0.7}>
         <View style={[styles.avatarSmall, { backgroundColor: colors.primaryFaded, borderColor: colors.primary }]}>
-          <Text style={styles.avatarSmallText}>{profile?.avatar_url || '\uD83C\uDFAD'}</Text>
+          <Text style={styles.avatarSmallText}>{auth.profile?.avatar_url || '\uD83C\uDFAD'}</Text>
         </View>
-        <Text style={[styles.greeting, { color: colors.textSecondary }]}>{t('game.greeting', { username: profile?.username ?? 'player' })}</Text>
+        <Text style={[styles.greeting, { color: colors.textSecondary }]}>{t('game.greeting', { username: auth.profile?.username ?? 'player' })}</Text>
         <Text style={[styles.todayLabel, { color: colors.textMuted }]}>{t('game.todays_word')}</Text>
       </TouchableOpacity>
 
@@ -529,9 +530,9 @@ export default function HomeScreen() {
           onChangeText={setInput}
           multiline
           autoFocus
-          maxLength={200}
+          maxLength={DESCRIPTION_MAX_LENGTH}
         />
-        <WordCounter count={wordCount} max={5} />
+        <WordCounter count={wordCount} max={DESCRIPTION_WORD_COUNT} />
         <Button
           title={submitting ? t('loading.submitting') : t('game.submit')}
           onPress={handleSubmit}

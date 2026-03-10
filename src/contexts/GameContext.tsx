@@ -1,8 +1,9 @@
-import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useMemo, type ReactNode } from 'react';
 import { supabase } from '../lib/supabase';
 import { checkProfanity } from '../lib/profanityFilter';
 import { withTimeout } from '../lib/withTimeout';
 import { rateLimits } from '../lib/rateLimit';
+import { DESCRIPTION_WORD_COUNT, LEADERBOARD_LIMIT } from '../constants/app';
 import { useAuthContext } from './AuthContext';
 import type { DailyWord, VotePair, LeaderboardEntry } from '../types/database';
 
@@ -20,19 +21,8 @@ interface GameContextType {
   refresh: () => Promise<void>;
 }
 
-const GameContext = createContext<GameContextType>({
-  todayWord: null,
-  hasSubmitted: false,
-  userDescription: null,
-  loading: true,
-  loadError: false,
-  submitDescription: async () => ({ error: null }),
-  getVotePair: async () => null,
-  submitVote: async () => ({ error: null }),
-  getLeaderboard: async () => [],
-  reportDescription: async () => ({ error: null }),
-  refresh: async () => {},
-});
+// Strict default: throws if used outside <GameProvider>.
+const GameContext = createContext<GameContextType | null>(null);
 
 export function GameProvider({ children }: { children: ReactNode }) {
   const { session, language } = useAuthContext();
@@ -85,11 +75,11 @@ export function GameProvider({ children }: { children: ReactNode }) {
     fetchTodayWord();
   }, [fetchTodayWord]);
 
-  async function submitDescription(description: string) {
+  const submitDescription = useCallback(async (description: string) => {
     if (!todayWord || !userId) return { error: new Error('Not ready') };
 
     const words = description.trim().split(/\s+/).filter(Boolean);
-    if (words.length !== 5) {
+    if (words.length !== DESCRIPTION_WORD_COUNT) {
       return { error: new Error('Your description must be exactly 5 words.') };
     }
 
@@ -127,9 +117,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
     } catch (err) {
       return { error: err instanceof Error ? err : new Error('Network error. Please try again.') };
     }
-  }
+  }, [todayWord, userId]);
 
-  async function getVotePair(): Promise<VotePair | null> {
+  const getVotePair = useCallback(async (): Promise<VotePair | null> => {
     if (!todayWord || !userId) return null;
     const { data, error } = await withTimeout(supabase.rpc('get_vote_pair', {
       p_word_id: todayWord.id,
@@ -142,9 +132,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
       return data[0];
     }
     return null;
-  }
+  }, [todayWord, userId]);
 
-  async function submitVote(winnerId: string, loserId: string) {
+  const submitVote = useCallback(async (winnerId: string, loserId: string) => {
     if (!todayWord || !userId) return { error: new Error('Not ready') };
     if (!rateLimits.vote()) {
       return { error: new Error('Voting too fast. Please slow down.') };
@@ -160,23 +150,23 @@ export function GameProvider({ children }: { children: ReactNode }) {
     } catch (err) {
       return { error: err instanceof Error ? err : new Error('Network error. Please try again.') };
     }
-  }
+  }, [todayWord, userId]);
 
-  async function getLeaderboard(): Promise<LeaderboardEntry[]> {
+  const getLeaderboard = useCallback(async (): Promise<LeaderboardEntry[]> => {
     if (!todayWord) return [];
     try {
       const { data } = await withTimeout(supabase.rpc('get_leaderboard', {
         p_word_id: todayWord.id,
-        p_limit: 20,
+        p_limit: LEADERBOARD_LIMIT,
       }));
       return data ?? [];
     } catch {
       console.error('Failed to get leaderboard');
       return [];
     }
-  }
+  }, [todayWord]);
 
-  async function reportDescription(descriptionId: string) {
+  const reportDescription = useCallback(async (descriptionId: string) => {
     if (!todayWord || !userId) return { error: new Error('Not ready') };
     if (!rateLimits.report()) {
       return { error: new Error('Too many reports. Please wait a moment.') };
@@ -191,27 +181,33 @@ export function GameProvider({ children }: { children: ReactNode }) {
     } catch (err) {
       return { error: err instanceof Error ? err : new Error('Network error. Please try again.') };
     }
-  }
+  }, [todayWord, userId]);
+
+  const value = useMemo(() => ({
+    todayWord,
+    hasSubmitted,
+    userDescription,
+    loading,
+    loadError,
+    submitDescription,
+    getVotePair,
+    submitVote,
+    getLeaderboard,
+    reportDescription,
+    refresh: fetchTodayWord,
+  }), [todayWord, hasSubmitted, userDescription, loading, loadError, submitDescription, getVotePair, submitVote, getLeaderboard, reportDescription, fetchTodayWord]);
 
   return (
-    <GameContext.Provider value={{
-      todayWord,
-      hasSubmitted,
-      userDescription,
-      loading,
-      loadError,
-      submitDescription,
-      getVotePair,
-      submitVote,
-      getLeaderboard,
-      reportDescription,
-      refresh: fetchTodayWord,
-    }}>
+    <GameContext.Provider value={value}>
       {children}
     </GameContext.Provider>
   );
 }
 
 export function useGameContext() {
-  return useContext(GameContext);
+  const context = useContext(GameContext);
+  if (!context) {
+    throw new Error('useGameContext must be used within a <GameProvider>');
+  }
+  return context;
 }

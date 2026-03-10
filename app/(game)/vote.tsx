@@ -2,7 +2,6 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import { View, Text, StyleSheet, Alert, Platform, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -22,12 +21,8 @@ import { useToast } from '../../src/components/Toast';
 import { VOTE_BATCH_SIZE } from '../../src/constants/app';
 import { fontSize, spacing, borderRadius } from '../../src/constants/theme';
 import { haptic } from '../../src/lib/haptics';
-import { getGameDate } from '../../src/lib/gameDate';
+import { supabase } from '../../src/lib/supabase';
 import type { VotePair } from '../../src/types/database';
-
-function voteStorageKey(wordId: string): string {
-  return `vote_progress_${wordId}_${getGameDate()}`;
-}
 
 export default function VoteScreen() {
   const router = useRouter();
@@ -45,32 +40,29 @@ export default function VoteScreen() {
   const [voting, setVoting] = useState(false);
   const [loadError, setLoadError] = useState(false);
   const [selectedCard, setSelectedCard] = useState<1 | 2 | null>(null);
-  // How many pairs we've shown (persisted across visits via AsyncStorage)
+  // How many pairs we've shown (persisted on server via votes table)
   const pairsShownRef = useRef(0);
-  const storageKeyRef = useRef<string | null>(null);
 
   const mountedRef = useRef(true);
   useEffect(() => {
     return () => { mountedRef.current = false; };
   }, []);
 
-  // Restore vote progress from AsyncStorage on mount
+  // Restore vote progress from server on mount (works across devices)
   useEffect(() => {
     if (!todayWord || !hasSubmitted) return;
-    const key = voteStorageKey(todayWord.id);
-    storageKeyRef.current = key;
     (async () => {
       try {
-        const stored = await AsyncStorage.getItem(key);
-        if (stored && mountedRef.current) {
-          const count = parseInt(stored, 10);
-          if (!isNaN(count) && count > 0) {
-            setVoteCount(count);
-            pairsShownRef.current = count;
-            // If they already hit the batch limit, show the done screen
-            if (count >= VOTE_BATCH_SIZE) {
-              setBatchExhausted(true);
-            }
+        const { data } = await supabase.rpc('get_user_vote_count', {
+          p_user_id: (await supabase.auth.getSession()).data.session?.user.id,
+          p_word_id: todayWord.id,
+        });
+        const count = typeof data === 'number' ? data : 0;
+        if (count > 0 && mountedRef.current) {
+          setVoteCount(count);
+          pairsShownRef.current = count;
+          if (count >= VOTE_BATCH_SIZE) {
+            setBatchExhausted(true);
           }
         }
       } catch { /* non-critical */ }
@@ -190,14 +182,7 @@ export default function VoteScreen() {
       return;
     }
 
-    setVoteCount((c) => {
-      const next = c + 1;
-      // Persist vote count so it survives app restarts
-      if (storageKeyRef.current) {
-        AsyncStorage.setItem(storageKeyRef.current, String(next)).catch(() => {});
-      }
-      return next;
-    });
+    setVoteCount((c) => c + 1);
 
     // Wait for visual feedback
     await new Promise((r) => setTimeout(r, 600));

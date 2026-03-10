@@ -111,6 +111,28 @@ export default function ResultsScreen() {
     }
   };
 
+  // Locked state — user hasn't submitted today's description yet
+  if (!hasSubmitted) {
+    return (
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <ThemeToggle />
+        <View style={[styles.center, { backgroundColor: colors.background }]}>
+          <Text style={styles.lockIcon}>{'\uD83D\uDD12'}</Text>
+          {todayWord && <WordDisplay word={todayWord.word} category={todayWord.category} />}
+          <Text style={[styles.lockedMessage, { color: colors.textSecondary }]}>
+            {t('results.locked_message')}
+          </Text>
+        </View>
+        <View style={styles.actions}>
+          <Button
+            title={t('results.go_to_today')}
+            onPress={() => { haptic.medium(); router.replace('/'); }}
+          />
+        </View>
+      </View>
+    );
+  }
+
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <ThemeToggle />
@@ -335,5 +357,16 @@ const styles = StyleSheet.create({
     fontSize: fontSize.md,
     fontWeight: '700',
     letterSpacing: 1,
+  },
+  lockIcon: {
+    fontSize: 48,
+    marginBottom: spacing.md,
+  },
+  lockedMessage: {
+    fontSize: fontSize.md,
+    textAlign: 'center',
+    marginTop: spacing.lg,
+    paddingHorizontal: spacing.lg,
+    lineHeight: 22,
   },
 });

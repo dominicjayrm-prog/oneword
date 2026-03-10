@@ -86,14 +86,20 @@ export default function HomeScreen() {
     };
   }, []);
 
-  // Fetch interstitial cards (recap + winner) in a single effect to avoid double API calls.
-  // Priority: Weekly Recap (Mondays only) → Yesterday's Winner → Today's Word.
-  // Deps intentionally exclude the RPC callbacks (accessed via refs) to prevent
-  // cancellation races when userId/language stabilise during initial load.
+  // Fetch interstitial cards (recap + winner) once per mount when conditions are met.
+  // Uses a ref guard instead of the effect cleanup's `cancelled` flag, because
+  // auth.profile can change reference multiple times during login (fetchProfile runs
+  // from both getSession and onAuthStateChange), which would cancel in-flight fetches.
+  const interstitialStartedRef = useRef(false);
+  // Reset the guard on logout so re-login shows interstitials again
+  useEffect(() => {
+    if (!auth.session) interstitialStartedRef.current = false;
+  }, [auth.session]);
   useEffect(() => {
     if (!auth.session || !auth.profile || gameLoading) return;
+    if (interstitialStartedRef.current) return;
+    interstitialStartedRef.current = true;
 
-    let cancelled = false;
     (async () => {
       try {
         const gameDateStr = getGameDate();
@@ -104,7 +110,7 @@ export default function HomeScreen() {
           const dismissedWeek = await AsyncStorage.getItem(STORAGE_KEY_RECAP);
           if (dismissedWeek !== thisMonday) {
             const recap = await getWeeklyRecapRef.current();
-            if (!cancelled && recap) {
+            if (recap) {
               setRecapData(recap);
               setShowWeeklyRecap(true);
             }
@@ -115,17 +121,17 @@ export default function HomeScreen() {
         const lastDismissed = await AsyncStorage.getItem(STORAGE_KEY_WINNER);
         if (lastDismissed !== gameDateStr) {
           const winner = await getYesterdayWinnerRef.current();
-          if (!cancelled && winner) {
+          if (winner) {
             setYesterdayData(winner);
             setShowYesterdayWinner(true);
           }
         }
       } catch {
         // Non-critical — just skip interstitial cards
+        // Allow retry on next mount if it failed
+        interstitialStartedRef.current = false;
       }
     })();
-
-    return () => { cancelled = true; };
   }, [auth.session, auth.profile, gameLoading]);
 
   const dismissWeeklyRecap = useCallback(async () => {

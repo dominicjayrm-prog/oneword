@@ -11,7 +11,6 @@ import Animated, {
   withDelay,
   withSequence,
 } from 'react-native-reanimated';
-import { useAuthContext } from '../../src/contexts/AuthContext';
 import { useGameContext } from '../../src/contexts/GameContext';
 import { useTheme } from '../../src/contexts/ThemeContext';
 import { WordDisplay } from '../../src/components/WordDisplay';
@@ -34,8 +33,7 @@ export default function VoteScreen() {
   const router = useRouter();
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const { session } = useAuthContext();
-  const { todayWord, getVotePair, submitVote, reportDescription } = useGameContext();
+  const { todayWord, hasSubmitted, getVotePair, submitVote, reportDescription } = useGameContext();
 
   const { showToast } = useToast();
 
@@ -58,7 +56,7 @@ export default function VoteScreen() {
 
   // Restore vote progress from AsyncStorage on mount
   useEffect(() => {
-    if (!todayWord) return;
+    if (!todayWord || !hasSubmitted) return;
     const key = voteStorageKey(todayWord.id);
     storageKeyRef.current = key;
     (async () => {
@@ -77,7 +75,7 @@ export default function VoteScreen() {
         }
       } catch { /* non-critical */ }
     })();
-  }, [todayWord]);
+  }, [todayWord, hasSubmitted]);
 
   // Animation shared values
   const card1TranslateX = useSharedValue(-300);
@@ -151,8 +149,8 @@ export default function VoteScreen() {
   }, [voteCount]);
 
   useEffect(() => {
-    loadPair();
-  }, [loadPair]);
+    if (hasSubmitted) loadPair();
+  }, [loadPair, hasSubmitted]);
 
   async function handleVote(winnerId: string, loserId: string, winnerIsCard1: boolean) {
     if (voting) return;
@@ -305,6 +303,28 @@ export default function VoteScreen() {
       doneTextOpacity.value = withDelay(200, withTiming(1, { duration: 300 }));
     }
   }, [noMorePairs, batchExhausted]);
+
+  // Locked state — user hasn't submitted today's description yet
+  if (!hasSubmitted) {
+    return (
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <ThemeToggle />
+        <View style={[styles.center, { backgroundColor: colors.background }]}>
+          <Text style={styles.lockIcon}>{'\uD83D\uDD12'}</Text>
+          {todayWord && <WordDisplay word={todayWord.word} category={todayWord.category} />}
+          <Text style={[styles.lockedMessage, { color: colors.textSecondary }]}>
+            {t('vote.locked_message')}
+          </Text>
+        </View>
+        <View style={styles.actions}>
+          <Button
+            title={t('vote.go_to_today')}
+            onPress={() => { haptic.medium(); router.replace('/'); }}
+          />
+        </View>
+      </View>
+    );
+  }
 
   // "No pairs available" screen — server returned no more unseen pairs
   if (noMorePairs) {
@@ -581,5 +601,16 @@ const styles = StyleSheet.create({
   actions: {
     gap: spacing.md,
     paddingBottom: spacing.xl,
+  },
+  lockIcon: {
+    fontSize: 48,
+    marginBottom: spacing.md,
+  },
+  lockedMessage: {
+    fontSize: fontSize.md,
+    textAlign: 'center',
+    marginTop: spacing.lg,
+    paddingHorizontal: spacing.lg,
+    lineHeight: 22,
   },
 });

@@ -7,6 +7,8 @@ import { useTheme } from '../src/contexts/ThemeContext';
 import { Button } from '../src/components/Button';
 import { ThemeToggle } from '../src/components/ThemeToggle';
 import { LoadingSpinner } from '../src/components/LoadingSpinner';
+import { BadgePill } from '../src/components/BadgePill';
+import { BadgeProgress } from '../src/components/BadgeProgress';
 import { useToast } from '../src/components/Toast';
 import { fontSize, spacing, borderRadius } from '../src/constants/theme';
 import { haptic } from '../src/lib/haptics';
@@ -149,9 +151,22 @@ export default function ProfileScreen() {
         <Text style={[styles.tapToChange, { color: colors.textMuted }]}>{t('profile.tap_to_change')}</Text>
 
         <Text style={[styles.username, { color: colors.text }]}>{profile.username}</Text>
+        {profile.current_streak > 0 && (
+          <View style={styles.badgeRow}>
+            <BadgePill streak={profile.current_streak} showName size="md" />
+            <Text style={[styles.streakLabel, { color: colors.textSecondary }]}>
+              {t('game.day_streak', { count: profile.current_streak })}
+            </Text>
+          </View>
+        )}
         <Text style={[styles.memberSince, { color: colors.textMuted }]}>
           {t('profile.member_since', { date: memberSince })}
         </Text>
+      </View>
+
+      {/* Badge Progress */}
+      <View style={styles.badgeProgressSection}>
+        <BadgeProgress streak={profile.current_streak} />
       </View>
 
       {/* Avatar Picker */}
@@ -308,6 +323,19 @@ const styles = StyleSheet.create({
   },
   avatarText: {
     fontSize: 40,
+  },
+  badgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginTop: spacing.sm,
+  },
+  streakLabel: {
+    fontSize: fontSize.sm,
+    fontWeight: '500',
+  },
+  badgeProgressSection: {
+    marginBottom: spacing.lg,
   },
   tapToChange: {
     fontSize: fontSize.xs,

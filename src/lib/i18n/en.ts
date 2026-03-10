@@ -288,6 +288,34 @@ export default {
     results: 'Results',
   },
 
+  // Badges
+  badges: {
+    milestone_label: 'STREAK MILESTONE',
+    day_streak: 'day streak',
+    tap_continue: 'tap to continue',
+    next_milestone: 'Next milestone',
+    days_to_go: '{{count}} days to go',
+    highest_tier: "You've reached the highest tier. You are OneWord.",
+    no_badge: 'Play {{count}} days in a row to earn your first badge \u2728',
+    played: 'PLAYED',
+    best_rank: 'BEST RANK',
+    votes: 'VOTES',
+    spark: 'Spark',
+    on_fire: 'On Fire',
+    unstoppable: 'Unstoppable',
+    crowned: 'Crowned',
+    diamond: 'Diamond',
+    legend: 'Legend',
+    eternal: 'Eternal',
+    tagline_3: 'The flame begins.',
+    tagline_7: 'A whole week. Unstoppable.',
+    tagline_14: 'Two weeks of pure creativity.',
+    tagline_30: 'A month. You earned the crown.',
+    tagline_50: 'Fifty days. Ice cold dedication.',
+    tagline_100: 'One hundred days. Legendary.',
+    tagline_365: 'A full year. You are OneWord.',
+  },
+
   // Language names
   lang: {
     en: 'English',

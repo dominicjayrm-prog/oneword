@@ -288,6 +288,34 @@ export default {
     results: 'Resultados',
   },
 
+  // Badges
+  badges: {
+    milestone_label: 'RACHA ALCANZADA',
+    day_streak: 'racha de d\u00EDas',
+    tap_continue: 'toca para continuar',
+    next_milestone: 'Siguiente nivel',
+    days_to_go: '{{count}} d\u00EDas m\u00E1s',
+    highest_tier: 'Has alcanzado el nivel m\u00E1s alto. T\u00FA eres OneWord.',
+    no_badge: 'Juega {{count}} d\u00EDas seguidos para ganar tu primera insignia \u2728',
+    played: 'JUGADOS',
+    best_rank: 'MEJOR PUESTO',
+    votes: 'VOTOS',
+    spark: 'Chispa',
+    on_fire: 'En Llamas',
+    unstoppable: 'Imparable',
+    crowned: 'Coronado',
+    diamond: 'Diamante',
+    legend: 'Leyenda',
+    eternal: 'Eterno',
+    tagline_3: 'La llama comienza.',
+    tagline_7: 'Una semana entera. Imparable.',
+    tagline_14: 'Dos semanas de pura creatividad.',
+    tagline_30: 'Un mes. Te ganaste la corona.',
+    tagline_50: 'Cincuenta d\u00EDas. Dedicaci\u00F3n absoluta.',
+    tagline_100: 'Cien d\u00EDas. Legendario.',
+    tagline_365: 'Un a\u00F1o entero. T\u00FA eres OneWord.',
+  },
+
   // Language names
   lang: {
     en: 'English',

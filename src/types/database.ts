@@ -18,6 +18,8 @@ export interface Profile {
   total_plays: number;
   total_votes_received: number;
   best_rank: number | null;
+  streak_badge_emoji: string | null;
+  streak_badge_name: string | null;
   last_played_date: string | null;
   created_at: string;
   updated_at: string;
@@ -48,9 +50,11 @@ export interface VotePair {
   desc1_id: string;
   desc1_text: string;
   desc1_username: string;
+  desc1_badge_emoji: string | null;
   desc2_id: string;
   desc2_text: string;
   desc2_username: string;
+  desc2_badge_emoji: string | null;
 }
 
 export interface YesterdayWinner {
@@ -87,4 +91,5 @@ export interface LeaderboardEntry {
   username: string;
   votes: number;
   rank: number;
+  streak_badge_emoji: string | null;
 }

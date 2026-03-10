@@ -9,9 +9,10 @@ interface LeaderboardRowProps {
   description: string;
   votes: number;
   isCurrentUser?: boolean;
+  badgeEmoji?: string | null;
 }
 
-export function LeaderboardRow({ rank, username, description, votes, isCurrentUser }: LeaderboardRowProps) {
+export function LeaderboardRow({ rank, username, description, votes, isCurrentUser, badgeEmoji }: LeaderboardRowProps) {
   const { t } = useTranslation();
   const { colors } = useTheme();
 
@@ -35,7 +36,9 @@ export function LeaderboardRow({ rank, username, description, votes, isCurrentUs
       </View>
       <View style={styles.content}>
         <Text style={[styles.description, { color: colors.text }]}>{description}</Text>
-        <Text style={[styles.username, { color: colors.textMuted }]}>@{username}</Text>
+        <Text style={[styles.username, { color: colors.textMuted }]}>
+          @{username}{badgeEmoji ? ` ${badgeEmoji}` : ''}
+        </Text>
       </View>
       <View style={styles.votesContainer}>
         <Text style={[styles.votes, { color: colors.primary }]}>{votes}</Text>

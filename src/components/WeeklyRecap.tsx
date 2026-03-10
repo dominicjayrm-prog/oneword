@@ -15,6 +15,7 @@ import Animated, {
 import { Button } from './Button';
 import { WeeklyRecapShareCard } from './WeeklyRecapShareCard';
 import { getRankEmoji } from '../lib/format';
+import { getCurrentBadge } from '../lib/badges';
 import { fontSize, spacing, borderRadius } from '../constants/theme';
 import { haptic } from '../lib/haptics';
 import type { WeeklyRecap as WeeklyRecapType } from '../types/database';
@@ -207,7 +208,7 @@ export function WeeklyRecapCard({ data, onDismiss }: Props) {
             <Text style={styles.statLabel}>{t('weekly_recap.best_rank')}</Text>
           </View>
           <View style={styles.statCard}>
-            <Text style={styles.statNumber}>{'\uD83D\uDD25'} {data.current_streak}</Text>
+            <Text style={styles.statNumber}>{getCurrentBadge(data.current_streak)?.emoji || '\uD83D\uDD25'} {data.current_streak}</Text>
             <Text style={styles.statLabel}>{t('weekly_recap.day_streak')}</Text>
           </View>
         </Animated.View>

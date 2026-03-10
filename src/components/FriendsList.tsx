@@ -59,7 +59,7 @@ export function FriendsList({ friends, onRemove, onAddPress }: Props) {
           </View>
           {friend.friend_current_streak > 0 && (
             <Text style={[styles.streak, { color: colors.primary }]}>
-              {'\uD83D\uDD25'} {t('game.day_streak', { count: friend.friend_current_streak })}
+              {friend.friend_badge_emoji || '\uD83D\uDD25'} {t('game.day_streak', { count: friend.friend_current_streak })}
             </Text>
           )}
         </TouchableOpacity>

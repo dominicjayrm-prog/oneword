@@ -19,6 +19,8 @@ import { ThemeToggle } from '../../src/components/ThemeToggle';
 import { LoadingSpinner } from '../../src/components/LoadingSpinner';
 import { EmptyState } from '../../src/components/EmptyState';
 import { useToast } from '../../src/components/Toast';
+import { useNetwork } from '../../src/contexts/NetworkContext';
+import { RetryState } from '../../src/components/RetryState';
 import { VOTE_BATCH_SIZE } from '../../src/constants/app';
 import { fontSize, spacing, borderRadius, withOpacity } from '../../src/constants/theme';
 import { haptic } from '../../src/lib/haptics';
@@ -33,6 +35,7 @@ export default function VoteScreen() {
   const { session } = useAuthContext();
 
   const { showToast } = useToast();
+  const { isOnline } = useNetwork();
 
   const [pair, setPair] = useState<VotePair | null>(null);
   const [voteCount, setVoteCount] = useState(0);
@@ -175,7 +178,8 @@ export default function VoteScreen() {
     }
 
     if (voteFailed) {
-      showToast(t('errors.vote_failed'), 'error');
+      haptic.warning();
+      showToast(t('offline.vote_failed') + ' ' + t('offline.vote_try_again'), 'error');
       // Reset animations — stay on the same pair so user can retry
       await new Promise((r) => setTimeout(r, 400));
       if (!mountedRef.current) return;
@@ -291,6 +295,16 @@ export default function VoteScreen() {
       doneTextOpacity.value = withDelay(200, withTiming(1, { duration: 300 }));
     }
   }, [noMorePairs, batchExhausted]);
+
+  // Offline state — voting requires an internet connection
+  if (!isOnline && !pair) {
+    return (
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <ThemeToggle />
+        <RetryState type="offline" onRetry={loadPair} />
+      </View>
+    );
+  }
 
   // Locked state — user hasn't submitted today's description yet
   if (!hasSubmitted) {

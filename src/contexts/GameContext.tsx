@@ -1,14 +1,19 @@
 import { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef, type ReactNode } from 'react';
 import { AppState, type AppStateStatus } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import NetInfo from '@react-native-community/netinfo';
 import { supabase } from '../lib/supabase';
 import { checkProfanity } from '../lib/profanityFilter';
 import { withTimeout } from '../lib/withTimeout';
 import { rateLimits } from '../lib/rateLimit';
 import { getGameDate, hasWordRolledOver } from '../lib/gameDate';
 import { DESCRIPTION_WORD_COUNT, LEADERBOARD_LIMIT } from '../constants/app';
+import { cacheData, getCachedData, CACHE_KEYS } from '../lib/cache';
 import { useAuthContext } from './AuthContext';
 import { getCurrentBadge } from '../lib/badges';
 import type { DailyWord, VotePair, LeaderboardEntry, YesterdayWinner, WeeklyRecap } from '../types/database';
+
+const PENDING_DESCRIPTION_KEY = 'pending_description';
 
 interface GameContextType {
   todayWord: DailyWord | null;
@@ -16,6 +21,7 @@ interface GameContextType {
   userDescription: string | null;
   loading: boolean;
   loadError: boolean;
+  hasPendingDescription: boolean;
   submitDescription: (description: string) => Promise<{ error: Error | null; oldStreak?: number }>;
   getVotePair: () => Promise<VotePair | null>;
   submitVote: (winnerId: string, loserId: string) => Promise<{ error: Error | null }>;
@@ -38,6 +44,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [userDescription, setUserDescription] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
+  const [hasPendingDescription, setHasPendingDescription] = useState(false);
 
   const fetchTodayWord = useCallback(async () => {
     setLoading(true);
@@ -46,6 +53,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
       const { data } = await withTimeout(supabase.rpc('get_today_word', { p_language: language }));
       if (data && data.length > 0) {
         setTodayWord(data[0]);
+        // Cache today's word for offline use
+        await cacheData(CACHE_KEYS.TODAY_WORD, data[0]);
         if (userId) {
           const { data: desc } = await withTimeout(
             supabase
@@ -58,6 +67,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
           if (desc) {
             setHasSubmitted(true);
             setUserDescription(desc.description);
+            await cacheData(CACHE_KEYS.MY_DESCRIPTION, desc.description);
           } else {
             setHasSubmitted(false);
             setUserDescription(null);
@@ -70,7 +80,18 @@ export function GameProvider({ children }: { children: ReactNode }) {
       }
     } catch (err) {
       console.error('Failed to fetch today word:', err);
-      setLoadError(true);
+      // Try to load from cache on failure
+      const cachedWord = await getCachedData<DailyWord>(CACHE_KEYS.TODAY_WORD, 24);
+      if (cachedWord) {
+        setTodayWord(cachedWord);
+        const cachedDesc = await getCachedData<string>(CACHE_KEYS.MY_DESCRIPTION, 24);
+        if (cachedDesc) {
+          setHasSubmitted(true);
+          setUserDescription(cachedDesc);
+        }
+      } else {
+        setLoadError(true);
+      }
     } finally {
       setLoading(false);
     }
@@ -106,6 +127,74 @@ export function GameProvider({ children }: { children: ReactNode }) {
     };
   }, [fetchTodayWord]);
 
+  // Check for pending description on mount
+  useEffect(() => {
+    (async () => {
+      try {
+        const raw = await AsyncStorage.getItem(PENDING_DESCRIPTION_KEY);
+        if (raw) {
+          const { timestamp } = JSON.parse(raw);
+          const hoursSinceSaved = (Date.now() - timestamp) / (1000 * 60 * 60);
+          if (hoursSinceSaved < 24) {
+            setHasPendingDescription(true);
+          } else {
+            await AsyncStorage.removeItem(PENDING_DESCRIPTION_KEY);
+          }
+        }
+      } catch {
+        // ignore
+      }
+    })();
+  }, []);
+
+  // Auto-retry pending description on network reconnection
+  useEffect(() => {
+    if (!userId) return;
+
+    const unsubscribe = NetInfo.addEventListener(async (state) => {
+      if (!state.isConnected) return;
+
+      try {
+        const raw = await AsyncStorage.getItem(PENDING_DESCRIPTION_KEY);
+        if (!raw) return;
+
+        const { description, wordId, timestamp } = JSON.parse(raw);
+        const hoursSinceSaved = (Date.now() - timestamp) / (1000 * 60 * 60);
+
+        if (hoursSinceSaved >= 24) {
+          await AsyncStorage.removeItem(PENDING_DESCRIPTION_KEY);
+          setHasPendingDescription(false);
+          return;
+        }
+
+        const { error } = await supabase.from('descriptions').insert({
+          user_id: userId,
+          word_id: wordId,
+          description,
+        });
+
+        if (!error) {
+          await AsyncStorage.removeItem(PENDING_DESCRIPTION_KEY);
+          setHasPendingDescription(false);
+          setHasSubmitted(true);
+          setUserDescription(description);
+          await cacheData(CACHE_KEYS.MY_DESCRIPTION, description);
+          // Try to update streak too
+          try {
+            await supabase.rpc('update_streak', { p_user_id: userId });
+            await refreshProfile();
+          } catch {
+            // non-critical
+          }
+        }
+      } catch {
+        // Still failing — leave pending for next retry
+      }
+    });
+
+    return () => unsubscribe();
+  }, [userId, refreshProfile]);
+
   const submitDescription = useCallback(async (description: string) => {
     if (!todayWord || !userId) return { error: new Error('Not ready') };
     if (!rateLimits.submit()) {
@@ -136,6 +225,14 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
     const oldStreak = authProfile?.current_streak ?? 0;
 
+    // IMMEDIATELY save locally before attempting network request
+    await AsyncStorage.setItem(PENDING_DESCRIPTION_KEY, JSON.stringify({
+      description: cleaned,
+      wordId: todayWord.id,
+      timestamp: Date.now(),
+    }));
+    setHasPendingDescription(true);
+
     try {
       const { error } = await withTimeout(supabase.from('descriptions').insert({
         user_id: userId,
@@ -144,8 +241,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
       }));
 
       if (!error) {
+        // Success — clear the pending description
+        await AsyncStorage.removeItem(PENDING_DESCRIPTION_KEY);
+        setHasPendingDescription(false);
         setHasSubmitted(true);
         setUserDescription(cleaned);
+        await cacheData(CACHE_KEYS.MY_DESCRIPTION, cleaned);
         await withTimeout(supabase.rpc('update_streak', { p_user_id: userId }));
         // Refresh profile so badge fields + streak are up to date
         await refreshProfile();
@@ -153,7 +254,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
       return { error, oldStreak };
     } catch (err) {
-      return { error: err instanceof Error ? err : new Error('Network error. Please try again.') };
+      // Network failed — description is safely stored locally
+      // Return a special 'pending' state — not a hard error since data is saved
+      return { error: err instanceof Error ? err : new Error('Network error. Please try again.'), oldStreak };
     }
   }, [todayWord, userId, authProfile?.current_streak, refreshProfile]);
 
@@ -192,12 +295,24 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   const getLeaderboard = useCallback(async (): Promise<LeaderboardEntry[]> => {
     if (!todayWord) return [];
-    const { data, error } = await withTimeout(supabase.rpc('get_leaderboard', {
-      p_word_id: todayWord.id,
-      p_limit: LEADERBOARD_LIMIT,
-    }));
-    if (error) throw error;
-    return data ?? [];
+    try {
+      const { data, error } = await withTimeout(supabase.rpc('get_leaderboard', {
+        p_word_id: todayWord.id,
+        p_limit: LEADERBOARD_LIMIT,
+      }));
+      if (error) throw error;
+      const results = data ?? [];
+      // Cache results for offline viewing
+      if (results.length > 0) {
+        await cacheData(CACHE_KEYS.LAST_RESULTS, results);
+      }
+      return results;
+    } catch (err) {
+      // Try to return cached results on failure
+      const cached = await getCachedData<LeaderboardEntry[]>(CACHE_KEYS.LAST_RESULTS, 24);
+      if (cached) return cached;
+      throw err;
+    }
   }, [todayWord]);
 
   const reportDescription = useCallback(async (descriptionId: string) => {
@@ -262,6 +377,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     userDescription,
     loading,
     loadError,
+    hasPendingDescription,
     submitDescription,
     getVotePair,
     submitVote,
@@ -270,7 +386,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     getYesterdayWinner,
     getWeeklyRecap,
     refresh: fetchTodayWord,
-  }), [todayWord, hasSubmitted, userDescription, loading, loadError, submitDescription, getVotePair, submitVote, getLeaderboard, reportDescription, getYesterdayWinner, getWeeklyRecap, fetchTodayWord]);
+  }), [todayWord, hasSubmitted, userDescription, loading, loadError, hasPendingDescription, submitDescription, getVotePair, submitVote, getLeaderboard, reportDescription, getYesterdayWinner, getWeeklyRecap, fetchTodayWord]);
 
   return (
     <GameContext.Provider value={value}>

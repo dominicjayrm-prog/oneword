@@ -1,37 +1,39 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { Text, StyleSheet, Animated, Platform } from 'react-native';
-import NetInfo from '@react-native-community/netinfo';
 import { useTranslation } from 'react-i18next';
-import { fontSize, spacing, borderRadius } from '../constants/theme';
+import { useNetwork } from '../contexts/NetworkContext';
+import { fontSize, spacing } from '../constants/theme';
 
 export function NetworkBanner() {
   const { t } = useTranslation();
-  const [isOffline, setIsOffline] = useState(false);
+  const { isOnline, isReconnecting } = useNetwork();
   const translateY = useRef(new Animated.Value(-60)).current;
 
-  useEffect(() => {
-    const unsubscribe = NetInfo.addEventListener((state) => {
-      const offline = !(state.isConnected && state.isInternetReachable !== false);
-      setIsOffline(offline);
-    });
-    return () => unsubscribe();
-  }, []);
+  const visible = !isOnline || isReconnecting;
 
   useEffect(() => {
     Animated.spring(translateY, {
-      toValue: isOffline ? 0 : -60,
+      toValue: visible ? 0 : -60,
       friction: 8,
       tension: 80,
       useNativeDriver: true,
     }).start();
-  }, [isOffline]);
+  }, [visible]);
 
   return (
     <Animated.View
       pointerEvents="none"
-      style={[styles.banner, { transform: [{ translateY }] }]}
+      style={[
+        styles.banner,
+        { transform: [{ translateY }], backgroundColor: isReconnecting ? '#2ECC71' : '#FF6B4A' },
+      ]}
     >
-      <Text style={styles.text}>{t('errors.network')}</Text>
+      <Text style={styles.text}>
+        {isReconnecting
+          ? t('offline.reconnected')
+          : t('offline.no_connection')
+        }
+      </Text>
     </Animated.View>
   );
 }
@@ -42,7 +44,6 @@ const styles = StyleSheet.create({
     top: Platform.OS === 'web' ? 0 : 44,
     left: 0,
     right: 0,
-    backgroundColor: '#FF6B4A',
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.md,
     alignItems: 'center',

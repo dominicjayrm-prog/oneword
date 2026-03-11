@@ -347,6 +347,28 @@ export default {
     streak_risk_body: "You haven't played today. Don't let your streak end. \u23F0",
   },
 
+  // Offline
+  offline: {
+    no_connection: "You're offline",
+    check_connection: 'Check your internet connection and try again.',
+    reconnected: 'Back online!',
+    something_wrong: 'Something went wrong',
+    try_again: 'Try Again',
+    try_again_message: "We couldn't load this. Give it another shot.",
+    description_saved: 'Description saved!',
+    will_submit_when_online: "We'll submit it automatically when you're back online.",
+    submitted_successfully: 'Submitted!',
+    description_submitted: 'Your description was submitted successfully.',
+    vote_failed: "Vote didn't go through",
+    vote_try_again: 'Tap your choice again to retry.',
+    connect_for_word: "Connect to the internet to get today's word.",
+    connect_to_vote: 'Voting requires an internet connection.',
+    connect_for_results: "Connect to see today's results.",
+    connect_for_friends: "Check back when you're online for new friend requests.",
+    last_updated: 'Last updated {{time}}',
+    cached_results: 'Showing cached results',
+  },
+
   // Language names
   lang: {
     en: 'English',

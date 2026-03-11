@@ -116,3 +116,77 @@ BEGIN
   LIMIT p_limit;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- #4: Add auth.uid() checks to dismissal and vote-count functions.
+-- All are SECURITY DEFINER (bypass RLS) but accepted arbitrary p_user_id
+-- without verification. Any authenticated user could read/modify another
+-- user's dismissal state or query their vote count.
+
+CREATE OR REPLACE FUNCTION set_dismissal(p_user_id UUID, p_field TEXT, p_value TEXT)
+RETURNS VOID AS $$
+BEGIN
+  IF auth.uid() != p_user_id THEN
+    RAISE EXCEPTION 'Forbidden: cannot modify another user''s dismissals';
+  END IF;
+
+  INSERT INTO user_dismissals (user_id)
+  VALUES (p_user_id)
+  ON CONFLICT (user_id) DO NOTHING;
+
+  IF p_field = 'winner_dismissed_date' THEN
+    UPDATE user_dismissals SET winner_dismissed_date = p_value, updated_at = NOW()
+    WHERE user_id = p_user_id;
+  ELSIF p_field = 'recap_dismissed_week' THEN
+    UPDATE user_dismissals SET recap_dismissed_week = p_value, updated_at = NOW()
+    WHERE user_id = p_user_id;
+  END IF;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE OR REPLACE FUNCTION add_milestone_shown(p_user_id UUID, p_streak INTEGER)
+RETURNS VOID AS $$
+BEGIN
+  IF auth.uid() != p_user_id THEN
+    RAISE EXCEPTION 'Forbidden: cannot modify another user''s milestones';
+  END IF;
+
+  INSERT INTO user_dismissals (user_id, milestones_shown)
+  VALUES (p_user_id, ARRAY[p_streak])
+  ON CONFLICT (user_id)
+  DO UPDATE SET
+    milestones_shown = CASE
+      WHEN p_streak = ANY(user_dismissals.milestones_shown) THEN user_dismissals.milestones_shown
+      ELSE array_append(user_dismissals.milestones_shown, p_streak)
+    END,
+    updated_at = NOW();
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE OR REPLACE FUNCTION get_dismissals(p_user_id UUID)
+RETURNS TABLE(
+  winner_dismissed_date TEXT,
+  recap_dismissed_week TEXT,
+  milestones_shown INTEGER[]
+) AS $$
+BEGIN
+  IF auth.uid() != p_user_id THEN
+    RAISE EXCEPTION 'Forbidden: cannot read another user''s dismissals';
+  END IF;
+
+  RETURN QUERY
+  SELECT ud.winner_dismissed_date, ud.recap_dismissed_week, ud.milestones_shown
+  FROM user_dismissals ud
+  WHERE ud.user_id = p_user_id;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE OR REPLACE FUNCTION get_user_vote_count(p_user_id UUID, p_word_id UUID)
+RETURNS INTEGER AS $$
+BEGIN
+  IF auth.uid() != p_user_id THEN
+    RAISE EXCEPTION 'Forbidden: cannot read another user''s vote count';
+  END IF;
+
+  RETURN (SELECT COUNT(*)::INTEGER FROM votes WHERE voter_id = p_user_id AND word_id = p_word_id);
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;

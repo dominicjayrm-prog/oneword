@@ -11,6 +11,7 @@ import Animated, {
   withSequence,
 } from 'react-native-reanimated';
 import { useGameContext } from '../../src/contexts/GameContext';
+import { useAuthContext } from '../../src/contexts/AuthContext';
 import { useTheme } from '../../src/contexts/ThemeContext';
 import { WordDisplay } from '../../src/components/WordDisplay';
 import { Button } from '../../src/components/Button';
@@ -29,6 +30,7 @@ export default function VoteScreen() {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const { todayWord, hasSubmitted, getVotePair, submitVote, reportDescription } = useGameContext();
+  const { session } = useAuthContext();
 
   const { showToast } = useToast();
 
@@ -50,11 +52,11 @@ export default function VoteScreen() {
 
   // Restore vote progress from server on mount (works across devices)
   useEffect(() => {
-    if (!todayWord || !hasSubmitted) return;
+    if (!todayWord || !hasSubmitted || !session?.user) return;
     (async () => {
       try {
         const { data } = await supabase.rpc('get_user_vote_count', {
-          p_user_id: (await supabase.auth.getSession()).data.session?.user.id,
+          p_user_id: session.user.id,
           p_word_id: todayWord.id,
         });
         const count = typeof data === 'number' ? data : 0;
@@ -67,7 +69,7 @@ export default function VoteScreen() {
         }
       } catch { /* non-critical */ }
     })();
-  }, [todayWord, hasSubmitted]);
+  }, [todayWord, hasSubmitted, session]);
 
   // Animation shared values
   const card1TranslateX = useSharedValue(-300);

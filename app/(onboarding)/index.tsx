@@ -90,7 +90,7 @@ export default function OnboardingScreen() {
         // Continue to home anyway — worst case user sees onboarding again next launch
       }
     }
-    router.replace('/');
+    router.replace('/(game)');
   };
 
   const isLast = currentIndex === 2;

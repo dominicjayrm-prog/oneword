@@ -59,7 +59,7 @@ function InnerLayout() {
         if (!seen && !inOnboarding) {
           router.replace('/(onboarding)');
         } else if (seen && inOnboarding) {
-          router.replace('/');
+          router.replace('/(game)');
         }
       })
       .catch(() => {
@@ -67,7 +67,7 @@ function InnerLayout() {
         if (!hasSeenOnboarding && !inOnboarding) {
           router.replace('/(onboarding)');
         } else if (hasSeenOnboarding && inOnboarding) {
-          router.replace('/');
+          router.replace('/(game)');
         }
       });
   }, [onboardingChecked, hasSeenOnboarding, segments]);

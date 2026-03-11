@@ -317,8 +317,10 @@ export default function HomeScreen() {
           if (!milestones.includes(newBadge.streak)) {
             // Delay celebration 500ms after "locked in" appears
             setTimeout(() => {
-              setCelebrationStreak(newStreak);
-              setCelebrationBadge(newBadge);
+              if (mountedRef.current) {
+                setCelebrationStreak(newStreak);
+                setCelebrationBadge(newBadge);
+              }
             }, 500);
             await supabase.rpc('add_milestone_shown', {
               p_user_id: auth.session.user.id,
@@ -335,7 +337,9 @@ export default function HomeScreen() {
         if (Platform.OS !== 'web' && !auth.profile?.notifications_enabled) {
           const shouldShow = await shouldShowNotificationPrompt();
           if (shouldShow) {
-            setTimeout(() => setShowNotifPrompt(true), 1500);
+            setTimeout(() => {
+              if (mountedRef.current) setShowNotifPrompt(true);
+            }, 1500);
           }
         }
       }

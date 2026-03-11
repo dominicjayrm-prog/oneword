@@ -170,12 +170,13 @@ export function StreakCelebration({ streak, badge, onDismiss }: StreakCelebratio
     glowOpacity.value = withDelay(200, withTiming(0.6, { duration: 400 }));
 
     // Phase 2: Confetti + rings at 500ms (handled by particle components)
-    setTimeout(() => {
+    const t1 = setTimeout(() => {
       haptic.heavy();
       if (isEternal) {
-        setTimeout(() => haptic.success(), 300);
+        t2 = setTimeout(() => haptic.success(), 300);
       }
     }, 500);
+    let t2: ReturnType<typeof setTimeout> | undefined;
 
     // Phase 3: Emoji (500ms)
     emojiOpacity.value = withDelay(500, withTiming(1, { duration: 100 }));
@@ -200,6 +201,11 @@ export function StreakCelebration({ streak, badge, onDismiss }: StreakCelebratio
     nextOpacity.value = withDelay(2800, withTiming(1, { duration: 500 }));
     nextTranslateY.value = withDelay(2800, withTiming(0, { duration: 500, easing: Easing.out(Easing.cubic) }));
     dismissOpacity.value = withDelay(3000, withTiming(1, { duration: 300 }));
+
+    return () => {
+      clearTimeout(t1);
+      if (t2) clearTimeout(t2);
+    };
   }, []);
 
   const handleDismiss = () => {

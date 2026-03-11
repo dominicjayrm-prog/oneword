@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Linking } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { rateLimits, resetRateLimit } from '../lib/rateLimit';
@@ -373,28 +373,49 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await supabase.auth.signOut();
   }
 
+  const value = useMemo(
+    () => ({
+      session,
+      profile,
+      loading,
+      language,
+      pendingVerification,
+      passwordRecovery,
+      signUp,
+      signIn,
+      signOut,
+      refreshProfile,
+      updateAvatar,
+      updateLanguage,
+      deleteAccount,
+      resendVerification,
+      clearPendingVerification,
+      resetPassword,
+      updatePassword,
+    }),
+    [
+      session,
+      profile,
+      loading,
+      language,
+      pendingVerification,
+      passwordRecovery,
+      signUp,
+      signIn,
+      signOut,
+      refreshProfile,
+      updateAvatar,
+      updateLanguage,
+      deleteAccount,
+      resendVerification,
+      clearPendingVerification,
+      resetPassword,
+      updatePassword,
+    ],
+  );
+
   return (
-    <AuthContext.Provider
-      value={{
-        session,
-        profile,
-        loading,
-        language,
-        pendingVerification,
-        passwordRecovery,
-        signUp,
-        signIn,
-        signOut,
-        refreshProfile,
-        updateAvatar,
-        updateLanguage,
-        deleteAccount,
-        resendVerification,
-        clearPendingVerification,
-        resetPassword,
-        updatePassword,
-      }}
-    >
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );

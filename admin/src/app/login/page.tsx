@@ -13,7 +13,7 @@ import {
 export default async function LoginPage({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
   if (await isAuthenticated()) redirect('/');
   const params = await searchParams;
-  const csrfToken = await generateCsrfToken();
+  const csrfToken = generateCsrfToken();
 
   async function login(formData: FormData) {
     'use server';
@@ -22,7 +22,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
 
     // CSRF check
     const csrf = formData.get('csrf_token') as string;
-    if (!(await validateCsrfToken(csrf))) {
+    if (!validateCsrfToken(csrf)) {
       redirect('/login?error=csrf');
     }
 

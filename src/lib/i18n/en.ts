@@ -371,6 +371,14 @@ export default {
     cached_results: 'Showing cached results',
   },
 
+  // Legal
+  legal: {
+    privacy_policy: 'Privacy Policy',
+    terms_of_use: 'Terms of Use',
+    agree_prefix: 'By signing up, you agree to our ',
+    and: ' and ',
+  },
+
   // Language names
   lang: {
     en: 'English',

@@ -646,6 +646,24 @@ export default function HomeScreen() {
               loading={authSubmitting}
               disabled={!email || !password || (authMode === 'signup' && !username)}
             />
+            {authMode === 'signup' && (
+              <Text style={[styles.legalText, { color: colors.textMuted }]}>
+                {t('legal.agree_prefix')}
+                <Text
+                  style={{ color: colors.primary }}
+                  onPress={() => router.push({ pathname: '/webview', params: { url: selectedLang === 'es' ? 'https://playoneword.app/es/terms' : 'https://playoneword.app/terms', title: t('legal.terms_of_use') } })}
+                >
+                  {t('legal.terms_of_use')}
+                </Text>
+                {t('legal.and')}
+                <Text
+                  style={{ color: colors.primary }}
+                  onPress={() => router.push({ pathname: '/webview', params: { url: selectedLang === 'es' ? 'https://playoneword.app/es/privacy' : 'https://playoneword.app/privacy', title: t('legal.privacy_policy') } })}
+                >
+                  {t('legal.privacy_policy')}
+                </Text>
+              </Text>
+            )}
             {authMode === 'signin' && (
               <TouchableOpacity onPress={() => setForgotMode(true)} activeOpacity={0.7}>
                 <Text style={[styles.forgotLink, { color: colors.primary }]}>{t('auth.forgot_link')}</Text>
@@ -948,6 +966,11 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     textAlign: 'center',
     fontWeight: '600',
+  },
+  legalText: {
+    fontSize: fontSize.xs,
+    textAlign: 'center',
+    lineHeight: fontSize.xs * 1.5,
   },
   verifyEmoji: {
     fontSize: 64,

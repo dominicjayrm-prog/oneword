@@ -124,6 +124,13 @@ function InnerLayout() {
             animation: 'slide_from_bottom',
           }}
         />
+        <Stack.Screen
+          name="webview"
+          options={{
+            presentation: 'modal',
+            animation: 'slide_from_bottom',
+          }}
+        />
       </Stack>
       <NetworkBanner />
     </MobileContainer>

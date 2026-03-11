@@ -261,11 +261,11 @@ export default function ProfileScreen() {
         <Text style={[styles.supportTitle, { color: colors.textMuted }]}>{t('profile.support_title')}</Text>
         <TouchableOpacity
           style={styles.supportRow}
-          onPress={() => Linking.openURL('mailto:support@playoneword.app')}
+          onPress={() => Linking.openURL('mailto:hello@oneword.app')}
           activeOpacity={0.7}
         >
           <Text style={[styles.supportLabel, { color: colors.textSecondary }]}>{t('profile.contact_us')}</Text>
-          <Text style={[styles.supportValue, { color: colors.textMuted }]}>support@playoneword.app</Text>
+          <Text style={[styles.supportValue, { color: colors.textMuted }]}>hello@oneword.app</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.supportRow}
@@ -277,17 +277,19 @@ export default function ProfileScreen() {
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.supportRow}
-          onPress={() => Linking.openURL(language === 'es' ? 'https://playoneword.app/es/privacy' : 'https://playoneword.app/privacy')}
+          onPress={() => router.push({ pathname: '/webview', params: { url: language === 'es' ? 'https://playoneword.app/es/privacy' : 'https://playoneword.app/privacy', title: t('profile.privacy_policy') } })}
           activeOpacity={0.7}
         >
           <Text style={[styles.supportLabel, { color: colors.textSecondary }]}>{t('profile.privacy_policy')}</Text>
+          <Text style={[styles.supportValue, { color: colors.textMuted }]}>{'\u2192'}</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.supportRow}
-          onPress={() => Linking.openURL(language === 'es' ? 'https://playoneword.app/es/terms' : 'https://playoneword.app/terms')}
+          onPress={() => router.push({ pathname: '/webview', params: { url: language === 'es' ? 'https://playoneword.app/es/terms' : 'https://playoneword.app/terms', title: t('profile.terms_of_use') } })}
           activeOpacity={0.7}
         >
           <Text style={[styles.supportLabel, { color: colors.textSecondary }]}>{t('profile.terms_of_use')}</Text>
+          <Text style={[styles.supportValue, { color: colors.textMuted }]}>{'\u2192'}</Text>
         </TouchableOpacity>
       </View>
 

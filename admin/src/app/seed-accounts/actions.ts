@@ -171,6 +171,8 @@ export async function createSeedAccounts() {
       });
 
       if (profileError) {
+        // Clean up the orphaned auth user since profile creation failed
+        await supabase.auth.admin.deleteUser(authData.user.id).catch(() => {});
         results.push({ username: account.username, status: 'error', error: profileError.message });
         continue;
       }

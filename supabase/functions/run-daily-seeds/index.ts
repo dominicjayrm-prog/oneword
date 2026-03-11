@@ -172,9 +172,9 @@ async function runSeedVoting(
     return { error: "Not enough descriptions to vote", count: descriptions?.length || 0 };
   }
 
-  const seedUserIds = new Set(seedAccounts.map((a) => a.user_id));
   let totalVotes = 0;
   let failedVotes = 0;
+  let skippedDuplicates = 0;
 
   for (const voter of seedAccounts) {
     // Each seed account votes on up to 10 pairs
@@ -182,14 +182,23 @@ async function runSeedVoting(
 
     if (votableDescs.length < 2) continue;
 
-    // Check how many votes this seed already cast today
-    const { count: existingVotes } = await supabaseAdmin
+    // Fetch already-voted pairs for this voter+word to avoid duplicates
+    // (prevents race condition if this function runs concurrently)
+    const { data: existingVoteRows } = await supabaseAdmin
       .from("votes")
-      .select("id", { count: "exact", head: true })
+      .select("winner_id, loser_id")
       .eq("voter_id", voter.user_id)
       .eq("word_id", wordId);
 
-    const votesToCast = Math.max(0, 10 - (existingVotes || 0));
+    const votedPairs = new Set<string>();
+    for (const v of existingVoteRows || []) {
+      const pairKey = v.winner_id < v.loser_id
+        ? `${v.winner_id}:${v.loser_id}`
+        : `${v.loser_id}:${v.winner_id}`;
+      votedPairs.add(pairKey);
+    }
+
+    const votesToCast = Math.max(0, 10 - votedPairs.size);
 
     for (let i = 0; i < votesToCast; i++) {
       // Pick two random descriptions using Fisher-Yates shuffle
@@ -201,6 +210,15 @@ async function runSeedVoting(
       const desc1 = shuffled[0];
       const desc2 = shuffled[1];
       if (!desc1 || !desc2) break;
+
+      // Skip if this pair was already voted on
+      const pairKey = desc1.id < desc2.id
+        ? `${desc1.id}:${desc2.id}`
+        : `${desc2.id}:${desc1.id}`;
+      if (votedPairs.has(pairKey)) {
+        skippedDuplicates++;
+        continue;
+      }
 
       // Slightly favour the one with higher elo (60/40 split) to make rankings natural
       let winner, loser;
@@ -222,9 +240,10 @@ async function runSeedVoting(
         failedVotes++;
       } else {
         totalVotes++;
+        votedPairs.add(pairKey);
       }
     }
   }
 
-  return { total_votes_cast: totalVotes, failed_votes: failedVotes };
+  return { total_votes_cast: totalVotes, failed_votes: failedVotes, skipped_duplicates: skippedDuplicates };
 }

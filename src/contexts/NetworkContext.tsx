@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useRef, type ReactNode } from 'react';
 import NetInfo, { type NetInfoState } from '@react-native-community/netinfo';
 
 interface NetworkContextType {
@@ -11,23 +11,25 @@ const NetworkContext = createContext<NetworkContextType>({ isOnline: true, isRec
 export function NetworkProvider({ children }: { children: ReactNode }) {
   const [isOnline, setIsOnline] = useState(true);
   const [isReconnecting, setIsReconnecting] = useState(false);
-  const [wasOffline, setWasOffline] = useState(false);
+  // Use a ref to track previous offline state so the effect doesn't
+  // re-subscribe on every state change (which caused an infinite loop).
+  const wasOfflineRef = useRef(false);
 
   useEffect(() => {
     const unsubscribe = NetInfo.addEventListener((state: NetInfoState) => {
       const online = state.isConnected ?? false;
 
-      if (online && wasOffline) {
+      if (online && wasOfflineRef.current) {
         setIsReconnecting(true);
         setTimeout(() => setIsReconnecting(false), 2000);
       }
 
-      setWasOffline(!online);
+      wasOfflineRef.current = !online;
       setIsOnline(online);
     });
 
     return () => unsubscribe();
-  }, [wasOffline]);
+  }, []);
 
   return (
     <NetworkContext.Provider value={{ isOnline, isReconnecting }}>

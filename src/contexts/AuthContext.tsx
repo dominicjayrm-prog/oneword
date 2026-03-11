@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { Linking } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { rateLimits, resetRateLimit } from '../lib/rateLimit';
@@ -61,14 +61,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     // Handle deep links (e.g. password reset link opens app with tokens in URL)
+    const ALLOWED_SCHEMES = ['oneword://', 'com.oneword.app://'];
+
+    function isAllowedDeepLink(url: string): boolean {
+      const lower = url.toLowerCase();
+      return ALLOWED_SCHEMES.some((scheme) => lower.startsWith(scheme))
+        || lower.startsWith('https://oneword.app/')
+        || lower.startsWith('https://www.oneword.app/');
+    }
+
+    // Validate that a string looks like a safe auth code (alphanumeric + URL-safe chars only)
+    function isSafeAuthCode(code: string): boolean {
+      return /^[a-zA-Z0-9_\-]+$/.test(code) && code.length < 512;
+    }
+
+    // Validate that a string looks like a safe JWT token
+    function isSafeToken(token: string): boolean {
+      return /^[a-zA-Z0-9_\-\.]+$/.test(token) && token.length < 8192;
+    }
+
     function handleDeepLink(event: { url: string }) {
       const url = event.url;
-      if (!url) return;
+      if (!url || !isAllowedDeepLink(url)) return;
 
       // PKCE flow (Supabase v2 default): redirect has ?code=AUTH_CODE as query param
       const codeMatch = url.match(/[?&]code=([^&#]+)/);
       if (codeMatch) {
-        supabase.auth.exchangeCodeForSession(codeMatch[1]).catch((err) => {
+        const code = decodeURIComponent(codeMatch[1]);
+        if (!isSafeAuthCode(code)) {
+          console.error('Deep link contained invalid auth code');
+          return;
+        }
+        supabase.auth.exchangeCodeForSession(code).catch((err) => {
           console.error('Failed to exchange code for session:', err);
         });
         return;
@@ -81,6 +105,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const accessToken = params.get('access_token');
       const refreshToken = params.get('refresh_token');
       if (accessToken && refreshToken) {
+        if (!isSafeToken(accessToken) || !isSafeToken(refreshToken)) {
+          console.error('Deep link contained invalid tokens');
+          return;
+        }
         supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken }).catch((err) => {
           console.error('Failed to set session from hash fragment:', err);
         });
@@ -116,7 +144,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Guard to prevent fetchProfile from racing with signUp's profile creation.
   // signUp sets this before its own upsert so that concurrent fetchProfile calls
   // skip the "create from metadata" path and just wait for signUp to finish.
-  let signUpInProgress = false;
+  // Uses a ref so the value persists across renders and isn't reset.
+  const signUpInProgressRef = useRef(false);
 
   async function fetchProfile(userId: string) {
     try {
@@ -129,7 +158,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (error && error.code === 'PGRST116') {
         // Profile doesn't exist yet.
         // If signUp is currently creating it, skip — signUp will call fetchProfile when done.
-        if (signUpInProgress) {
+        if (signUpInProgressRef.current) {
           return;
         }
         // Create it from auth metadata
@@ -183,7 +212,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!rateLimits.signUp()) {
       return { error: new Error('Too many attempts. Please wait a moment.') };
     }
-    signUpInProgress = true;
+    signUpInProgressRef.current = true;
     try {
       const userLang = lang || language;
       const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
@@ -263,7 +292,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       return { error: null };
     } finally {
-      signUpInProgress = false;
+      signUpInProgressRef.current = false;
     }
   }
 

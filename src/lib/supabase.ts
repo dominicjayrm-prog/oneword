@@ -45,8 +45,13 @@ const ExpoSecureStoreAdapter = {
       await SecureStore.setItemAsync(key, value);
     } catch {
       // SecureStore has a 2048-byte limit per value; large session tokens
-      // may exceed this. Fall back to AsyncStorage so session persists
-      // across app restarts (less secure but functional).
+      // may exceed this. For auth tokens, do NOT fall back to AsyncStorage
+      // as that stores data unencrypted. The session will still work
+      // in-memory but won't survive app restart.
+      if (key.includes('auth-token') || key.includes('supabase.auth')) {
+        console.warn(`Storage: refusing to store auth key "${key}" in unencrypted AsyncStorage (${value.length} bytes). Session will not persist across restarts.`);
+        return;
+      }
       try {
         await AsyncStorage.setItem(key, value);
       } catch {

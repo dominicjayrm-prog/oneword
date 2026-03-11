@@ -132,11 +132,27 @@ export async function exportSubscribers(filters: {
 
   if (!data) return '';
 
+  // Sanitize a field for safe CSV output:
+  // 1. Escape embedded double-quotes by doubling them
+  // 2. Strip leading formula characters (=, +, -, @, \t, \r) to prevent CSV injection
+  function csvSafe(value: string): string {
+    let safe = (value ?? '').replace(/"/g, '""');
+    // Strip leading characters that could trigger formula execution in spreadsheets
+    safe = safe.replace(/^[=+\-@\t\r]+/, '');
+    return `"${safe}"`;
+  }
+
   const csv = [
     'email,language,source,referrer,subscribed_at',
     ...data.map(
       (row) =>
-        `"${row.email}","${row.language}","${row.source || ''}","${row.referrer || ''}","${row.subscribed_at}"`
+        [
+          csvSafe(row.email),
+          csvSafe(row.language),
+          csvSafe(row.source || ''),
+          csvSafe(row.referrer || ''),
+          csvSafe(row.subscribed_at),
+        ].join(',')
     ),
   ].join('\n');
 

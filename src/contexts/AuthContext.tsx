@@ -61,14 +61,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     // Handle deep links (e.g. password reset link opens app with tokens in URL)
+    const ALLOWED_SCHEMES = ['oneword://', 'com.oneword.app://'];
+
+    function isAllowedDeepLink(url: string): boolean {
+      const lower = url.toLowerCase();
+      return ALLOWED_SCHEMES.some((scheme) => lower.startsWith(scheme))
+        || lower.startsWith('https://oneword.app/')
+        || lower.startsWith('https://www.oneword.app/');
+    }
+
+    // Validate that a string looks like a safe auth code (alphanumeric + URL-safe chars only)
+    function isSafeAuthCode(code: string): boolean {
+      return /^[a-zA-Z0-9_\-]+$/.test(code) && code.length < 512;
+    }
+
+    // Validate that a string looks like a safe JWT token
+    function isSafeToken(token: string): boolean {
+      return /^[a-zA-Z0-9_\-\.]+$/.test(token) && token.length < 8192;
+    }
+
     function handleDeepLink(event: { url: string }) {
       const url = event.url;
-      if (!url) return;
+      if (!url || !isAllowedDeepLink(url)) return;
 
       // PKCE flow (Supabase v2 default): redirect has ?code=AUTH_CODE as query param
       const codeMatch = url.match(/[?&]code=([^&#]+)/);
       if (codeMatch) {
-        supabase.auth.exchangeCodeForSession(codeMatch[1]).catch((err) => {
+        const code = decodeURIComponent(codeMatch[1]);
+        if (!isSafeAuthCode(code)) {
+          console.error('Deep link contained invalid auth code');
+          return;
+        }
+        supabase.auth.exchangeCodeForSession(code).catch((err) => {
           console.error('Failed to exchange code for session:', err);
         });
         return;
@@ -81,6 +105,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const accessToken = params.get('access_token');
       const refreshToken = params.get('refresh_token');
       if (accessToken && refreshToken) {
+        if (!isSafeToken(accessToken) || !isSafeToken(refreshToken)) {
+          console.error('Deep link contained invalid tokens');
+          return;
+        }
         supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken }).catch((err) => {
           console.error('Failed to set session from hash fragment:', err);
         });

@@ -79,18 +79,20 @@ export default function FriendsScreen() {
   async function handleAccept(friendshipId: string) {
     if (processingRef.current.has(friendshipId)) return;
     processingRef.current.add(friendshipId);
+    const prevRequests = requests;
     setRequests((prev) => prev.filter((r) => r.friendship_id !== friendshipId));
     try {
-      const { error } = await acceptFriendRequest(friendshipId);
+      const { error } = await acceptFriendRequest(friendshipId, userId!);
       if (error) {
         showToast(t('errors.generic'), 'error');
+        setRequests(prevRequests);
       } else {
         showToast(t('success.friend_accepted'), 'success');
       }
-      await loadData();
+      await loadData(false);
     } catch {
       showToast(t('errors.generic'), 'error');
-      await loadData();
+      setRequests(prevRequests);
     } finally {
       processingRef.current.delete(friendshipId);
     }
@@ -99,16 +101,17 @@ export default function FriendsScreen() {
   async function handleDecline(friendshipId: string) {
     if (processingRef.current.has(friendshipId)) return;
     processingRef.current.add(friendshipId);
+    const prevRequests = requests;
     setRequests((prev) => prev.filter((r) => r.friendship_id !== friendshipId));
     try {
       const { error } = await declineFriendRequest(friendshipId);
       if (error) {
         showToast(t('errors.generic'), 'error');
-        await loadData();
+        setRequests(prevRequests);
       }
     } catch {
       showToast(t('errors.generic'), 'error');
-      await loadData();
+      setRequests(prevRequests);
     } finally {
       processingRef.current.delete(friendshipId);
     }
@@ -117,6 +120,8 @@ export default function FriendsScreen() {
   async function handleRemove(friendshipId: string) {
     if (processingRef.current.has(friendshipId)) return;
     processingRef.current.add(friendshipId);
+    const prevFriends = friends;
+    const prevDescriptions = descriptions;
     const friendToRemove = friends.find((f) => f.friendship_id === friendshipId);
     setFriends((prev) => prev.filter((f) => f.friendship_id !== friendshipId));
     // Also remove from descriptions so FriendsToday updates immediately
@@ -127,11 +132,13 @@ export default function FriendsScreen() {
       const { error } = await removeFriend(friendshipId);
       if (error) {
         showToast(t('errors.generic'), 'error');
-        await loadData();
+        setFriends(prevFriends);
+        setDescriptions(prevDescriptions);
       }
     } catch {
       showToast(t('errors.generic'), 'error');
-      await loadData();
+      setFriends(prevFriends);
+      setDescriptions(prevDescriptions);
     } finally {
       processingRef.current.delete(friendshipId);
     }

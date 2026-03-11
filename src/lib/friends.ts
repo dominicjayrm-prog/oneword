@@ -213,11 +213,12 @@ export async function sendFriendRequest(requesterId: string, addresseeId: string
   return { error: null };
 }
 
-export async function acceptFriendRequest(friendshipId: string): Promise<{ error: Error | null }> {
+export async function acceptFriendRequest(friendshipId: string, currentUserId: string): Promise<{ error: Error | null }> {
   const { error } = await supabase
     .from('friendships')
     .update({ status: 'accepted', updated_at: new Date().toISOString() })
-    .eq('id', friendshipId);
+    .eq('id', friendshipId)
+    .eq('addressee_id', currentUserId);
   if (error) return { error: new Error(error.message) };
   return { error: null };
 }

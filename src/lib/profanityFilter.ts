@@ -4,60 +4,134 @@
 // Words are checked as whole words (not substrings) to avoid false positives.
 const BLOCKED_WORDS_EN = new Set([
   // Hard profanity
-  'fuck', 'fucking', 'fucked', 'fucker', 'fuckers', 'fucks', 'fuk', 'fuking',
-  'shit', 'shitting', 'shitty', 'shits', 'bullshit',
-  'asshole', 'assholes',
-  'bitch', 'bitches', 'bitching', 'bitchy',
-  'dick', 'dicks', 'dickhead', 'dickheads',
-  'cock', 'cocks', 'cocksucker',
-  'cunt', 'cunts',
-  'pussy', 'pussies',
-  'bastard', 'bastards',
-  'whore', 'whores',
-  'slut', 'sluts', 'slutty',
-  'tits', 'titties', 'boobs', 'boobies',
-  'wank', 'wanker', 'wankers',
-  'twat', 'twats',
+  'fuck',
+  'fucking',
+  'fucked',
+  'fucker',
+  'fuckers',
+  'fucks',
+  'fuk',
+  'fuking',
+  'shit',
+  'shitting',
+  'shitty',
+  'shits',
+  'bullshit',
+  'asshole',
+  'assholes',
+  'bitch',
+  'bitches',
+  'bitching',
+  'bitchy',
+  'dick',
+  'dicks',
+  'dickhead',
+  'dickheads',
+  'cock',
+  'cocks',
+  'cocksucker',
+  'cunt',
+  'cunts',
+  'pussy',
+  'pussies',
+  'bastard',
+  'bastards',
+  'whore',
+  'whores',
+  'slut',
+  'sluts',
+  'slutty',
+  'tits',
+  'titties',
+  'boobs',
+  'boobies',
+  'wank',
+  'wanker',
+  'wankers',
+  'twat',
+  'twats',
   'bollocks',
   'arsehole',
-  'prick', 'pricks',
+  'prick',
+  'pricks',
 
   // Slurs (racial, ethnic, homophobic, etc.)
-  'nigger', 'niggers', 'nigga', 'niggas',
-  'faggot', 'faggots', 'fag', 'fags',
-  'dyke', 'dykes',
-  'retard', 'retards', 'retarded',
-  'spic', 'spics',
-  'chink', 'chinks',
-  'kike', 'kikes',
-  'wetback', 'wetbacks',
-  'beaner', 'beaners',
-  'tranny', 'trannies',
-  'coon', 'coons',
-  'gook', 'gooks',
-  'raghead', 'ragheads',
-  'towelhead', 'towelheads',
+  'nigger',
+  'niggers',
+  'nigga',
+  'niggas',
+  'faggot',
+  'faggots',
+  'fag',
+  'fags',
+  'dyke',
+  'dykes',
+  'retard',
+  'retards',
+  'retarded',
+  'spic',
+  'spics',
+  'chink',
+  'chinks',
+  'kike',
+  'kikes',
+  'wetback',
+  'wetbacks',
+  'beaner',
+  'beaners',
+  'tranny',
+  'trannies',
+  'coon',
+  'coons',
+  'gook',
+  'gooks',
+  'raghead',
+  'ragheads',
+  'towelhead',
+  'towelheads',
 
   // Sexually explicit
-  'blowjob', 'handjob', 'rimjob',
-  'cum', 'cumming', 'cumshot',
-  'jizz', 'ejaculate',
-  'masturbate', 'masturbating',
+  'blowjob',
+  'handjob',
+  'rimjob',
+  'cum',
+  'cumming',
+  'cumshot',
+  'jizz',
+  'ejaculate',
+  'masturbate',
+  'masturbating',
   'dildo',
-  'porn', 'porno', 'pornography',
+  'porn',
+  'porno',
+  'pornography',
   'hentai',
   'horny',
 
   // Violence / harmful
-  'rape', 'raping', 'rapist',
-  'suicide', 'suicidal',
-  'pedophile', 'pedo', 'paedophile',
-  'molest', 'molester',
+  'rape',
+  'raping',
+  'rapist',
+  'suicide',
+  'suicidal',
+  'pedophile',
+  'pedo',
+  'paedophile',
+  'molest',
+  'molester',
   'genocide',
 
   // Common evasions
-  'fck', 'fcking', 'fking', 'wtf', 'stfu', 'gtfo',
-  'sh1t', 'f*ck', 'b1tch', 'a$$',
+  'fck',
+  'fcking',
+  'fking',
+  'wtf',
+  'stfu',
+  'gtfo',
+  'sh1t',
+  'f*ck',
+  'b1tch',
+  'a$$',
 ]);
 
 // Spanish profanity list.
@@ -65,50 +139,103 @@ const BLOCKED_WORDS_EN = new Set([
 // Only hard profanity, slurs, sexually explicit, and violence terms are blocked.
 const BLOCKED_WORDS_ES = new Set([
   // Hard profanity (equivalents of banned English words)
-  'puta', 'putas', 'putita', 'putero',
-  'perra', 'perras',                         // bitch
-  'zorra', 'zorras',                         // slut
-  'joder', 'jodido', 'jodida', 'jodidos', 'jodidas',  // fuck
-  'chingar', 'chingado', 'chingada', 'chingados', 'chingadas', 'chingón',
-  'verga', 'vergas', 'vergudo',              // dick
-  'polla', 'pollas',                         // cock
-  'picha',                                   // dick (regional)
-  'concha',                                  // cunt (LatAm)
-  'teta', 'tetas',                           // tits
+  'puta',
+  'putas',
+  'putita',
+  'putero',
+  'perra',
+  'perras', // bitch
+  'zorra',
+  'zorras', // slut
+  'joder',
+  'jodido',
+  'jodida',
+  'jodidos',
+  'jodidas', // fuck
+  'chingar',
+  'chingado',
+  'chingada',
+  'chingados',
+  'chingadas',
+  'chingón',
+  'verga',
+  'vergas',
+  'vergudo', // dick
+  'polla',
+  'pollas', // cock
+  'picha', // dick (regional)
+  'concha', // cunt (LatAm)
+  'teta',
+  'tetas', // tits
 
   // Slurs (homophobic)
-  'maricón', 'maricon', 'maricones',
-  'marica', 'maricas',
-  'joto', 'jotos', 'jota', 'jotas',         // homophobic (MX)
-  'tortillera', 'tortilleras',               // lesbian slur
-  'travelo', 'travelos',                     // transphobic
+  'maricón',
+  'maricon',
+  'maricones',
+  'marica',
+  'maricas',
+  'joto',
+  'jotos',
+  'jota',
+  'jotas', // homophobic (MX)
+  'tortillera',
+  'tortilleras', // lesbian slur
+  'travelo',
+  'travelos', // transphobic
 
   // Slurs (ableist)
-  'mongólico', 'mongolico', 'mongólicos', 'mongolicos',
-  'subnormal', 'subnormales',
+  'mongólico',
+  'mongolico',
+  'mongólicos',
+  'mongolicos',
+  'subnormal',
+  'subnormales',
 
   // Slurs (ethnic/racial)
-  'sudaca', 'sudacas',
+  'sudaca',
+  'sudacas',
 
   // Sexually explicit
-  'mamada', 'mamadas',                       // blowjob
-  'cogida',                                  // fuck (noun)
-  'follada', 'follar', 'follando',           // fuck (Spain)
-  'pajear', 'pajearse', 'paja',              // masturbate
-  'corrida', 'correrse',                     // cum (sexual context — "corrida" also means bullfight but rare in 5-word descriptions)
-  'pornografía', 'pornografia', 'porno',
-  'cachondo', 'cachonda',                    // horny
+  'mamada',
+  'mamadas', // blowjob
+  'cogida', // fuck (noun)
+  'follada',
+  'follar',
+  'follando', // fuck (Spain)
+  'pajear',
+  'pajearse',
+  'paja', // masturbate
+  'corrida',
+  'correrse', // cum (sexual context — "corrida" also means bullfight but rare in 5-word descriptions)
+  'pornografía',
+  'pornografia',
+  'porno',
+  'cachondo',
+  'cachonda', // horny
 
   // Violence / harmful
-  'violación', 'violacion', 'violar', 'violador',  // rape
-  'suicidio', 'suicida',
-  'pedófilo', 'pedofilo', 'pederasta',
+  'violación',
+  'violacion',
+  'violar',
+  'violador', // rape
+  'suicidio',
+  'suicida',
+  'pedófilo',
+  'pedofilo',
+  'pederasta',
   'genocidio',
 ]);
 
 // Strip accents for evasion detection (e.g. someone typing "maricon" without accent)
 function stripAccents(s: string): string {
-  return s.replace(/á/g, 'a').replace(/é/g, 'e').replace(/í/g, 'i').replace(/ó/g, 'o').replace(/ú/g, 'u').replace(/ü/g, 'u').replace(/ñ/g, 'n');
+  return s
+    .replace(/á/g, 'a')
+    .replace(/é/g, 'e')
+    .replace(/í/g, 'i')
+    .replace(/ó/g, 'o')
+    .replace(/ú/g, 'u')
+    .replace(/ü/g, 'u')
+    .replace(/ñ/g, 'n');
 }
 
 /**
@@ -120,15 +247,25 @@ function normalizeUnicode(s: string): string {
   let result = s;
 
   // Fullwidth ASCII variants (U+FF01-U+FF5E → U+0021-U+007E)
-  result = result.replace(/[\uFF01-\uFF5E]/g, (ch) =>
-    String.fromCharCode(ch.charCodeAt(0) - 0xFEE0)
-  );
+  result = result.replace(/[\uFF01-\uFF5E]/g, (ch) => String.fromCharCode(ch.charCodeAt(0) - 0xfee0));
 
   // Common Cyrillic lookalikes → Latin
   const cyrillicMap: Record<string, string> = {
-    '\u0430': 'a', '\u0435': 'e', '\u043E': 'o', '\u0440': 'p', '\u0441': 'c',
-    '\u0443': 'y', '\u0445': 'x', '\u0456': 'i', '\u0410': 'a', '\u0415': 'e',
-    '\u041E': 'o', '\u0420': 'p', '\u0421': 'c', '\u0423': 'y', '\u0425': 'x',
+    '\u0430': 'a',
+    '\u0435': 'e',
+    '\u043E': 'o',
+    '\u0440': 'p',
+    '\u0441': 'c',
+    '\u0443': 'y',
+    '\u0445': 'x',
+    '\u0456': 'i',
+    '\u0410': 'a',
+    '\u0415': 'e',
+    '\u041E': 'o',
+    '\u0420': 'p',
+    '\u0421': 'c',
+    '\u0423': 'y',
+    '\u0425': 'x',
   };
   result = result.replace(/[\u0400-\u04FF]/g, (ch) => cyrillicMap[ch] || ch);
 
@@ -138,13 +275,13 @@ function normalizeUnicode(s: string): string {
   result = result.replace(/[\u{1D400}-\u{1D7FF}]/gu, (ch) => {
     const cp = ch.codePointAt(0)!;
     // Bold uppercase A-Z
-    if (cp >= 0x1D400 && cp <= 0x1D419) return String.fromCharCode(cp - 0x1D400 + 65);
+    if (cp >= 0x1d400 && cp <= 0x1d419) return String.fromCharCode(cp - 0x1d400 + 65);
     // Bold lowercase a-z
-    if (cp >= 0x1D41A && cp <= 0x1D433) return String.fromCharCode(cp - 0x1D41A + 97);
+    if (cp >= 0x1d41a && cp <= 0x1d433) return String.fromCharCode(cp - 0x1d41a + 97);
     // Italic uppercase A-Z
-    if (cp >= 0x1D434 && cp <= 0x1D44D) return String.fromCharCode(cp - 0x1D434 + 65);
+    if (cp >= 0x1d434 && cp <= 0x1d44d) return String.fromCharCode(cp - 0x1d434 + 65);
     // Italic lowercase a-z
-    if (cp >= 0x1D44E && cp <= 0x1D467) return String.fromCharCode(cp - 0x1D44E + 97);
+    if (cp >= 0x1d44e && cp <= 0x1d467) return String.fromCharCode(cp - 0x1d44e + 97);
     return ch;
   });
 
@@ -153,9 +290,7 @@ function normalizeUnicode(s: string): string {
 
 // Pre-compute accent-stripped Spanish blocked set so that stripped input
 // is compared against stripped blocked words (not the accented originals).
-const BLOCKED_WORDS_ES_STRIPPED = new Set(
-  [...BLOCKED_WORDS_ES].map(stripAccents)
-);
+const BLOCKED_WORDS_ES_STRIPPED = new Set([...BLOCKED_WORDS_ES].map(stripAccents));
 
 /**
  * Check if a description contains profanity.
@@ -172,7 +307,10 @@ export function checkProfanity(text: string): { clean: boolean; flaggedWord?: st
   const lower = cleaned;
 
   // Split keeping Spanish characters intact
-  const words = lower.replace(/[^a-záéíóúñü0-9\s]/g, '').split(/\s+/).filter(Boolean);
+  const words = lower
+    .replace(/[^a-záéíóúñü0-9\s]/g, '')
+    .split(/\s+/)
+    .filter(Boolean);
 
   for (const word of words) {
     if (BLOCKED_WORDS_EN.has(word) || BLOCKED_WORDS_ES.has(word)) {

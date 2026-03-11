@@ -124,6 +124,7 @@ export default {
     locked_message: 'Submit your description first, then vote on others.',
     go_to_today: "Go to Today's Word \u2192",
     your_pick: 'YOUR PICK \u2713',
+    vs: 'VS',
     report_title: 'Report Description',
     report_message: 'Flag this description as inappropriate?',
     report_cancel: 'Cancel',
@@ -244,6 +245,7 @@ export default {
     invalid_email: 'Enter a valid email address',
     password_short: 'Password must be at least 6 characters',
     wrong_credentials: 'Incorrect email or password',
+    profanity: 'The word "{{word}}" isn\'t allowed. Please rephrase.',
     crash_title: 'Oops! Something broke',
     crash_subtitle: 'The app crashed unexpectedly. Try restarting.',
   },
@@ -264,7 +266,7 @@ export default {
     no_results_sub: 'Keep voting to help rank the descriptions!',
     no_descriptions: 'No descriptions yet',
     no_descriptions_sub: "Be the first to play today's word!",
-    no_friends_played: "None of your friends have played yet today",
+    no_friends_played: 'None of your friends have played yet today',
     vote_complete: 'You voted on {{count}} pairs today!',
     no_pairs: 'Not enough descriptions yet. Check back later.',
   },
@@ -367,6 +369,14 @@ export default {
     connect_for_friends: "Check back when you're online for new friend requests.",
     last_updated: 'Last updated {{time}}',
     cached_results: 'Showing cached results',
+  },
+
+  // Legal
+  legal: {
+    privacy_policy: 'Privacy Policy',
+    terms_of_use: 'Terms of Use',
+    agree_prefix: 'By signing up, you agree to our ',
+    and: ' and ',
   },
 
   // Language names

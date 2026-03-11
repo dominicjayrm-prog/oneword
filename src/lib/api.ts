@@ -3,7 +3,7 @@ import NetInfo from '@react-native-community/netinfo';
 export type ApiError = 'offline' | 'server_error' | null;
 
 export async function safeQuery<T>(
-  queryFn: () => Promise<{ data: T; error: any }>
+  queryFn: () => Promise<{ data: T; error: any }>,
 ): Promise<{ data: T | null; error: ApiError }> {
   const netInfo = await NetInfo.fetch();
   if (!netInfo.isConnected) {

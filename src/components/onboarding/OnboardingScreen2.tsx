@@ -127,7 +127,11 @@ export function OnboardingScreen2({ isActive }: Props) {
             },
           ]}
         >
-          <Text style={[styles.cardText, { color: colors.text }]}>{'\u201C'}{t('onboarding.screen2_desc1')}{'\u201D'}</Text>
+          <Text style={[styles.cardText, { color: colors.text }]}>
+            {'\u201C'}
+            {t('onboarding.screen2_desc1')}
+            {'\u201D'}
+          </Text>
         </Animated.View>
         <Animated.View
           style={[
@@ -156,7 +160,11 @@ export function OnboardingScreen2({ isActive }: Props) {
           },
         ]}
       >
-        <Text style={[styles.cardText, { color: colors.text }]}>{'\u201C'}{t('onboarding.screen2_desc2')}{'\u201D'}</Text>
+        <Text style={[styles.cardText, { color: colors.text }]}>
+          {'\u201C'}
+          {t('onboarding.screen2_desc2')}
+          {'\u201D'}
+        </Text>
       </Animated.View>
 
       {/* Progress */}

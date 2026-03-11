@@ -411,7 +411,7 @@ const descs = await getFriendsDescriptions(userId, todayWord.id);
 - Delete account (with confirmation → type username to confirm)
 
 #### Support Section
-- Contact: support@playoneword.app
+- Contact: hello@oneword.app
 - Website: playoneword.app
 - Privacy Policy link
 - Terms of Use link

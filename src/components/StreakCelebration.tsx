@@ -62,7 +62,10 @@ function ConfettiParticle({ particle, badgeColor }: { particle: Particle; badgeC
 
   useEffect(() => {
     const totalDelay = 500 + particle.delay;
-    progress.value = withDelay(totalDelay, withTiming(1, { duration: 1500 + Math.random() * 500, easing: Easing.out(Easing.cubic) }));
+    progress.value = withDelay(
+      totalDelay,
+      withTiming(1, { duration: 1500 + Math.random() * 500, easing: Easing.out(Easing.cubic) }),
+    );
     opacity.value = withDelay(totalDelay + 1000, withTiming(0, { duration: 500 }));
   }, []);
 
@@ -76,7 +79,8 @@ function ConfettiParticle({ particle, badgeColor }: { particle: Particle; badgeC
         { translateY: ty },
         { rotate: `${progress.value * 720}deg` },
         { scale: 1 - progress.value * 0.5 },
-      ],
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ] as any,
       opacity: opacity.value,
     };
   });
@@ -108,7 +112,8 @@ function RingBurst({ delay, badgeColor }: { delay: number; badgeColor: string })
   }, []);
 
   const style = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    transform: [{ scale: scale.value }] as any,
     opacity: opacity.value,
   }));
 
@@ -206,29 +211,31 @@ export function StreakCelebration({ streak, badge, onDismiss }: StreakCelebratio
   // Animated styles
   const bgStyle = useAnimatedStyle(() => ({ opacity: bgOpacity.value }));
   const glowStyle = useAnimatedStyle(() => ({ opacity: glowOpacity.value }));
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  type TransformWorkaround = any; // RN 0.83 transform type incompatibility with Reanimated
   const emojiStyle = useAnimatedStyle(() => ({
     opacity: emojiOpacity.value,
-    transform: [{ scale: emojiScale.value }, { translateY: emojiTranslateY.value }],
+    transform: [{ scale: emojiScale.value }, { translateY: emojiTranslateY.value }] as TransformWorkaround,
   }));
   const numberStyle = useAnimatedStyle(() => ({
     opacity: numberOpacity.value,
-    transform: [{ scale: numberScale.value }],
+    transform: [{ scale: numberScale.value }] as TransformWorkaround,
   }));
   const nameStyle = useAnimatedStyle(() => ({
     opacity: nameOpacity.value,
-    transform: [{ translateY: nameTranslateY.value }],
+    transform: [{ translateY: nameTranslateY.value }] as TransformWorkaround,
   }));
   const taglineStyle = useAnimatedStyle(() => ({
     opacity: taglineOpacity.value,
-    transform: [{ translateY: taglineTranslateY.value }],
+    transform: [{ translateY: taglineTranslateY.value }] as TransformWorkaround,
   }));
   const statsStyle = useAnimatedStyle(() => ({
     opacity: statsOpacity.value,
-    transform: [{ translateY: statsTranslateY.value }],
+    transform: [{ translateY: statsTranslateY.value }] as TransformWorkaround,
   }));
   const nextStyle = useAnimatedStyle(() => ({
     opacity: nextOpacity.value,
-    transform: [{ translateY: nextTranslateY.value }],
+    transform: [{ translateY: nextTranslateY.value }] as TransformWorkaround,
   }));
   const dismissStyle = useAnimatedStyle(() => ({
     opacity: dismissOpacity.value,
@@ -270,21 +277,15 @@ export function StreakCelebration({ streak, badge, onDismiss }: StreakCelebratio
 
           {/* Streak number */}
           <Animated.View style={[styles.numberRow, numberStyle]}>
-            <Text style={[styles.number, { color: badge.color, textShadowColor: badge.glow }]}>
-              {streak}
-            </Text>
+            <Text style={[styles.number, { color: badge.color, textShadowColor: badge.glow }]}>{streak}</Text>
             <Text style={styles.dayLabel}>{t('badges.day_streak')}</Text>
           </Animated.View>
 
           {/* Badge name */}
-          <Animated.Text style={[styles.badgeName, nameStyle]}>
-            {badgeName}
-          </Animated.Text>
+          <Animated.Text style={[styles.badgeName, nameStyle]}>{badgeName}</Animated.Text>
 
           {/* Tagline */}
-          <Animated.Text style={[styles.tagline, taglineStyle]}>
-            {badgeTagline}
-          </Animated.Text>
+          <Animated.Text style={[styles.tagline, taglineStyle]}>{badgeTagline}</Animated.Text>
 
           {/* Stats row */}
           <Animated.View style={[styles.statsRow, statsStyle]}>
@@ -293,15 +294,11 @@ export function StreakCelebration({ streak, badge, onDismiss }: StreakCelebratio
               <Text style={styles.statLabel}>{t('badges.played')}</Text>
             </View>
             <View style={styles.statCol}>
-              <Text style={styles.statNumber}>
-                {profile?.best_rank ? `#${profile.best_rank}` : '-'}
-              </Text>
+              <Text style={styles.statNumber}>{profile?.best_rank ? `#${profile.best_rank}` : '-'}</Text>
               <Text style={styles.statLabel}>{t('badges.best_rank')}</Text>
             </View>
             <View style={styles.statCol}>
-              <Text style={styles.statNumber}>
-                {profile?.total_votes_received ?? 0}
-              </Text>
+              <Text style={styles.statNumber}>{profile?.total_votes_received ?? 0}</Text>
               <Text style={styles.statLabel}>{t('badges.votes')}</Text>
             </View>
           </Animated.View>
@@ -309,26 +306,25 @@ export function StreakCelebration({ streak, badge, onDismiss }: StreakCelebratio
           {/* Next milestone or Eternal message */}
           <Animated.View style={[styles.nextSection, nextStyle]}>
             {isEternal ? (
-              <Text style={[styles.eternalText, { color: '#FFD700' }]}>
-                {t('badges.highest_tier')}
-              </Text>
+              <Text style={[styles.eternalText, { color: '#FFD700' }]}>{t('badges.highest_tier')}</Text>
             ) : next ? (
               <View style={styles.nextCard}>
                 <Text style={styles.nextLabel}>{t('badges.next_milestone')}</Text>
                 <Text style={styles.nextBadge}>
-                  {next.emoji} {isEs ? next.nameEs : next.name} — {t('badges.days_to_go', { count: next.streak - streak })}
+                  {next.emoji} {isEs ? next.nameEs : next.name} —{' '}
+                  {t('badges.days_to_go', { count: next.streak - streak })}
                 </Text>
                 <View style={styles.progressBarBg}>
-                  <View style={[styles.progressBarFill, { width: `${progress * 100}%`, backgroundColor: badge.color }]} />
+                  <View
+                    style={[styles.progressBarFill, { width: `${progress * 100}%`, backgroundColor: badge.color }]}
+                  />
                 </View>
               </View>
             ) : null}
           </Animated.View>
 
           {/* Tap to continue */}
-          <Animated.Text style={[styles.tapText, dismissStyle]}>
-            {t('badges.tap_continue')}
-          </Animated.Text>
+          <Animated.Text style={[styles.tapText, dismissStyle]}>{t('badges.tap_continue')}</Animated.Text>
         </View>
       </Animated.View>
     </TouchableWithoutFeedback>

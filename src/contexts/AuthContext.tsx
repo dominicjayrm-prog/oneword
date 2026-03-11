@@ -46,7 +46,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       else setLoading(false);
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session);
       if (event === 'PASSWORD_RECOVERY') {
         setPasswordRecovery(true);
@@ -65,9 +67,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     function isAllowedDeepLink(url: string): boolean {
       const lower = url.toLowerCase();
-      return ALLOWED_SCHEMES.some((scheme) => lower.startsWith(scheme))
-        || lower.startsWith('https://oneword.app/')
-        || lower.startsWith('https://www.oneword.app/');
+      return (
+        ALLOWED_SCHEMES.some((scheme) => lower.startsWith(scheme)) ||
+        lower.startsWith('https://oneword.app/') ||
+        lower.startsWith('https://www.oneword.app/')
+      );
     }
 
     // Validate that a string looks like a safe auth code (alphanumeric + URL-safe chars only)
@@ -131,10 +135,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const deviceTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
       if (deviceTimezone && deviceTimezone !== storedTimezone) {
-        await supabase
-          .from('profiles')
-          .update({ timezone: deviceTimezone })
-          .eq('id', userId);
+        await supabase.from('profiles').update({ timezone: deviceTimezone }).eq('id', userId);
       }
     } catch (err) {
       console.warn('[AuthContext] Timezone sync failed:', err);
@@ -149,11 +150,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function fetchProfile(userId: string) {
     try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
+      const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).single();
 
       if (error && error.code === 'PGRST116') {
         // Profile doesn't exist yet.
@@ -162,7 +159,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return;
         }
         // Create it from auth metadata
-        const { data: { user } } = await supabase.auth.getUser();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
         const username = user?.user_metadata?.username || 'player_' + userId.slice(0, 8);
         const lang = user?.user_metadata?.language || 'en';
         const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
@@ -202,7 +201,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function refreshProfile() {
-    const { data: { session: currentSession } } = await supabase.auth.getSession();
+    const {
+      data: { session: currentSession },
+    } = await supabase.auth.getSession();
     if (currentSession?.user) {
       await fetchProfile(currentSession.user.id);
     }
@@ -225,14 +226,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (error) {
         // If the trigger failed, try to recover by creating the profile manually
         if (error.message?.includes('Database error') && data?.user) {
-          const { error: profileError } = await supabase
-            .from('profiles')
-            .upsert({
+          const { error: profileError } = await supabase.from('profiles').upsert(
+            {
               id: data.user.id,
               username,
               language: userLang,
               timezone: userTimezone,
-            }, { onConflict: 'id' });
+            },
+            { onConflict: 'id' },
+          );
           if (profileError) {
             return { error: new Error(profileError.message) };
           }
@@ -270,20 +272,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         if (!existingProfile) {
           // Trigger didn't create the profile — create it manually (upsert to avoid race with onAuthStateChange)
-          await supabase
-            .from('profiles')
-            .upsert({
+          await supabase.from('profiles').upsert(
+            {
               id: data.user.id,
               username,
               language: userLang,
               timezone: userTimezone,
-            }, { onConflict: 'id' });
+            },
+            { onConflict: 'id' },
+          );
         } else if (existingProfile.username !== username && existingProfile.username.startsWith('player_')) {
           // Trigger created a fallback username — update to the real one
-          await supabase
-            .from('profiles')
-            .update({ username })
-            .eq('id', data.user.id);
+          await supabase.from('profiles').update({ username }).eq('id', data.user.id);
         }
 
         // Refresh profile state so the UI shows the correct username
@@ -312,7 +312,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .update({ avatar_url: avatarUrl, updated_at: new Date().toISOString() })
       .eq('id', session.user.id);
     if (!error) {
-      setProfile((prev) => prev ? { ...prev, avatar_url: avatarUrl } : prev);
+      setProfile((prev) => (prev ? { ...prev, avatar_url: avatarUrl } : prev));
     }
     return { error };
   }
@@ -327,7 +327,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .update({ language: lang, updated_at: new Date().toISOString() })
       .eq('id', session.user.id);
     if (!error) {
-      setProfile((prev) => prev ? { ...prev, language: lang } : prev);
+      setProfile((prev) => (prev ? { ...prev, language: lang } : prev));
     }
     return { error };
   }
@@ -374,7 +374,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ session, profile, loading, language, pendingVerification, passwordRecovery, signUp, signIn, signOut, refreshProfile, updateAvatar, updateLanguage, deleteAccount, resendVerification, clearPendingVerification, resetPassword, updatePassword }}>
+    <AuthContext.Provider
+      value={{
+        session,
+        profile,
+        loading,
+        language,
+        pendingVerification,
+        passwordRecovery,
+        signUp,
+        signIn,
+        signOut,
+        refreshProfile,
+        updateAvatar,
+        updateLanguage,
+        deleteAccount,
+        resendVerification,
+        clearPendingVerification,
+        resetPassword,
+        updatePassword,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

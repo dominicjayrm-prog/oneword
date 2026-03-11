@@ -53,7 +53,8 @@ export default {
     forgot_subtitle: 'Ingresa tu correo y te enviaremos un enlace para restablecerla.',
     forgot_send: 'Enviar enlace',
     reset_sent_title: 'Revisa tu correo',
-    reset_sent_subtitle: 'Enviamos un enlace para restablecer tu contrase\u00F1a a {{email}}. Toca el enlace para crear una nueva.',
+    reset_sent_subtitle:
+      'Enviamos un enlace para restablecer tu contrase\u00F1a a {{email}}. Toca el enlace para crear una nueva.',
     new_password_title: 'Nueva contrase\u00F1a',
     new_password_subtitle: 'Elige una nueva contrase\u00F1a para tu cuenta.',
     new_password: 'Nueva contrase\u00F1a',
@@ -124,6 +125,7 @@ export default {
     locked_message: 'Env\u00EDa tu descripci\u00F3n primero, luego vota por otras.',
     go_to_today: 'Ir a la Palabra de Hoy \u2192',
     your_pick: 'TU ELECCI\u00D3N \u2713',
+    vs: 'VS',
     report_title: 'Reportar descripci\u00F3n',
     report_message: '\u00BFMarcar esta descripci\u00F3n como inapropiada?',
     report_cancel: 'Cancelar',
@@ -234,7 +236,8 @@ export default {
     friend_request_failed: 'No se pudo enviar la solicitud',
     search_failed: 'Búsqueda no disponible ahora',
     try_again: 'Reintentar',
-    delete_confirm: '\u00BFEst\u00E1s seguro? Esto eliminar\u00E1 permanentemente tu cuenta y todos tus datos. No se puede deshacer.',
+    delete_confirm:
+      '\u00BFEst\u00E1s seguro? Esto eliminar\u00E1 permanentemente tu cuenta y todos tus datos. No se puede deshacer.',
     delete_type_username: 'Escribe tu nombre de usuario para confirmar',
     logout_confirm: '\u00BFSeguro que quieres cerrar sesi\u00F3n?',
     max_friends: 'Has alcanzado el l\u00EDmite de amigos (50)',
@@ -244,6 +247,7 @@ export default {
     invalid_email: 'Introduce un correo v\u00E1lido',
     password_short: 'La contrase\u00F1a debe tener al menos 6 caracteres',
     wrong_credentials: 'Correo o contrase\u00F1a incorrectos',
+    profanity: 'La palabra "{{word}}" no est\u00E1 permitida. Reformula tu descripci\u00F3n.',
     crash_title: '\u00A1Ups! Algo fall\u00F3',
     crash_subtitle: 'La app se cerr\u00F3 inesperadamente. Intenta reiniciar.',
   },
@@ -367,6 +371,14 @@ export default {
     connect_for_friends: 'Vuelve cuando tengas conexi\u00F3n para ver solicitudes nuevas.',
     last_updated: '\u00DAltima actualizaci\u00F3n {{time}}',
     cached_results: 'Mostrando resultados guardados',
+  },
+
+  // Legal
+  legal: {
+    privacy_policy: 'Pol\u00EDtica de Privacidad',
+    terms_of_use: 'T\u00E9rminos de Uso',
+    agree_prefix: 'Al registrarte, aceptas nuestros ',
+    and: ' y ',
   },
 
   // Language names

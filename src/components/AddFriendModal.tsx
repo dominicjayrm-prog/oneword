@@ -57,17 +57,13 @@ function SuccessToast({ visible, username, colors }: { visible: boolean; usernam
   if (!visible) return null;
 
   return (
-    <Animated.View
-      pointerEvents="none"
-      style={[
-        styles.toastContainer,
-        { opacity, transform: [{ scale }] },
-      ]}
-    >
+    <Animated.View pointerEvents="none" style={[styles.toastContainer, { opacity, transform: [{ scale }] }]}>
       <View style={[styles.toast, { backgroundColor: colors.surface, borderColor: withOpacity(colors.primary, 0.25) }]}>
         <Text style={styles.toastEmoji}>{'\u2705'}</Text>
         <Text style={[styles.toastTitle, { color: colors.text }]}>{t('success.friend_sent')}</Text>
-        <Text style={[styles.toastSubtitle, { color: colors.textMuted }]}>{t('success.friend_request_subtitle', { username })}</Text>
+        <Text style={[styles.toastSubtitle, { color: colors.textMuted }]}>
+          {t('success.friend_request_subtitle', { username })}
+        </Text>
       </View>
     </Animated.View>
   );
@@ -96,35 +92,38 @@ export function AddFriendModal({ visible, onClose, currentUserId, onRequestSent 
     };
   }, []);
 
-  const doSearch = useCallback(async (text: string, offset = 0) => {
-    if (text.trim().length < 2) {
-      setResults([]);
-      setSearching(false);
-      setHasMore(false);
-      return;
-    }
-    if (offset === 0) setSearching(true);
-    else setLoadingMore(true);
-
-    try {
-      const data = await searchUsers(text.trim(), currentUserId, offset);
-
-      if (offset === 0) {
-        setResults(data);
-      } else {
-        setResults((prev) => [...prev, ...data]);
+  const doSearch = useCallback(
+    async (text: string, offset = 0) => {
+      if (text.trim().length < 2) {
+        setResults([]);
+        setSearching(false);
+        setHasMore(false);
+        return;
       }
-      setHasMore(data.length >= SEARCH_PAGE_SIZE);
-    } catch (err) {
-      if (err instanceof Error && err.message.includes('slow down')) {
-        showToast(err.message, 'error');
+      if (offset === 0) setSearching(true);
+      else setLoadingMore(true);
+
+      try {
+        const data = await searchUsers(text.trim(), currentUserId, offset);
+
+        if (offset === 0) {
+          setResults(data);
+        } else {
+          setResults((prev) => [...prev, ...data]);
+        }
+        setHasMore(data.length >= SEARCH_PAGE_SIZE);
+      } catch (err) {
+        if (err instanceof Error && err.message.includes('slow down')) {
+          showToast(err.message, 'error');
+        }
+        if (offset === 0) setResults([]);
+      } finally {
+        setSearching(false);
+        setLoadingMore(false);
       }
-      if (offset === 0) setResults([]);
-    } finally {
-      setSearching(false);
-      setLoadingMore(false);
-    }
-  }, [currentUserId]);
+    },
+    [currentUserId],
+  );
 
   function handleChangeText(text: string) {
     setQuery(text);
@@ -149,7 +148,11 @@ export function AddFriendModal({ visible, onClose, currentUserId, onRequestSent 
       }
       setSentIds((prev) => new Set(prev).add(userId));
     } finally {
-      setSendingIds((prev) => { const next = new Set(prev); next.delete(userId); return next; });
+      setSendingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(userId);
+        return next;
+      });
     }
     setToastUser(username);
     if (toastTimer.current) clearTimeout(toastTimer.current);
@@ -202,7 +205,8 @@ export function AddFriendModal({ visible, onClose, currentUserId, onRequestSent 
             <Text style={[styles.resultName, { color: colors.text }]}>@{item.username}</Text>
             {item.current_streak > 0 && (
               <Text style={[styles.resultStreak, { color: colors.textMuted }]}>
-                {getCurrentBadge(item.current_streak)?.emoji || '\uD83D\uDD25'} {t('game.day_streak', { count: item.current_streak })}
+                {getCurrentBadge(item.current_streak)?.emoji || '\uD83D\uDD25'}{' '}
+                {t('game.day_streak', { count: item.current_streak })}
               </Text>
             )}
           </View>
@@ -231,7 +235,10 @@ export function AddFriendModal({ visible, onClose, currentUserId, onRequestSent 
           </View>
 
           <TextInput
-            style={[styles.searchInput, { backgroundColor: colors.surface, color: colors.text, borderColor: colors.border }]}
+            style={[
+              styles.searchInput,
+              { backgroundColor: colors.surface, color: colors.text, borderColor: colors.border },
+            ]}
             placeholder={t('friends.search_placeholder')}
             placeholderTextColor={colors.textMuted}
             value={query}

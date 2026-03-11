@@ -19,18 +19,17 @@ export function FriendsToday({ descriptions, wordText, userHasPlayed }: Props) {
 
   return (
     <View style={styles.container}>
-      <Text style={[styles.wordLabel, { color: colors.textMuted }]}>
-        {t('friends.today_word', { word: wordText })}
-      </Text>
-      <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-        {t('friends.today_title')}
-      </Text>
+      <Text style={[styles.wordLabel, { color: colors.textMuted }]}>{t('friends.today_word', { word: wordText })}</Text>
+      <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{t('friends.today_title')}</Text>
 
       {!userHasPlayed && (
-        <View style={[styles.lockBanner, { backgroundColor: withOpacity(colors.primary, 0.06), borderColor: withOpacity(colors.primary, 0.19) }]}>
-          <Text style={[styles.lockText, { color: colors.primary }]}>
-            {t('friends.play_first')}
-          </Text>
+        <View
+          style={[
+            styles.lockBanner,
+            { backgroundColor: withOpacity(colors.primary, 0.06), borderColor: withOpacity(colors.primary, 0.19) },
+          ]}
+        >
+          <Text style={[styles.lockText, { color: colors.primary }]}>{t('friends.play_first')}</Text>
         </View>
       )}
 
@@ -57,13 +56,13 @@ export function FriendsToday({ descriptions, wordText, userHasPlayed }: Props) {
           ) : fd.has_played && fd.description_text ? (
             <View style={styles.descRow}>
               <Text style={[styles.description, { color: colors.text }]} numberOfLines={2}>
-                {'\u201C'}{fd.description_text}{'\u201D'}
+                {'\u201C'}
+                {fd.description_text}
+                {'\u201D'}
               </Text>
             </View>
           ) : (
-            <Text style={[styles.notPlayed, { color: colors.textMuted }]}>
-              {t('friends.hasnt_played')}
-            </Text>
+            <Text style={[styles.notPlayed, { color: colors.textMuted }]}>{t('friends.hasnt_played')}</Text>
           )}
         </View>
       ))}

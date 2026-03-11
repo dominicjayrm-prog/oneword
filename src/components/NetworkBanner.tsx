@@ -23,17 +23,9 @@ export function NetworkBanner() {
   return (
     <Animated.View
       pointerEvents="none"
-      style={[
-        styles.banner,
-        { transform: [{ translateY }], backgroundColor: isReconnecting ? '#2ECC71' : '#FF6B4A' },
-      ]}
+      style={[styles.banner, { transform: [{ translateY }], backgroundColor: isReconnecting ? '#2ECC71' : '#FF6B4A' }]}
     >
-      <Text style={styles.text}>
-        {isReconnecting
-          ? t('offline.reconnected')
-          : t('offline.no_connection')
-        }
-      </Text>
+      <Text style={styles.text}>{isReconnecting ? t('offline.reconnected') : t('offline.no_connection')}</Text>
     </Animated.View>
   );
 }

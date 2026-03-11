@@ -31,11 +31,7 @@ export function NetworkProvider({ children }: { children: ReactNode }) {
     return () => unsubscribe();
   }, []);
 
-  return (
-    <NetworkContext.Provider value={{ isOnline, isReconnecting }}>
-      {children}
-    </NetworkContext.Provider>
-  );
+  return <NetworkContext.Provider value={{ isOnline, isReconnecting }}>{children}</NetworkContext.Provider>;
 }
 
 export const useNetwork = () => useContext(NetworkContext);

@@ -10,10 +10,13 @@ export const CACHE_KEYS = {
 
 export async function cacheData(key: string, data: unknown): Promise<void> {
   try {
-    await AsyncStorage.setItem(key, JSON.stringify({
-      data,
-      cachedAt: Date.now(),
-    }));
+    await AsyncStorage.setItem(
+      key,
+      JSON.stringify({
+        data,
+        cachedAt: Date.now(),
+      }),
+    );
   } catch (err) {
     console.warn('[cache] Failed to cache data for key:', key, err);
   }

@@ -12,9 +12,7 @@ export function WordDisplay({ word, category }: WordDisplayProps) {
 
   return (
     <View style={styles.container}>
-      {category && (
-        <Text style={[styles.category, { color: colors.primary }]}>{category.toUpperCase()}</Text>
-      )}
+      {category && <Text style={[styles.category, { color: colors.primary }]}>{category.toUpperCase()}</Text>}
       <Text style={[styles.word, { color: colors.text }]}>{word}</Text>
       <View style={[styles.underline, { backgroundColor: colors.primary }]} />
     </View>

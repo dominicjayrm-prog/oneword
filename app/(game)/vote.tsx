@@ -50,7 +50,9 @@ export default function VoteScreen() {
 
   const mountedRef = useRef(true);
   useEffect(() => {
-    return () => { mountedRef.current = false; };
+    return () => {
+      mountedRef.current = false;
+    };
   }, []);
 
   // Restore vote progress from server on mount (works across devices)
@@ -70,7 +72,9 @@ export default function VoteScreen() {
             setBatchExhausted(true);
           }
         }
-      } catch (err) { console.warn('[VoteScreen] Failed to restore vote count:', err); }
+      } catch (err) {
+        console.warn('[VoteScreen] Failed to restore vote count:', err);
+      }
     })();
   }, [todayWord, hasSubmitted, session]);
 
@@ -139,10 +143,7 @@ export default function VoteScreen() {
   // Animate vote count bump
   useEffect(() => {
     if (voteCount > 0) {
-      voteCountScale.value = withSequence(
-        withTiming(1.15, { duration: 100 }),
-        withTiming(1, { duration: 100 })
-      );
+      voteCountScale.value = withSequence(withTiming(1.15, { duration: 100 }), withTiming(1, { duration: 100 }));
     }
   }, [voteCount]);
 
@@ -228,14 +229,15 @@ export default function VoteScreen() {
   async function handleReport(descriptionId: string) {
     if (voting) return;
 
-    const ok = Platform.OS === 'web'
-      ? window.confirm(`${t('vote.report_title')}\n\n${t('vote.report_message')}`)
-      : await new Promise<boolean>((resolve) => {
-          Alert.alert(t('vote.report_title'), t('vote.report_message'), [
-            { text: t('vote.report_cancel'), style: 'cancel', onPress: () => resolve(false) },
-            { text: t('vote.report_confirm'), style: 'destructive', onPress: () => resolve(true) },
-          ]);
-        });
+    const ok =
+      Platform.OS === 'web'
+        ? window.confirm(`${t('vote.report_title')}\n\n${t('vote.report_message')}`)
+        : await new Promise<boolean>((resolve) => {
+            Alert.alert(t('vote.report_title'), t('vote.report_message'), [
+              { text: t('vote.report_cancel'), style: 'cancel', onPress: () => resolve(false) },
+              { text: t('vote.report_confirm'), style: 'destructive', onPress: () => resolve(true) },
+            ]);
+          });
 
     if (ok) {
       const { error } = await reportDescription(descriptionId);
@@ -257,7 +259,8 @@ export default function VoteScreen() {
     transform: [
       { translateX: card1TranslateX.value },
       { scale: card1Scale.value },
-    ],
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ] as any,
     opacity: card1Opacity.value,
   }));
 
@@ -265,7 +268,8 @@ export default function VoteScreen() {
     transform: [
       { translateX: card2TranslateX.value },
       { scale: card2Scale.value },
-    ],
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ] as any,
     opacity: card2Opacity.value,
   }));
 
@@ -316,14 +320,15 @@ export default function VoteScreen() {
         <View style={[styles.center, { backgroundColor: colors.background }]}>
           <Text style={styles.lockIcon}>{'\uD83D\uDD12'}</Text>
           {todayWord && <WordDisplay word={todayWord.word} category={todayWord.category} />}
-          <Text style={[styles.lockedMessage, { color: colors.textSecondary }]}>
-            {t('vote.locked_message')}
-          </Text>
+          <Text style={[styles.lockedMessage, { color: colors.textSecondary }]}>{t('vote.locked_message')}</Text>
         </View>
         <View style={styles.actions}>
           <Button
             title={t('vote.go_to_today')}
-            onPress={() => { haptic.medium(); router.replace('/'); }}
+            onPress={() => {
+              haptic.medium();
+              router.replace('/');
+            }}
           />
         </View>
       </View>
@@ -347,29 +352,35 @@ export default function VoteScreen() {
       );
     }
 
-    const votedText1 = voteCount === 1
-      ? t('vote.voted_on', { count: voteCount })
-      : t('vote.voted_on_plural', { count: voteCount });
+    const votedText1 =
+      voteCount === 1 ? t('vote.voted_on', { count: voteCount }) : t('vote.voted_on_plural', { count: voteCount });
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <ThemeToggle />
         <View style={[styles.center, { backgroundColor: colors.background }]}>
           <Animated.Text style={[styles.doneEmoji, doneEmojiStyle]}>{'\u2705'}</Animated.Text>
           <Animated.View style={doneTextStyle}>
-            <Text style={[styles.doneTitle, { color: colors.text }]}>
-              {t('vote.all_caught_up')}
-            </Text>
-            <Text style={[styles.doneSubtitle, { color: colors.textSecondary }]}>
-              {votedText1}
-            </Text>
-            <Text style={[styles.doneHint, { color: colors.textMuted }]}>
-              {t('vote.all_caught_up_subtitle')}
-            </Text>
+            <Text style={[styles.doneTitle, { color: colors.text }]}>{t('vote.all_caught_up')}</Text>
+            <Text style={[styles.doneSubtitle, { color: colors.textSecondary }]}>{votedText1}</Text>
+            <Text style={[styles.doneHint, { color: colors.textMuted }]}>{t('vote.all_caught_up_subtitle')}</Text>
           </Animated.View>
         </View>
         <View style={styles.actions}>
-          <Button title={t('vote.see_results')} onPress={() => { haptic.medium(); router.replace('/results'); }} />
-          <Button title={t('vote.back_home')} onPress={() => { haptic.medium(); router.replace('/'); }} variant="outline" />
+          <Button
+            title={t('vote.see_results')}
+            onPress={() => {
+              haptic.medium();
+              router.replace('/results');
+            }}
+          />
+          <Button
+            title={t('vote.back_home')}
+            onPress={() => {
+              haptic.medium();
+              router.replace('/');
+            }}
+            variant="outline"
+          />
         </View>
       </View>
     );
@@ -377,29 +388,35 @@ export default function VoteScreen() {
 
   // "Batch limit reached" screen — more pairs may exist, come back later
   if (batchExhausted) {
-    const votedText = voteCount === 1
-      ? t('vote.voted_on', { count: voteCount })
-      : t('vote.voted_on_plural', { count: voteCount });
+    const votedText =
+      voteCount === 1 ? t('vote.voted_on', { count: voteCount }) : t('vote.voted_on_plural', { count: voteCount });
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <ThemeToggle />
         <View style={[styles.center, { backgroundColor: colors.background }]}>
           <Animated.Text style={[styles.doneEmoji, doneEmojiStyle]}>{'\uD83C\uDF1F'}</Animated.Text>
           <Animated.View style={doneTextStyle}>
-            <Text style={[styles.doneTitle, { color: colors.text }]}>
-              {t('vote.batch_done')}
-            </Text>
-            <Text style={[styles.doneSubtitle, { color: colors.textSecondary }]}>
-              {votedText}
-            </Text>
-            <Text style={[styles.doneHint, { color: colors.textMuted }]}>
-              {t('vote.batch_done_subtitle')}
-            </Text>
+            <Text style={[styles.doneTitle, { color: colors.text }]}>{t('vote.batch_done')}</Text>
+            <Text style={[styles.doneSubtitle, { color: colors.textSecondary }]}>{votedText}</Text>
+            <Text style={[styles.doneHint, { color: colors.textMuted }]}>{t('vote.batch_done_subtitle')}</Text>
           </Animated.View>
         </View>
         <View style={styles.actions}>
-          <Button title={t('vote.see_results')} onPress={() => { haptic.medium(); router.replace('/results'); }} />
-          <Button title={t('vote.back_home')} onPress={() => { haptic.medium(); router.replace('/'); }} variant="outline" />
+          <Button
+            title={t('vote.see_results')}
+            onPress={() => {
+              haptic.medium();
+              router.replace('/results');
+            }}
+          />
+          <Button
+            title={t('vote.back_home')}
+            onPress={() => {
+              haptic.medium();
+              router.replace('/');
+            }}
+            variant="outline"
+          />
         </View>
       </View>
     );
@@ -444,7 +461,10 @@ export default function VoteScreen() {
                 <TouchableOpacity
                   style={[
                     styles.card,
-                    { backgroundColor: colors.surface, borderColor: selectedCard === 1 ? colors.primary : colors.border },
+                    {
+                      backgroundColor: colors.surface,
+                      borderColor: selectedCard === 1 ? colors.primary : colors.border,
+                    },
                     selectedCard === 1 && { backgroundColor: withOpacity(colors.primary, 0.06) },
                   ]}
                   onPress={() => handleVote(pair.desc1_id, pair.desc2_id, true)}
@@ -453,7 +473,8 @@ export default function VoteScreen() {
                 >
                   <Text style={[styles.cardText, { color: colors.text }]}>{pair.desc1_text}</Text>
                   <Text style={[styles.cardAuthor, { color: colors.textMuted }]}>
-                    @{pair.desc1_username}{pair.desc1_badge_emoji ? ` ${pair.desc1_badge_emoji}` : ''}
+                    @{pair.desc1_username}
+                    {pair.desc1_badge_emoji ? ` ${pair.desc1_badge_emoji}` : ''}
                   </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
@@ -471,7 +492,7 @@ export default function VoteScreen() {
               )}
             </View>
 
-            <Animated.Text style={[styles.vs, { color: colors.textMuted }, vsStyle]}>VS</Animated.Text>
+            <Animated.Text style={[styles.vs, { color: colors.textMuted }, vsStyle]}>{t('vote.vs')}</Animated.Text>
 
             {/* Card 2 */}
             <View>
@@ -479,7 +500,10 @@ export default function VoteScreen() {
                 <TouchableOpacity
                   style={[
                     styles.card,
-                    { backgroundColor: colors.surface, borderColor: selectedCard === 2 ? colors.primary : colors.border },
+                    {
+                      backgroundColor: colors.surface,
+                      borderColor: selectedCard === 2 ? colors.primary : colors.border,
+                    },
                     selectedCard === 2 && { backgroundColor: withOpacity(colors.primary, 0.06) },
                   ]}
                   onPress={() => handleVote(pair.desc2_id, pair.desc1_id, false)}
@@ -488,7 +512,8 @@ export default function VoteScreen() {
                 >
                   <Text style={[styles.cardText, { color: colors.text }]}>{pair.desc2_text}</Text>
                   <Text style={[styles.cardAuthor, { color: colors.textMuted }]}>
-                    @{pair.desc2_username}{pair.desc2_badge_emoji ? ` ${pair.desc2_badge_emoji}` : ''}
+                    @{pair.desc2_username}
+                    {pair.desc2_badge_emoji ? ` ${pair.desc2_badge_emoji}` : ''}
                   </Text>
                 </TouchableOpacity>
                 <TouchableOpacity

@@ -4,13 +4,13 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import NetInfo from '@react-native-community/netinfo';
 import { supabase } from '../lib/supabase';
 import { checkProfanity } from '../lib/profanityFilter';
+import i18n from '../lib/i18n';
 import { withTimeout } from '../lib/withTimeout';
 import { rateLimits } from '../lib/rateLimit';
 import { getGameDate, hasWordRolledOver } from '../lib/gameDate';
 import { DESCRIPTION_WORD_COUNT, LEADERBOARD_LIMIT } from '../constants/app';
 import { cacheData, getCachedData, CACHE_KEYS } from '../lib/cache';
 import { useAuthContext } from './AuthContext';
-import { getCurrentBadge } from '../lib/badges';
 import type { DailyWord, VotePair, LeaderboardEntry, YesterdayWinner, WeeklyRecap } from '../types/database';
 
 const PENDING_DESCRIPTION_KEY = 'pending_description';
@@ -62,7 +62,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
               .select('description')
               .eq('user_id', userId)
               .eq('word_id', data[0].id)
-              .single()
+              .single(),
           );
           if (desc) {
             setHasSubmitted(true);
@@ -195,77 +195,87 @@ export function GameProvider({ children }: { children: ReactNode }) {
     return () => unsubscribe();
   }, [userId, refreshProfile]);
 
-  const submitDescription = useCallback(async (description: string) => {
-    if (!todayWord || !userId) return { error: new Error('Not ready') };
-    if (!rateLimits.submit()) {
-      return { error: new Error('Submitting too fast. Please wait a moment.') };
-    }
-
-    const words = description.trim().split(/\s+/).filter(Boolean);
-    if (words.length !== DESCRIPTION_WORD_COUNT) {
-      return { error: new Error('Your description must be exactly 5 words.') };
-    }
-
-    // Each word must contain at least one letter and no repeated char spam (e.g. "aaaa")
-    for (const w of words) {
-      if (!/[a-zA-ZÀ-ÿ]/.test(w)) {
-        return { error: new Error('Each word must contain at least one letter.') };
-      }
-      if (/^(.)\1+$/.test(w)) {
-        return { error: new Error('Please use real words in your description.') };
-      }
-    }
-
-    const profanityCheck = checkProfanity(description);
-    if (!profanityCheck.clean) {
-      return { error: new Error('Your description contains inappropriate language. Please try again.') };
-    }
-
-    const cleaned = words.join(' ');
-
-    const oldStreak = authProfile?.current_streak ?? 0;
-
-    // IMMEDIATELY save locally before attempting network request
-    await AsyncStorage.setItem(PENDING_DESCRIPTION_KEY, JSON.stringify({
-      description: cleaned,
-      wordId: todayWord.id,
-      timestamp: Date.now(),
-    }));
-    setHasPendingDescription(true);
-
-    try {
-      const { error } = await withTimeout(supabase.from('descriptions').insert({
-        user_id: userId,
-        word_id: todayWord.id,
-        description: cleaned,
-      }));
-
-      if (!error) {
-        // Success — clear the pending description
-        await AsyncStorage.removeItem(PENDING_DESCRIPTION_KEY);
-        setHasPendingDescription(false);
-        setHasSubmitted(true);
-        setUserDescription(cleaned);
-        await cacheData(CACHE_KEYS.MY_DESCRIPTION, cleaned);
-        await withTimeout(supabase.rpc('update_streak', { p_user_id: userId }));
-        // Refresh profile so badge fields + streak are up to date
-        await refreshProfile();
+  const submitDescription = useCallback(
+    async (description: string) => {
+      if (!todayWord || !userId) return { error: new Error('Not ready') };
+      if (!rateLimits.submit()) {
+        return { error: new Error('Submitting too fast. Please wait a moment.') };
       }
 
-      return { error, oldStreak };
-    } catch (err) {
-      // Network failed — description is safely stored locally
-      // Return a special 'pending' state — not a hard error since data is saved
-      return { error: err instanceof Error ? err : new Error('Network error. Please try again.'), oldStreak };
-    }
-  }, [todayWord, userId, authProfile?.current_streak, refreshProfile]);
+      const words = description.trim().split(/\s+/).filter(Boolean);
+      if (words.length !== DESCRIPTION_WORD_COUNT) {
+        return { error: new Error('Your description must be exactly 5 words.') };
+      }
+
+      // Each word must contain at least one letter and no repeated char spam (e.g. "aaaa")
+      for (const w of words) {
+        if (!/[a-zA-ZÀ-ÿ]/.test(w)) {
+          return { error: new Error('Each word must contain at least one letter.') };
+        }
+        if (/^(.)\1+$/.test(w)) {
+          return { error: new Error('Please use real words in your description.') };
+        }
+      }
+
+      const profanityCheck = checkProfanity(description);
+      if (!profanityCheck.clean) {
+        return { error: new Error(i18n.t('errors.profanity', { word: profanityCheck.flaggedWord })) };
+      }
+
+      const cleaned = words.join(' ');
+
+      const oldStreak = authProfile?.current_streak ?? 0;
+
+      // IMMEDIATELY save locally before attempting network request
+      await AsyncStorage.setItem(
+        PENDING_DESCRIPTION_KEY,
+        JSON.stringify({
+          description: cleaned,
+          wordId: todayWord.id,
+          timestamp: Date.now(),
+        }),
+      );
+      setHasPendingDescription(true);
+
+      try {
+        const { error } = await withTimeout(
+          supabase.from('descriptions').insert({
+            user_id: userId,
+            word_id: todayWord.id,
+            description: cleaned,
+          }),
+        );
+
+        if (!error) {
+          // Success — clear the pending description
+          await AsyncStorage.removeItem(PENDING_DESCRIPTION_KEY);
+          setHasPendingDescription(false);
+          setHasSubmitted(true);
+          setUserDescription(cleaned);
+          await cacheData(CACHE_KEYS.MY_DESCRIPTION, cleaned);
+          await withTimeout(supabase.rpc('update_streak', { p_user_id: userId }));
+          // Refresh profile so badge fields + streak are up to date
+          await refreshProfile();
+        }
+
+        return { error, oldStreak };
+      } catch (err) {
+        // Network failed — description is safely stored locally
+        // Return a special 'pending' state — not a hard error since data is saved
+        return { error: err instanceof Error ? err : new Error('Network error. Please try again.'), oldStreak };
+      }
+    },
+    [todayWord, userId, authProfile?.current_streak, refreshProfile],
+  );
 
   const getVotePair = useCallback(async (): Promise<VotePair | null> => {
     if (!todayWord || !userId) return null;
-    const { data, error } = await withTimeout(supabase.rpc('get_vote_pair', {
-      p_word_id: todayWord.id,
-      p_voter_id: userId,
-    }));
+    const { data, error } = await withTimeout(
+      supabase.rpc('get_vote_pair', {
+        p_word_id: todayWord.id,
+        p_voter_id: userId,
+      }),
+    );
     if (error) {
       throw error;
     }
@@ -275,31 +285,38 @@ export function GameProvider({ children }: { children: ReactNode }) {
     return null;
   }, [todayWord, userId]);
 
-  const submitVote = useCallback(async (winnerId: string, loserId: string) => {
-    if (!todayWord || !userId) return { error: new Error('Not ready') };
-    if (!rateLimits.vote()) {
-      return { error: new Error('Voting too fast. Please slow down.') };
-    }
-    try {
-      const { error } = await withTimeout(supabase.rpc('submit_vote', {
-        p_voter_id: userId,
-        p_word_id: todayWord.id,
-        p_winner_id: winnerId,
-        p_loser_id: loserId,
-      }));
-      return { error };
-    } catch (err) {
-      return { error: err instanceof Error ? err : new Error('Network error. Please try again.') };
-    }
-  }, [todayWord, userId]);
+  const submitVote = useCallback(
+    async (winnerId: string, loserId: string) => {
+      if (!todayWord || !userId) return { error: new Error('Not ready') };
+      if (!rateLimits.vote()) {
+        return { error: new Error('Voting too fast. Please slow down.') };
+      }
+      try {
+        const { error } = await withTimeout(
+          supabase.rpc('submit_vote', {
+            p_voter_id: userId,
+            p_word_id: todayWord.id,
+            p_winner_id: winnerId,
+            p_loser_id: loserId,
+          }),
+        );
+        return { error };
+      } catch (err) {
+        return { error: err instanceof Error ? err : new Error('Network error. Please try again.') };
+      }
+    },
+    [todayWord, userId],
+  );
 
   const getLeaderboard = useCallback(async (): Promise<LeaderboardEntry[]> => {
     if (!todayWord) return [];
     try {
-      const { data, error } = await withTimeout(supabase.rpc('get_leaderboard', {
-        p_word_id: todayWord.id,
-        p_limit: LEADERBOARD_LIMIT,
-      }));
+      const { data, error } = await withTimeout(
+        supabase.rpc('get_leaderboard', {
+          p_word_id: todayWord.id,
+          p_limit: LEADERBOARD_LIMIT,
+        }),
+      );
       if (error) throw error;
       const results = data ?? [];
       // Cache results for offline viewing
@@ -315,30 +332,37 @@ export function GameProvider({ children }: { children: ReactNode }) {
     }
   }, [todayWord]);
 
-  const reportDescription = useCallback(async (descriptionId: string) => {
-    if (!todayWord || !userId) return { error: new Error('Not ready') };
-    if (!rateLimits.report()) {
-      return { error: new Error('Too many reports. Please wait a moment.') };
-    }
-    try {
-      const { error } = await withTimeout(supabase.rpc('submit_report', {
-        p_reporter_id: userId,
-        p_description_id: descriptionId,
-        p_word_id: todayWord.id,
-      }));
-      return { error };
-    } catch (err) {
-      return { error: err instanceof Error ? err : new Error('Network error. Please try again.') };
-    }
-  }, [todayWord, userId]);
+  const reportDescription = useCallback(
+    async (descriptionId: string) => {
+      if (!todayWord || !userId) return { error: new Error('Not ready') };
+      if (!rateLimits.report()) {
+        return { error: new Error('Too many reports. Please wait a moment.') };
+      }
+      try {
+        const { error } = await withTimeout(
+          supabase.rpc('submit_report', {
+            p_reporter_id: userId,
+            p_description_id: descriptionId,
+            p_word_id: todayWord.id,
+          }),
+        );
+        return { error };
+      } catch (err) {
+        return { error: err instanceof Error ? err : new Error('Network error. Please try again.') };
+      }
+    },
+    [todayWord, userId],
+  );
 
   const getYesterdayWinner = useCallback(async (): Promise<YesterdayWinner | null> => {
     if (!userId) return null;
     try {
-      const { data, error } = await withTimeout(supabase.rpc('get_yesterday_winner', {
-        p_user_id: userId,
-        p_language: language,
-      }));
+      const { data, error } = await withTimeout(
+        supabase.rpc('get_yesterday_winner', {
+          p_user_id: userId,
+          p_language: language,
+        }),
+      );
       if (error) throw error;
       if (__DEV__) {
         console.log('[getYesterdayWinner] language:', language, 'data:', JSON.stringify(data));
@@ -356,10 +380,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const getWeeklyRecap = useCallback(async (): Promise<WeeklyRecap | null> => {
     if (!userId) return null;
     try {
-      const { data, error } = await withTimeout(supabase.rpc('get_weekly_recap', {
-        p_user_id: userId,
-        p_language: language,
-      }));
+      const { data, error } = await withTimeout(
+        supabase.rpc('get_weekly_recap', {
+          p_user_id: userId,
+          p_language: language,
+        }),
+      );
       if (error) throw error;
       if (data && data.length > 0 && data[0].days_played > 0) {
         return data[0];
@@ -371,28 +397,42 @@ export function GameProvider({ children }: { children: ReactNode }) {
     }
   }, [userId, language]);
 
-  const value = useMemo(() => ({
-    todayWord,
-    hasSubmitted,
-    userDescription,
-    loading,
-    loadError,
-    hasPendingDescription,
-    submitDescription,
-    getVotePair,
-    submitVote,
-    getLeaderboard,
-    reportDescription,
-    getYesterdayWinner,
-    getWeeklyRecap,
-    refresh: fetchTodayWord,
-  }), [todayWord, hasSubmitted, userDescription, loading, loadError, hasPendingDescription, submitDescription, getVotePair, submitVote, getLeaderboard, reportDescription, getYesterdayWinner, getWeeklyRecap, fetchTodayWord]);
-
-  return (
-    <GameContext.Provider value={value}>
-      {children}
-    </GameContext.Provider>
+  const value = useMemo(
+    () => ({
+      todayWord,
+      hasSubmitted,
+      userDescription,
+      loading,
+      loadError,
+      hasPendingDescription,
+      submitDescription,
+      getVotePair,
+      submitVote,
+      getLeaderboard,
+      reportDescription,
+      getYesterdayWinner,
+      getWeeklyRecap,
+      refresh: fetchTodayWord,
+    }),
+    [
+      todayWord,
+      hasSubmitted,
+      userDescription,
+      loading,
+      loadError,
+      hasPendingDescription,
+      submitDescription,
+      getVotePair,
+      submitVote,
+      getLeaderboard,
+      reportDescription,
+      getYesterdayWinner,
+      getWeeklyRecap,
+      fetchTodayWord,
+    ],
   );
+
+  return <GameContext.Provider value={value}>{children}</GameContext.Provider>;
 }
 
 export function useGameContext() {

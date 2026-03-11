@@ -37,7 +37,8 @@ export function LeaderboardRow({ rank, username, description, votes, isCurrentUs
       <View style={styles.content}>
         <Text style={[styles.description, { color: colors.text }]}>{description}</Text>
         <Text style={[styles.username, { color: colors.textMuted }]}>
-          @{username}{badgeEmoji ? ` ${badgeEmoji}` : ''}
+          @{username}
+          {badgeEmoji ? ` ${badgeEmoji}` : ''}
         </Text>
       </View>
       <View style={styles.votesContainer}>

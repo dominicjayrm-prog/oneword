@@ -8,7 +8,10 @@ export function ThemeToggle() {
 
   return (
     <TouchableOpacity
-      onPress={() => { haptic.light(); toggleTheme(); }}
+      onPress={() => {
+        haptic.light();
+        toggleTheme();
+      }}
       style={[styles.toggle, { backgroundColor: colors.surface, borderColor: colors.border }]}
       activeOpacity={0.7}
     >

@@ -45,9 +45,7 @@ export function BadgeProgress({ streak }: BadgeProgressProps) {
     const daysLeft = next.streak - streak;
     return (
       <View style={[styles.container, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-        <Text style={[styles.nextLabel, { color: colors.textSecondary }]}>
-          {t('badges.next_milestone')}
-        </Text>
+        <Text style={[styles.nextLabel, { color: colors.textSecondary }]}>{t('badges.next_milestone')}</Text>
         <Text style={[styles.nextBadge, { color: colors.text }]}>
           {next.emoji} {next.name} — {t('badges.days_to_go', { count: daysLeft })}
         </Text>

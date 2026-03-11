@@ -16,12 +16,8 @@ export function ErrorState({ title, message, onRetry }: Props) {
   return (
     <View style={styles.container}>
       <Text style={styles.emoji}>{'\uD83D\uDE05'}</Text>
-      <Text style={[styles.title, { color: colors.text }]}>
-        {title || t('errors.generic')}
-      </Text>
-      {message && (
-        <Text style={[styles.message, { color: colors.textSecondary }]}>{message}</Text>
-      )}
+      <Text style={[styles.title, { color: colors.text }]}>{title || t('errors.generic')}</Text>
+      {message && <Text style={[styles.message, { color: colors.textSecondary }]}>{message}</Text>}
       <TouchableOpacity
         style={[styles.button, { backgroundColor: colors.primary }]}
         onPress={onRetry}

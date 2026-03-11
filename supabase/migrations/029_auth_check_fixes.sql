@@ -190,3 +190,119 @@ BEGIN
   RETURN (SELECT COUNT(*)::INTEGER FROM votes WHERE voter_id = p_user_id AND word_id = p_word_id);
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- #5: Add auth.uid() checks to friend-related SECURITY DEFINER functions.
+-- Any authenticated user could enumerate another user's friends, pending
+-- requests, and friends' descriptions by passing an arbitrary user ID.
+
+DROP FUNCTION IF EXISTS get_friends(UUID);
+
+CREATE FUNCTION get_friends(p_user_id UUID)
+RETURNS TABLE(
+  friendship_id UUID,
+  friend_id UUID,
+  friend_username TEXT,
+  friend_avatar_url TEXT,
+  friend_current_streak INTEGER,
+  friend_badge_emoji TEXT,
+  status TEXT
+) AS $$
+BEGIN
+  IF auth.uid() != p_user_id THEN
+    RAISE EXCEPTION 'Forbidden: cannot read another user''s friends';
+  END IF;
+
+  RETURN QUERY
+  SELECT
+    f.id AS friendship_id,
+    CASE WHEN f.requester_id = p_user_id THEN f.addressee_id ELSE f.requester_id END AS friend_id,
+    p.username AS friend_username,
+    p.avatar_url AS friend_avatar_url,
+    p.current_streak AS friend_current_streak,
+    p.streak_badge_emoji AS friend_badge_emoji,
+    f.status
+  FROM friendships f
+  JOIN profiles p ON p.id = CASE WHEN f.requester_id = p_user_id THEN f.addressee_id ELSE f.requester_id END
+  WHERE (f.requester_id = p_user_id OR f.addressee_id = p_user_id)
+  AND f.status = 'accepted'
+  ORDER BY p.username;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE OR REPLACE FUNCTION get_pending_requests(p_user_id UUID)
+RETURNS TABLE(
+  friendship_id UUID,
+  requester_id UUID,
+  requester_username TEXT,
+  requester_avatar_url TEXT,
+  created_at TIMESTAMPTZ
+) AS $$
+BEGIN
+  IF auth.uid() != p_user_id THEN
+    RAISE EXCEPTION 'Forbidden: cannot read another user''s friend requests';
+  END IF;
+
+  RETURN QUERY
+  SELECT f.id, f.requester_id, p.username, p.avatar_url, f.created_at
+  FROM friendships f
+  JOIN profiles p ON p.id = f.requester_id
+  WHERE f.addressee_id = p_user_id AND f.status = 'pending'
+  ORDER BY f.created_at DESC;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE OR REPLACE FUNCTION get_friends_descriptions(p_user_id UUID, p_word_id UUID)
+RETURNS TABLE(
+  friend_id UUID,
+  friend_username TEXT,
+  friend_avatar_url TEXT,
+  description_text TEXT,
+  vote_count INTEGER,
+  elo_rating DECIMAL,
+  friend_streak INTEGER,
+  has_played BOOLEAN
+) AS $$
+BEGIN
+  IF auth.uid() != p_user_id THEN
+    RAISE EXCEPTION 'Forbidden: cannot read another user''s friends descriptions';
+  END IF;
+
+  -- Check if user has submitted their own description
+  IF NOT EXISTS (
+    SELECT 1 FROM descriptions WHERE user_id = p_user_id AND word_id = p_word_id
+  ) THEN
+    RETURN QUERY
+    SELECT
+      CASE WHEN f.requester_id = p_user_id THEN f.addressee_id ELSE f.requester_id END,
+      p.username,
+      p.avatar_url,
+      NULL::TEXT,
+      NULL::INTEGER,
+      NULL::DECIMAL,
+      p.current_streak,
+      FALSE
+    FROM friendships f
+    JOIN profiles p ON p.id = CASE WHEN f.requester_id = p_user_id THEN f.addressee_id ELSE f.requester_id END
+    WHERE (f.requester_id = p_user_id OR f.addressee_id = p_user_id)
+    AND f.status = 'accepted';
+    RETURN;
+  END IF;
+
+  RETURN QUERY
+  SELECT
+    p.id,
+    p.username,
+    p.avatar_url,
+    d.description,
+    d.vote_count,
+    d.elo_rating,
+    p.current_streak,
+    TRUE
+  FROM friendships f
+  JOIN profiles p ON p.id = CASE WHEN f.requester_id = p_user_id THEN f.addressee_id ELSE f.requester_id END
+  LEFT JOIN descriptions d ON d.user_id = p.id AND d.word_id = p_word_id
+  WHERE (f.requester_id = p_user_id OR f.addressee_id = p_user_id)
+  AND f.status = 'accepted'
+  ORDER BY d.elo_rating DESC NULLS LAST;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;

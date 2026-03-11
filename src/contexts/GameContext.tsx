@@ -50,13 +50,14 @@ export function GameProvider({ children }: { children: ReactNode }) {
     setLoading(true);
     setLoadError(false);
     try {
-      const { data } = await withTimeout(supabase.rpc('get_today_word', { p_language: language }));
+      const { data, error } = await withTimeout(supabase.rpc('get_today_word', { p_language: language }));
+      if (error) throw error;
       if (data && data.length > 0) {
         setTodayWord(data[0]);
         // Cache today's word for offline use
         await cacheData(CACHE_KEYS.TODAY_WORD, data[0]);
         if (userId) {
-          const { data: desc } = await withTimeout(
+          const { data: desc, error: descError } = await withTimeout(
             supabase
               .from('descriptions')
               .select('description')
@@ -64,6 +65,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
               .eq('word_id', data[0].id)
               .single(),
           );
+          if (descError && descError.code !== 'PGRST116') throw descError;
           if (desc) {
             setHasSubmitted(true);
             setUserDescription(desc.description);
@@ -167,6 +169,13 @@ export function GameProvider({ children }: { children: ReactNode }) {
           return;
         }
 
+        // Don't submit if the game day has rolled over — the word has changed
+        if (todayWord && wordId !== todayWord.id) {
+          await AsyncStorage.removeItem(PENDING_DESCRIPTION_KEY);
+          setHasPendingDescription(false);
+          return;
+        }
+
         const { error } = await supabase.from('descriptions').insert({
           user_id: userId,
           word_id: wordId,
@@ -193,7 +202,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     });
 
     return () => unsubscribe();
-  }, [userId, refreshProfile]);
+  }, [userId, todayWord, refreshProfile]);
 
   const submitDescription = useCallback(
     async (description: string) => {

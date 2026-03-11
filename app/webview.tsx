@@ -22,11 +22,45 @@ const INJECTED_JS = `
 })();
 `;
 
+const ALLOWED_HOSTS = ['playoneword.app', 'www.playoneword.app'];
+
+function isAllowedUrl(urlStr: string | undefined): boolean {
+  if (!urlStr) return false;
+  try {
+    const parsed = new URL(urlStr);
+    return parsed.protocol === 'https:' && ALLOWED_HOSTS.includes(parsed.hostname);
+  } catch {
+    return false;
+  }
+}
+
 export default function WebViewScreen() {
   const { url, title } = useLocalSearchParams<{ url: string; title: string }>();
   const router = useRouter();
   const { colors } = useTheme();
   const [loading, setLoading] = useState(true);
+  const safeUrl = isAllowedUrl(url) ? url : undefined;
+
+  if (!safeUrl) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+        <View style={[styles.header, { borderBottomColor: colors.border }]}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+            <Text style={[styles.backText, { color: colors.primary }]}>{'\u2190'} Back</Text>
+          </TouchableOpacity>
+          <Text style={[styles.title, { color: colors.text }]} numberOfLines={1}>
+            {title || ''}
+          </Text>
+          <View style={styles.backButton} />
+        </View>
+        <View style={styles.webFallback}>
+          <Text style={[styles.webFallbackText, { color: colors.textSecondary }]}>
+            This link cannot be opened in-app.
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   if (Platform.OS === 'web') {
     return (
@@ -42,7 +76,7 @@ export default function WebViewScreen() {
         </View>
         <View style={styles.webFallback}>
           <Text style={[styles.webFallbackText, { color: colors.textSecondary }]}>
-            Visit: <Text style={{ color: colors.primary }}>{url}</Text>
+            Visit: <Text style={{ color: colors.primary }}>{safeUrl}</Text>
           </Text>
         </View>
       </SafeAreaView>
@@ -67,7 +101,7 @@ export default function WebViewScreen() {
       )}
       {WebView && (
         <WebView
-          source={{ uri: url || '' }}
+          source={{ uri: safeUrl }}
           style={styles.webview}
           onLoadEnd={() => setLoading(false)}
           injectedJavaScript={INJECTED_JS}

@@ -35,11 +35,11 @@ export default function GameLayout() {
     if (!session?.user?.id) return;
     getPendingRequests(session.user.id).then((requests) => {
       setPendingCount(requests.length);
-    });
+    }).catch(() => {});
     const interval = setInterval(() => {
       getPendingRequests(session.user.id).then((requests) => {
         setPendingCount(requests.length);
-      });
+      }).catch(() => {});
     }, 30000);
     return () => clearInterval(interval);
   }, [session?.user?.id]);

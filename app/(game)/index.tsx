@@ -262,8 +262,13 @@ export default function HomeScreen() {
     try {
       const { error, oldStreak } = await submitDescription(input);
       if (error) {
-        // If the description was saved locally (pending), show a warning instead of error
-        if (hasPendingDescription) {
+        // If this was a network error and the description was saved locally, show info toast
+        const isNetworkError = hasPendingDescription && (
+          error.message.includes('Network') ||
+          error.message.includes('timed out') ||
+          error.message.includes('fetch')
+        );
+        if (isNetworkError) {
           haptic.warning();
           showToast(t('offline.description_saved') + ' ' + t('offline.will_submit_when_online'), 'info');
         } else {
@@ -312,8 +317,10 @@ export default function HomeScreen() {
           if (!milestones.includes(newBadge.streak)) {
             // Delay celebration 500ms after "locked in" appears
             setTimeout(() => {
-              setCelebrationStreak(newStreak);
-              setCelebrationBadge(newBadge);
+              if (mountedRef.current) {
+                setCelebrationStreak(newStreak);
+                setCelebrationBadge(newBadge);
+              }
             }, 500);
             await supabase.rpc('add_milestone_shown', {
               p_user_id: auth.session.user.id,
@@ -330,7 +337,9 @@ export default function HomeScreen() {
         if (Platform.OS !== 'web' && !auth.profile?.notifications_enabled) {
           const shouldShow = await shouldShowNotificationPrompt();
           if (shouldShow) {
-            setTimeout(() => setShowNotifPrompt(true), 1500);
+            setTimeout(() => {
+              if (mountedRef.current) setShowNotifPrompt(true);
+            }, 1500);
           }
         }
       }

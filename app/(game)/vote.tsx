@@ -45,7 +45,8 @@ export default function VoteScreen() {
   const [voting, setVoting] = useState(false);
   const [loadError, setLoadError] = useState(false);
   const [selectedCard, setSelectedCard] = useState<1 | 2 | null>(null);
-  // How many pairs we've shown (persisted on server via votes table)
+  // Total pairs voted on today (restored from server + new votes this session).
+  // The batch limit is per-day across all sessions, not per-session.
   const pairsShownRef = useRef(0);
 
   const mountedRef = useRef(true);
@@ -213,7 +214,7 @@ export default function VoteScreen() {
     await new Promise((r) => setTimeout(r, 300));
     if (!mountedRef.current) return;
 
-    // After VOTE_BATCH_SIZE pairs this session, take a break.
+    // After VOTE_BATCH_SIZE total pairs today (across all sessions), take a break.
     // User can revisit the tab later when new descriptions come in.
     if (pairsShownRef.current >= VOTE_BATCH_SIZE) {
       haptic.success();

@@ -15,7 +15,7 @@ export function ThemeToggle() {
       style={[styles.toggle, { backgroundColor: colors.surface, borderColor: colors.border }]}
       activeOpacity={0.7}
     >
-      <Text style={styles.icon}>{mode === 'light' ? '\u263E' : '\u2600'}</Text>
+      <Text style={[styles.icon, { color: colors.text }]}>{mode === 'light' ? '\u263E' : '\u2600'}</Text>
     </TouchableOpacity>
   );
 }

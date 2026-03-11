@@ -27,6 +27,7 @@ import { WeeklyRecapCard } from '../../src/components/WeeklyRecap';
 import { StreakCelebration } from '../../src/components/StreakCelebration';
 import { BadgePill } from '../../src/components/BadgePill';
 import { useToast } from '../../src/components/Toast';
+import { useNetwork } from '../../src/contexts/NetworkContext';
 import { fontSize, spacing, borderRadius, withOpacity } from '../../src/constants/theme';
 import { DESCRIPTION_WORD_COUNT, DESCRIPTION_MAX_LENGTH, TOAST_DURATION_MS, USERNAME_MIN_LENGTH, USERNAME_MAX_LENGTH, PASSWORD_MIN_LENGTH } from '../../src/constants/app';
 import { haptic } from '../../src/lib/haptics';
@@ -49,7 +50,8 @@ export default function HomeScreen() {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const auth = useAuthContext();
-  const { todayWord, hasSubmitted, userDescription, loading: gameLoading, loadError: gameError, submitDescription, getYesterdayWinner, getWeeklyRecap, refresh } = useGameContext();
+  const { todayWord, hasSubmitted, userDescription, loading: gameLoading, loadError: gameError, hasPendingDescription, submitDescription, getYesterdayWinner, getWeeklyRecap, refresh } = useGameContext();
+  const { isOnline } = useNetwork();
 
   const { showToast } = useToast();
 
@@ -217,7 +219,13 @@ export default function HomeScreen() {
     try {
       const { error, oldStreak } = await submitDescription(input);
       if (error) {
-        showToast(error.message, 'error');
+        // If the description was saved locally (pending), show a warning instead of error
+        if (hasPendingDescription) {
+          haptic.warning();
+          showToast(t('offline.description_saved') + ' ' + t('offline.will_submit_when_online'), 'info');
+        } else {
+          showToast(error.message, 'error');
+        }
       } else if (oldStreak !== undefined) {
         // Post-submission notification logic (non-blocking)
         if (Platform.OS !== 'web') {
@@ -403,8 +411,8 @@ export default function HomeScreen() {
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <ThemeToggle />
         <ErrorState
-          title={t('errors.load_word')}
-          message={t('errors.network_retry')}
+          title={!isOnline ? t('offline.no_connection') : t('errors.load_word')}
+          message={!isOnline ? t('offline.connect_for_word') : t('errors.network_retry')}
           onRetry={refresh}
         />
       </View>

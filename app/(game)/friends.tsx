@@ -12,7 +12,9 @@ import { FriendsList } from '../../src/components/FriendsList';
 import { AddFriendModal } from '../../src/components/AddFriendModal';
 import { LoadingSpinner } from '../../src/components/LoadingSpinner';
 import { ErrorState } from '../../src/components/ErrorState';
+import { RetryState } from '../../src/components/RetryState';
 import { useToast } from '../../src/components/Toast';
+import { useNetwork } from '../../src/contexts/NetworkContext';
 import {
   getFriends,
   getPendingRequests,
@@ -33,6 +35,7 @@ export default function FriendsScreen() {
   const { todayWord, hasSubmitted } = useGameContext();
 
   const { showToast } = useToast();
+  const { isOnline } = useNetwork();
   const userId = session?.user?.id;
 
   const [friends, setFriends] = useState<Friend[]>([]);
@@ -157,8 +160,8 @@ export default function FriendsScreen() {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <ThemeToggle />
-        <ErrorState
-          title={t('errors.load_friends')}
+        <RetryState
+          type={!isOnline ? 'offline' : 'error'}
           onRetry={loadData}
         />
       </View>

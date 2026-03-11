@@ -26,6 +26,8 @@ import { FriendsLeaderboard } from '../../src/components/FriendsLeaderboard';
 import { LoadingSpinner } from '../../src/components/LoadingSpinner';
 import { ErrorState } from '../../src/components/ErrorState';
 import { EmptyState } from '../../src/components/EmptyState';
+import { RetryState } from '../../src/components/RetryState';
+import { useNetwork } from '../../src/contexts/NetworkContext';
 import { fontSize, spacing, borderRadius } from '../../src/constants/theme';
 import { haptic } from '../../src/lib/haptics';
 import type { LeaderboardEntry } from '../../src/types/database';
@@ -37,6 +39,7 @@ export default function ResultsScreen() {
   const { profile } = useAuthContext();
   const { showToast } = useToast();
   const { todayWord, hasSubmitted, userDescription, getLeaderboard } = useGameContext();
+  const { isOnline } = useNetwork();
 
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -171,8 +174,8 @@ export default function ResultsScreen() {
           <LoadingSpinner message={t('loading.results')} />
         </View>
       ) : loadError ? (
-        <ErrorState
-          title={t('errors.load_results')}
+        <RetryState
+          type={!isOnline ? 'offline' : 'error'}
           onRetry={loadResults}
         />
       ) : leaderboard.length === 0 ? (

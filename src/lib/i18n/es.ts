@@ -347,6 +347,28 @@ export default {
     streak_risk_body: 'No has jugado hoy. No dejes que tu racha se acabe. \u23F0',
   },
 
+  // Offline
+  offline: {
+    no_connection: 'Est\u00E1s sin conexi\u00F3n',
+    check_connection: 'Revisa tu conexi\u00F3n a internet e int\u00E9ntalo de nuevo.',
+    reconnected: '\u00A1Conexi\u00F3n restaurada!',
+    something_wrong: 'Algo sali\u00F3 mal',
+    try_again: 'Intentar de Nuevo',
+    try_again_message: 'No pudimos cargar esto. Int\u00E9ntalo otra vez.',
+    description_saved: '\u00A1Descripci\u00F3n guardada!',
+    will_submit_when_online: 'La enviaremos autom\u00E1ticamente cuando vuelvas a estar en l\u00EDnea.',
+    submitted_successfully: '\u00A1Enviado!',
+    description_submitted: 'Tu descripci\u00F3n fue enviada correctamente.',
+    vote_failed: 'El voto no se registr\u00F3',
+    vote_try_again: 'Toca tu elecci\u00F3n de nuevo para reintentar.',
+    connect_for_word: 'Con\u00E9ctate a internet para ver la palabra de hoy.',
+    connect_to_vote: 'Para votar necesitas conexi\u00F3n a internet.',
+    connect_for_results: 'Con\u00E9ctate para ver los resultados de hoy.',
+    connect_for_friends: 'Vuelve cuando tengas conexi\u00F3n para ver solicitudes nuevas.',
+    last_updated: '\u00DAltima actualizaci\u00F3n {{time}}',
+    cached_results: 'Mostrando resultados guardados',
+  },
+
   // Language names
   lang: {
     en: 'English',

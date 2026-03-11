@@ -112,13 +112,14 @@ export default function HomeScreen() {
     if (interstitialStartedRef.current) return;
     interstitialStartedRef.current = true;
 
+    const userId = auth.session.user.id;
     (async () => {
       try {
         const gameDateStr = getGameDate();
 
         // Fetch server-side dismissal state (works across devices)
         const { data: dismissals } = await supabase.rpc('get_dismissals', {
-          p_user_id: auth.session!.user.id,
+          p_user_id: userId,
         });
         const d = dismissals && dismissals.length > 0 ? dismissals[0] : null;
 
@@ -164,9 +165,10 @@ export default function HomeScreen() {
 
   const dismissWeeklyRecap = useCallback(async () => {
     setShowWeeklyRecap(false);
+    if (!auth.session) return;
     try {
       await supabase.rpc('set_dismissal', {
-        p_user_id: auth.session!.user.id,
+        p_user_id: auth.session.user.id,
         p_field: 'recap_dismissed_week',
         p_value: getGameMonday(),
       });
@@ -175,9 +177,10 @@ export default function HomeScreen() {
 
   const dismissYesterdayWinner = useCallback(async () => {
     setShowYesterdayWinner(false);
+    if (!auth.session) return;
     try {
       await supabase.rpc('set_dismissal', {
-        p_user_id: auth.session!.user.id,
+        p_user_id: auth.session.user.id,
         p_field: 'winner_dismissed_date',
         p_value: getGameDate(),
       });
@@ -244,8 +247,9 @@ export default function HomeScreen() {
         const newBadge = getCurrentBadge(newStreak);
         if (newBadge && (!oldBadge || newBadge.streak !== oldBadge.streak)) {
           // Check server-side to avoid re-showing across devices
+          if (!auth.session) return;
           const { data: dismissals } = await supabase.rpc('get_dismissals', {
-            p_user_id: auth.session!.user.id,
+            p_user_id: auth.session.user.id,
           });
           const milestones = dismissals?.[0]?.milestones_shown ?? [];
           if (!milestones.includes(newBadge.streak)) {
@@ -255,7 +259,7 @@ export default function HomeScreen() {
               setCelebrationBadge(newBadge);
             }, 500);
             await supabase.rpc('add_milestone_shown', {
-              p_user_id: auth.session!.user.id,
+              p_user_id: auth.session.user.id,
               p_streak: newBadge.streak,
             });
             // Also fire a local milestone notification

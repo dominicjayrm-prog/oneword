@@ -51,7 +51,7 @@ function ToastBanner({ toast, onDismiss }: { toast: ToastMessage; onDismiss: () 
   const translateY = useRef(new Animated.Value(-80)).current;
   const opacity = useRef(new Animated.Value(0)).current;
 
-  const insets = useSafeAreaInsets?.() ?? { top: 0 };
+  const insets = useSafeAreaInsets();
   const topOffset = Platform.OS === 'web' ? 16 : Math.max(insets.top, 16);
 
   const bgColors: Record<ToastType, string> = {
@@ -61,6 +61,8 @@ function ToastBanner({ toast, onDismiss }: { toast: ToastMessage; onDismiss: () 
   };
 
   useEffect(() => {
+    let dismissed = false;
+
     Animated.parallel([
       Animated.spring(translateY, { toValue: 0, friction: 8, tension: 80, useNativeDriver: true }),
       Animated.timing(opacity, { toValue: 1, duration: 200, useNativeDriver: true }),
@@ -70,10 +72,15 @@ function ToastBanner({ toast, onDismiss }: { toast: ToastMessage; onDismiss: () 
       Animated.parallel([
         Animated.timing(translateY, { toValue: -80, duration: 250, useNativeDriver: true }),
         Animated.timing(opacity, { toValue: 0, duration: 250, useNativeDriver: true }),
-      ]).start(() => onDismiss());
+      ]).start(() => {
+        if (!dismissed) onDismiss();
+      });
     }, 3000);
 
-    return () => clearTimeout(timer);
+    return () => {
+      dismissed = true;
+      clearTimeout(timer);
+    };
   }, [onDismiss]);
 
   return (

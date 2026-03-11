@@ -68,7 +68,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // PKCE flow (Supabase v2 default): redirect has ?code=AUTH_CODE as query param
       const codeMatch = url.match(/[?&]code=([^&#]+)/);
       if (codeMatch) {
-        supabase.auth.exchangeCodeForSession(codeMatch[1]);
+        supabase.auth.exchangeCodeForSession(codeMatch[1]).catch((err) => {
+          console.error('Failed to exchange code for session:', err);
+        });
         return;
       }
 
@@ -79,7 +81,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const accessToken = params.get('access_token');
       const refreshToken = params.get('refresh_token');
       if (accessToken && refreshToken) {
-        supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
+        supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken }).catch((err) => {
+          console.error('Failed to set session from hash fragment:', err);
+        });
       }
     }
 
@@ -209,12 +213,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Exponential backoff: 200ms, 400ms, 800ms, 1600ms, 3200ms
       let existingProfile = null;
       for (let attempt = 0; attempt < PROFILE_POLL_MAX_RETRIES; attempt++) {
-        const { data: profile } = await supabase
+        const { data: profile, error: pollError } = await supabase
           .from('profiles')
           .select('id, username')
           .eq('id', data.user.id)
-          .single();
-        if (profile) {
+          .maybeSingle();
+        if (pollError) {
+          // Query failed — continue polling
+        } else if (profile) {
           existingProfile = profile;
           break;
         }

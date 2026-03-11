@@ -18,7 +18,12 @@ export function FriendRequests({ requests, onAccept, onDecline }: Props) {
   if (requests.length === 0) return null;
 
   return (
-    <View style={[styles.container, { backgroundColor: withOpacity(colors.primary, 0.06), borderColor: withOpacity(colors.primary, 0.19) }]}>
+    <View
+      style={[
+        styles.container,
+        { backgroundColor: withOpacity(colors.primary, 0.06), borderColor: withOpacity(colors.primary, 0.19) },
+      ]}
+    >
       <Text style={[styles.title, { color: colors.primary }]}>
         {t('friends.requests')} ({requests.length})
       </Text>
@@ -36,13 +41,19 @@ export function FriendRequests({ requests, onAccept, onDecline }: Props) {
           <View style={styles.actions}>
             <TouchableOpacity
               style={[styles.acceptBtn, { backgroundColor: colors.primary }]}
-              onPress={() => { haptic.success(); onAccept(req.friendship_id); }}
+              onPress={() => {
+                haptic.success();
+                onAccept(req.friendship_id);
+              }}
               activeOpacity={0.7}
             >
               <Text style={styles.acceptText}>{t('friends.accept')}</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              onPress={() => { haptic.light(); onDecline(req.friendship_id); }}
+              onPress={() => {
+                haptic.light();
+                onDecline(req.friendship_id);
+              }}
               activeOpacity={0.7}
             >
               <Text style={[styles.declineText, { color: colors.textMuted }]}>{t('friends.decline')}</Text>

@@ -13,9 +13,7 @@ export function MobileContainer({ children }: { children: ReactNode }) {
 
   return (
     <View style={[styles.outer, { backgroundColor: colors.background }]}>
-      <View style={[styles.inner, { backgroundColor: colors.background }]}>
-        {children}
-      </View>
+      <View style={[styles.inner, { backgroundColor: colors.background }]}>{children}</View>
     </View>
   );
 }

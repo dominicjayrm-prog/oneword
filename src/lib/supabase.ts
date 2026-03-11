@@ -49,7 +49,9 @@ const ExpoSecureStoreAdapter = {
       // as that stores data unencrypted. The session will still work
       // in-memory but won't survive app restart.
       if (key.includes('auth-token') || key.includes('supabase.auth')) {
-        console.warn(`Storage: refusing to store auth key "${key}" in unencrypted AsyncStorage (${value.length} bytes). Session will not persist across restarts.`);
+        console.warn(
+          `Storage: refusing to store auth key "${key}" in unencrypted AsyncStorage (${value.length} bytes). Session will not persist across restarts.`,
+        );
         return;
       }
       try {

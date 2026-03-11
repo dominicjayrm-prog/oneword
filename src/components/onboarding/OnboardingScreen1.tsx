@@ -46,7 +46,7 @@ export function OnboardingScreen1({ isActive }: Props) {
             duration: 200,
             useNativeDriver: true,
           }),
-        ])
+        ]),
       );
 
       Animated.sequence([

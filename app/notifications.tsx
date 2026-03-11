@@ -57,7 +57,9 @@ export default function NotificationsScreen() {
       try {
         const { data } = await supabase
           .from('profiles')
-          .select('notify_daily, notify_daily_time, notify_streak_risk, notify_results, notify_friend_requests, notify_friend_activity, notify_weekly_recap, notify_welcome_back')
+          .select(
+            'notify_daily, notify_daily_time, notify_streak_risk, notify_results, notify_friend_requests, notify_friend_activity, notify_weekly_recap, notify_welcome_back',
+          )
           .eq('id', session.user.id)
           .single();
         if (data) {
@@ -80,53 +82,65 @@ export default function NotificationsScreen() {
     })();
   }, [session?.user?.id]);
 
-  const saveField = useCallback(async (field: keyof NotificationPrefs, value: boolean | string) => {
-    if (!session?.user?.id) return;
-    const prevValue = prefs[field];
-    setPrefs((prev) => ({ ...prev, [field]: value }));
-    try {
-      const { error } = await supabase.from('profiles').update({ [field]: value }).eq('id', session.user.id);
-      if (error) {
-        console.warn('[NotificationsScreen] Failed to save setting:', error);
+  const saveField = useCallback(
+    async (field: keyof NotificationPrefs, value: boolean | string) => {
+      if (!session?.user?.id) return;
+      const prevValue = prefs[field];
+      setPrefs((prev) => ({ ...prev, [field]: value }));
+      try {
+        const { error } = await supabase
+          .from('profiles')
+          .update({ [field]: value })
+          .eq('id', session.user.id);
+        if (error) {
+          console.warn('[NotificationsScreen] Failed to save setting:', error);
+          setPrefs((prev) => ({ ...prev, [field]: prevValue }));
+        }
+      } catch (err) {
+        console.warn('[NotificationsScreen] Failed to save setting:', err);
         setPrefs((prev) => ({ ...prev, [field]: prevValue }));
       }
-    } catch (err) {
-      console.warn('[NotificationsScreen] Failed to save setting:', err);
-      setPrefs((prev) => ({ ...prev, [field]: prevValue }));
-    }
-  }, [session?.user?.id, prefs]);
+    },
+    [session?.user?.id, prefs],
+  );
 
-  const handleToggle = useCallback(async (field: keyof NotificationPrefs, value: boolean) => {
-    haptic.light();
-    await saveField(field, value);
+  const handleToggle = useCallback(
+    async (field: keyof NotificationPrefs, value: boolean) => {
+      haptic.light();
+      await saveField(field, value);
 
-    // Handle local scheduling for daily reminder and streak risk
-    if (field === 'notify_daily') {
-      if (value) {
-        const [h, m] = parseTimeString(prefs.notify_daily_time);
-        await scheduleDailyReminder(h, m, t('notifications.daily_title'), t('notifications.daily_body'));
-      } else {
-        await cancelDailyReminder();
+      // Handle local scheduling for daily reminder and streak risk
+      if (field === 'notify_daily') {
+        if (value) {
+          const [h, m] = parseTimeString(prefs.notify_daily_time);
+          await scheduleDailyReminder(h, m, t('notifications.daily_title'), t('notifications.daily_body'));
+        } else {
+          await cancelDailyReminder();
+        }
       }
-    }
-    if (field === 'notify_streak_risk') {
-      if (value) {
-        await scheduleStreakRisk(20, 0, t('notifications.streak_risk_title'), t('notifications.streak_risk_body'));
-      } else {
-        await cancelStreakRisk();
+      if (field === 'notify_streak_risk') {
+        if (value) {
+          await scheduleStreakRisk(20, 0, t('notifications.streak_risk_title'), t('notifications.streak_risk_body'));
+        } else {
+          await cancelStreakRisk();
+        }
       }
-    }
-  }, [prefs.notify_daily_time, saveField, t]);
+    },
+    [prefs.notify_daily_time, saveField, t],
+  );
 
-  const handleTimeSelect = useCallback(async (hour: number, minute: number) => {
-    haptic.selection();
-    const timeStr = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
-    setShowTimePicker(false);
-    await saveField('notify_daily_time', timeStr);
-    if (prefs.notify_daily) {
-      await scheduleDailyReminder(hour, minute, t('notifications.daily_title'), t('notifications.daily_body'));
-    }
-  }, [prefs.notify_daily, saveField, t]);
+  const handleTimeSelect = useCallback(
+    async (hour: number, minute: number) => {
+      haptic.selection();
+      const timeStr = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+      setShowTimePicker(false);
+      await saveField('notify_daily_time', timeStr);
+      if (prefs.notify_daily) {
+        await scheduleDailyReminder(hour, minute, t('notifications.daily_title'), t('notifications.daily_body'));
+      }
+    },
+    [prefs.notify_daily, saveField, t],
+  );
 
   function formatTime(timeStr: string): string {
     const [h, m] = parseTimeString(timeStr);
@@ -151,7 +165,9 @@ export default function NotificationsScreen() {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} activeOpacity={0.7}>
-          <Text style={[styles.backBtn, { color: colors.primary }]}>{'\u2190'} {t('nav_back')}</Text>
+          <Text style={[styles.backBtn, { color: colors.primary }]}>
+            {'\u2190'} {t('nav_back')}
+          </Text>
         </TouchableOpacity>
         <Text style={[styles.title, { color: colors.text }]}>{t('notifications.settings_title')}</Text>
       </View>
@@ -241,12 +257,11 @@ export default function NotificationsScreen() {
 
       {/* Time Picker Modal */}
       <Modal visible={showTimePicker} transparent animationType="fade" statusBarTranslucent>
-        <TouchableOpacity
-          style={styles.pickerOverlay}
-          activeOpacity={1}
-          onPress={() => setShowTimePicker(false)}
-        >
-          <TouchableOpacity activeOpacity={1} style={[styles.pickerCard, { backgroundColor: colors.background, borderColor: colors.border }]}>
+        <TouchableOpacity style={styles.pickerOverlay} activeOpacity={1} onPress={() => setShowTimePicker(false)}>
+          <TouchableOpacity
+            activeOpacity={1}
+            style={[styles.pickerCard, { backgroundColor: colors.background, borderColor: colors.border }]}
+          >
             <Text style={[styles.pickerTitle, { color: colors.text }]}>{t('notifications.daily_time')}</Text>
             <ScrollView style={styles.pickerScroll} contentContainerStyle={styles.pickerGrid}>
               {HOURS.map((h) =>
@@ -264,16 +279,12 @@ export default function NotificationsScreen() {
                       onPress={() => handleTimeSelect(h, m)}
                       activeOpacity={0.7}
                     >
-                      <Text style={[
-                        styles.pickerItemText,
-                        { color: colors.text },
-                        isSelected && { color: '#FFFFFF' },
-                      ]}>
+                      <Text style={[styles.pickerItemText, { color: colors.text }, isSelected && { color: '#FFFFFF' }]}>
                         {formatTime(timeStr)}
                       </Text>
                     </TouchableOpacity>
                   );
-                })
+                }),
               )}
             </ScrollView>
           </TouchableOpacity>
@@ -283,7 +294,12 @@ export default function NotificationsScreen() {
   );
 }
 
-function ToggleRow({ label, value, onToggle, colors }: {
+function ToggleRow({
+  label,
+  value,
+  onToggle,
+  colors,
+}: {
   label: string;
   value: boolean;
   onToggle: (v: boolean) => void;

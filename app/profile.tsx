@@ -1,5 +1,15 @@
 import { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, ScrollView, Platform, TextInput, Linking } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Alert,
+  ScrollView,
+  Platform,
+  TextInput,
+  Linking,
+} from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useAuthContext } from '../src/contexts/AuthContext';
@@ -18,14 +28,36 @@ function confirmDialog(title: string, message: string, cancelText: string, okTex
     return Promise.resolve(window.confirm(`${title}\n\n${message}`));
   }
   return new Promise((resolve) => {
-    Alert.alert(title, message, [
-      { text: cancelText, style: 'cancel', onPress: () => resolve(false) },
-      { text: okText, onPress: () => resolve(true) },
-    ], { cancelable: true, onDismiss: () => resolve(false) });
+    Alert.alert(
+      title,
+      message,
+      [
+        { text: cancelText, style: 'cancel', onPress: () => resolve(false) },
+        { text: okText, onPress: () => resolve(true) },
+      ],
+      { cancelable: true, onDismiss: () => resolve(false) },
+    );
   });
 }
 
-const AVATARS = ['\uD83C\uDFAD', '\uD83E\uDD8A', '\uD83D\uDC19', '\uD83C\uDF1F', '\uD83C\uDFA8', '\uD83D\uDD25', '\uD83D\uDC8E', '\uD83C\uDF19', '\uD83E\uDD84', '\uD83C\uDF55', '\uD83C\uDFAF', '\uD83E\uDDCA', '\uD83E\uDE90', '\uD83C\uDFB8', '\uD83C\uDF0A', '\uD83E\uDD85'];
+const AVATARS = [
+  '\uD83C\uDFAD',
+  '\uD83E\uDD8A',
+  '\uD83D\uDC19',
+  '\uD83C\uDF1F',
+  '\uD83C\uDFA8',
+  '\uD83D\uDD25',
+  '\uD83D\uDC8E',
+  '\uD83C\uDF19',
+  '\uD83E\uDD84',
+  '\uD83C\uDF55',
+  '\uD83C\uDFAF',
+  '\uD83E\uDDCA',
+  '\uD83E\uDE90',
+  '\uD83C\uDFB8',
+  '\uD83C\uDF0A',
+  '\uD83E\uDD85',
+];
 
 export default function ProfileScreen() {
   const router = useRouter();
@@ -89,7 +121,12 @@ export default function ProfileScreen() {
 
   async function handleLogout() {
     haptic.warning();
-    const ok = await confirmDialog(t('profile.log_out_title'), t('profile.log_out_message'), t('common.cancel'), t('common.ok'));
+    const ok = await confirmDialog(
+      t('profile.log_out_title'),
+      t('profile.log_out_message'),
+      t('common.cancel'),
+      t('common.ok'),
+    );
     if (ok) {
       try {
         await signOut();
@@ -101,7 +138,12 @@ export default function ProfileScreen() {
 
   async function handleDeleteAccount() {
     haptic.error();
-    const ok = await confirmDialog(t('profile.delete_title'), t('errors.delete_confirm'), t('common.cancel'), t('common.ok'));
+    const ok = await confirmDialog(
+      t('profile.delete_title'),
+      t('errors.delete_confirm'),
+      t('common.cancel'),
+      t('common.ok'),
+    );
     if (!ok) return;
 
     setShowDeleteConfirm(true);
@@ -143,7 +185,10 @@ export default function ProfileScreen() {
       <View style={styles.profileHeader}>
         <TouchableOpacity
           style={[styles.avatarContainer, { backgroundColor: colors.primaryFaded, borderColor: colors.primary }]}
-          onPress={() => { haptic.light(); setShowAvatarPicker(!showAvatarPicker); }}
+          onPress={() => {
+            haptic.light();
+            setShowAvatarPicker(!showAvatarPicker);
+          }}
           activeOpacity={0.7}
         >
           <Text style={styles.avatarText}>{profile.avatar_url || '\uD83C\uDFAD'}</Text>
@@ -194,7 +239,10 @@ export default function ProfileScreen() {
       {/* Stats Grid */}
       <View style={styles.statsGrid}>
         {stats.map((stat) => (
-          <View key={stat.label} style={[styles.statCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+          <View
+            key={stat.label}
+            style={[styles.statCard, { backgroundColor: colors.surface, borderColor: colors.border }]}
+          >
             <Text style={styles.statIcon}>{stat.icon}</Text>
             <Text style={[styles.statValue, { color: colors.text }]}>{stat.value}</Text>
             <Text style={[styles.statLabel, { color: colors.textMuted }]}>{stat.label}</Text>
@@ -217,12 +265,18 @@ export default function ProfileScreen() {
 
       {/* Delete Confirmation */}
       {showDeleteConfirm && (
-        <View style={[styles.deleteConfirmBox, { backgroundColor: colors.surface, borderColor: withOpacity(colors.error, 0.25) }]}>
-          <Text style={[styles.deleteConfirmTitle, { color: colors.error }]}>
-            {t('errors.delete_type_username')}
-          </Text>
+        <View
+          style={[
+            styles.deleteConfirmBox,
+            { backgroundColor: colors.surface, borderColor: withOpacity(colors.error, 0.25) },
+          ]}
+        >
+          <Text style={[styles.deleteConfirmTitle, { color: colors.error }]}>{t('errors.delete_type_username')}</Text>
           <TextInput
-            style={[styles.deleteInput, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
+            style={[
+              styles.deleteInput,
+              { backgroundColor: colors.background, color: colors.text, borderColor: colors.border },
+            ]}
             value={deleteUsername}
             onChangeText={setDeleteUsername}
             placeholder={profile.username}
@@ -231,13 +285,21 @@ export default function ProfileScreen() {
           />
           <View style={styles.deleteConfirmActions}>
             <TouchableOpacity
-              style={[styles.deleteConfirmBtn, { backgroundColor: colors.error, opacity: deleteUsername === profile.username ? 1 : 0.4 }]}
+              style={[
+                styles.deleteConfirmBtn,
+                { backgroundColor: colors.error, opacity: deleteUsername === profile.username ? 1 : 0.4 },
+              ]}
               onPress={confirmDelete}
               disabled={deleteUsername !== profile.username}
             >
               <Text style={styles.deleteConfirmBtnText}>{t('profile.delete_account')}</Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => { setShowDeleteConfirm(false); setDeleteUsername(''); }}>
+            <TouchableOpacity
+              onPress={() => {
+                setShowDeleteConfirm(false);
+                setDeleteUsername('');
+              }}
+            >
               <Text style={[styles.cancelText, { color: colors.textMuted }]}>{t('common.cancel')}</Text>
             </TouchableOpacity>
           </View>
@@ -248,7 +310,10 @@ export default function ProfileScreen() {
       <View style={[styles.supportSection, { borderTopColor: colors.border }]}>
         <TouchableOpacity
           style={styles.supportRow}
-          onPress={() => { haptic.light(); router.push('/notifications'); }}
+          onPress={() => {
+            haptic.light();
+            router.push('/notifications');
+          }}
           activeOpacity={0.7}
         >
           <Text style={[styles.supportLabel, { color: colors.textSecondary }]}>{t('profile.notifications')}</Text>
@@ -277,7 +342,15 @@ export default function ProfileScreen() {
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.supportRow}
-          onPress={() => router.push({ pathname: '/webview', params: { url: language === 'es' ? 'https://playoneword.app/es/privacy' : 'https://playoneword.app/privacy', title: t('profile.privacy_policy') } })}
+          onPress={() =>
+            router.push({
+              pathname: '/webview',
+              params: {
+                url: language === 'es' ? 'https://playoneword.app/es/privacy' : 'https://playoneword.app/privacy',
+                title: t('profile.privacy_policy'),
+              },
+            })
+          }
           activeOpacity={0.7}
         >
           <Text style={[styles.supportLabel, { color: colors.textSecondary }]}>{t('profile.privacy_policy')}</Text>
@@ -285,7 +358,15 @@ export default function ProfileScreen() {
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.supportRow}
-          onPress={() => router.push({ pathname: '/webview', params: { url: language === 'es' ? 'https://playoneword.app/es/terms' : 'https://playoneword.app/terms', title: t('profile.terms_of_use') } })}
+          onPress={() =>
+            router.push({
+              pathname: '/webview',
+              params: {
+                url: language === 'es' ? 'https://playoneword.app/es/terms' : 'https://playoneword.app/terms',
+                title: t('profile.terms_of_use'),
+              },
+            })
+          }
           activeOpacity={0.7}
         >
           <Text style={[styles.supportLabel, { color: colors.textSecondary }]}>{t('profile.terms_of_use')}</Text>
@@ -298,13 +379,23 @@ export default function ProfileScreen() {
         <Text style={[styles.langFooterLabel, { color: colors.textMuted }]}>{t('profile.language')}</Text>
         <View style={styles.langFooterRow}>
           <TouchableOpacity onPress={() => handleLanguageSwitch('en')} activeOpacity={0.7}>
-            <Text style={[styles.langFooterOption, language === 'en' ? { color: colors.primary, fontWeight: '700' } : { color: colors.textMuted }]}>
+            <Text
+              style={[
+                styles.langFooterOption,
+                language === 'en' ? { color: colors.primary, fontWeight: '700' } : { color: colors.textMuted },
+              ]}
+            >
               English
             </Text>
           </TouchableOpacity>
           <Text style={[styles.langFooterDivider, { color: colors.textMuted }]}>|</Text>
           <TouchableOpacity onPress={() => handleLanguageSwitch('es')} activeOpacity={0.7}>
-            <Text style={[styles.langFooterOption, language === 'es' ? { color: colors.primary, fontWeight: '700' } : { color: colors.textMuted }]}>
+            <Text
+              style={[
+                styles.langFooterOption,
+                language === 'es' ? { color: colors.primary, fontWeight: '700' } : { color: colors.textMuted },
+              ]}
+            >
               Espa{'\u00F1'}ol
             </Text>
           </TouchableOpacity>

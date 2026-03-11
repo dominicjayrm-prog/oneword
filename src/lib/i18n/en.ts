@@ -266,7 +266,7 @@ export default {
     no_results_sub: 'Keep voting to help rank the descriptions!',
     no_descriptions: 'No descriptions yet',
     no_descriptions_sub: "Be the first to play today's word!",
-    no_friends_played: "None of your friends have played yet today",
+    no_friends_played: 'None of your friends have played yet today',
     vote_complete: 'You voted on {{count}} pairs today!',
     no_pairs: 'Not enough descriptions yet. Check back later.',
   },

@@ -52,7 +52,7 @@ export async function getFriends(userId: string): Promise<Friend[]> {
 
   if (fbError || !rows) return [];
 
-  const friendIds = rows.map((r) => r.requester_id === userId ? r.addressee_id : r.requester_id);
+  const friendIds = rows.map((r) => (r.requester_id === userId ? r.addressee_id : r.requester_id));
   if (friendIds.length === 0) return [];
 
   const { data: profiles } = await supabase
@@ -92,10 +92,7 @@ export async function getPendingRequests(userId: string): Promise<PendingRequest
   if (fbError || !rows || rows.length === 0) return [];
 
   const reqIds = rows.map((r) => r.requester_id);
-  const { data: profiles } = await supabase
-    .from('profiles')
-    .select('id, username, avatar_url')
-    .in('id', reqIds);
+  const { data: profiles } = await supabase.from('profiles').select('id, username, avatar_url').in('id', reqIds);
 
   return rows.map((r) => {
     const p = profiles?.find((pr) => pr.id === r.requester_id);
@@ -150,11 +147,7 @@ function escapeIlike(str: string): string {
 
 export const SEARCH_PAGE_SIZE = 10;
 
-export async function searchUsers(
-  query: string,
-  currentUserId: string,
-  offset = 0,
-): Promise<UserSearchResult[]> {
+export async function searchUsers(query: string, currentUserId: string, offset = 0): Promise<UserSearchResult[]> {
   if (!rateLimits.search()) {
     throw new Error('Too many searches. Please slow down.');
   }
@@ -213,7 +206,10 @@ export async function sendFriendRequest(requesterId: string, addresseeId: string
   return { error: null };
 }
 
-export async function acceptFriendRequest(friendshipId: string, currentUserId: string): Promise<{ error: Error | null }> {
+export async function acceptFriendRequest(
+  friendshipId: string,
+  currentUserId: string,
+): Promise<{ error: Error | null }> {
   const { error } = await supabase
     .from('friendships')
     .update({ status: 'accepted', updated_at: new Date().toISOString() })
@@ -224,19 +220,13 @@ export async function acceptFriendRequest(friendshipId: string, currentUserId: s
 }
 
 export async function declineFriendRequest(friendshipId: string): Promise<{ error: Error | null }> {
-  const { error } = await supabase
-    .from('friendships')
-    .delete()
-    .eq('id', friendshipId);
+  const { error } = await supabase.from('friendships').delete().eq('id', friendshipId);
   if (error) return { error: new Error(error.message) };
   return { error: null };
 }
 
 export async function removeFriend(friendshipId: string): Promise<{ error: Error | null }> {
-  const { error } = await supabase
-    .from('friendships')
-    .delete()
-    .eq('id', friendshipId);
+  const { error } = await supabase.from('friendships').delete().eq('id', friendshipId);
   if (error) return { error: new Error(error.message) };
   return { error: null };
 }

@@ -14,22 +14,15 @@ export function RetryState({ type, onRetry }: Props) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.emoji}>
-        {type === 'offline' ? '\uD83D\uDCE1' : '\uD83D\uDE35'}
-      </Text>
+      <Text style={styles.emoji}>{type === 'offline' ? '\uD83D\uDCE1' : '\uD83D\uDE35'}</Text>
       <Text style={[styles.title, { color: colors.text }]}>
         {type === 'offline' ? t('offline.no_connection') : t('offline.something_wrong')}
       </Text>
       <Text style={[styles.message, { color: colors.textSecondary }]}>
-        {type === 'offline'
-          ? t('offline.check_connection')
-          : t('offline.try_again_message')
-        }
+        {type === 'offline' ? t('offline.check_connection') : t('offline.try_again_message')}
       </Text>
       <Pressable onPress={onRetry} style={[styles.button, { backgroundColor: colors.primary }]}>
-        <Text style={styles.buttonText}>
-          {t('offline.try_again')}
-        </Text>
+        <Text style={styles.buttonText}>{t('offline.try_again')}</Text>
       </Pressable>
     </View>
   );

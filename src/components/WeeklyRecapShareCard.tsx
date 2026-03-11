@@ -34,15 +34,20 @@ export const WeeklyRecapShareCard = forwardRef<View, Props>(({ data, dateRange }
         <View style={styles.bestBox}>
           <Text style={styles.bestWord}>{data.best_rank_word.toUpperCase()}</Text>
           <Text style={styles.bestDesc}>
-            {'\u201C'}{data.best_rank_description}{'\u201D'}
+            {'\u201C'}
+            {data.best_rank_description}
+            {'\u201D'}
           </Text>
-          <Text style={styles.bestRank}>{rankEmoji} #{data.best_rank}</Text>
+          <Text style={styles.bestRank}>
+            {rankEmoji} #{data.best_rank}
+          </Text>
         </View>
       )}
 
       {/* Stats line */}
       <Text style={styles.statsLine}>
-        {data.days_played}/7 days  {'\u00B7'}  {data.total_votes_received} votes  {'\u00B7'}  {getCurrentBadge(data.current_streak)?.emoji || '\uD83D\uDD25'} {data.current_streak} streak
+        {data.days_played}/7 days {'\u00B7'} {data.total_votes_received} votes {'\u00B7'}{' '}
+        {getCurrentBadge(data.current_streak)?.emoji || '\uD83D\uDD25'} {data.current_streak} streak
       </Text>
 
       {/* Footer */}

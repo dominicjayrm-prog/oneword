@@ -42,8 +42,7 @@ export default function WebViewScreen() {
         </View>
         <View style={styles.webFallback}>
           <Text style={[styles.webFallbackText, { color: colors.textSecondary }]}>
-            Visit:{' '}
-            <Text style={{ color: colors.primary }}>{url}</Text>
+            Visit: <Text style={{ color: colors.primary }}>{url}</Text>
           </Text>
         </View>
       </SafeAreaView>

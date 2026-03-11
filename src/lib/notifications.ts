@@ -42,16 +42,17 @@ export async function registerForPushNotifications(userId: string): Promise<stri
   }
 
   const projectId = Constants.expoConfig?.extra?.eas?.projectId;
-  const tokenData = await Notifications.getExpoPushTokenAsync(
-    projectId ? { projectId } : undefined
-  );
+  const tokenData = await Notifications.getExpoPushTokenAsync(projectId ? { projectId } : undefined);
   const token = tokenData.data;
 
   // Save token to profile
-  await supabase.from('profiles').update({
-    push_token: token,
-    notifications_enabled: true,
-  }).eq('id', userId);
+  await supabase
+    .from('profiles')
+    .update({
+      push_token: token,
+      notifications_enabled: true,
+    })
+    .eq('id', userId);
 
   // Set up Android notification channel
   if (Platform.OS === 'android') {

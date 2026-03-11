@@ -23,7 +23,7 @@ export function LoadingSpinner({ message }: Props) {
           Animated.timing(scale, { toValue: 1, duration: 600, useNativeDriver: true }),
           Animated.timing(opacity, { toValue: 0.4, duration: 600, useNativeDriver: true }),
         ]),
-      ])
+      ]),
     );
     pulse.start();
     return () => pulse.stop();
@@ -31,15 +31,8 @@ export function LoadingSpinner({ message }: Props) {
 
   return (
     <View style={styles.container}>
-      <Animated.View
-        style={[
-          styles.dot,
-          { backgroundColor: colors.primary, opacity, transform: [{ scale }] },
-        ]}
-      />
-      {message && (
-        <Text style={[styles.message, { color: colors.textSecondary }]}>{message}</Text>
-      )}
+      <Animated.View style={[styles.dot, { backgroundColor: colors.primary, opacity, transform: [{ scale }] }]} />
+      {message && <Text style={[styles.message, { color: colors.textSecondary }]}>{message}</Text>}
     </View>
   );
 }

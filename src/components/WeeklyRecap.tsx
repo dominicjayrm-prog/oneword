@@ -51,7 +51,10 @@ export function WeeklyRecapCard({ data, onDismiss }: Props) {
   const dayCircles = getDayCircles(data.days_played);
 
   const rankEmoji = getRankEmoji(data.best_rank);
-  const improved = data.previous_week_average_rank != null && data.average_rank != null && data.average_rank < data.previous_week_average_rank;
+  const improved =
+    data.previous_week_average_rank != null &&
+    data.average_rank != null &&
+    data.average_rank < data.previous_week_average_rank;
 
   // ── Animations ──
   const bgOpacity = useSharedValue(0);
@@ -85,19 +88,25 @@ export function WeeklyRecapCard({ data, onDismiss }: Props) {
 
     if (data.perfect_week) {
       haptic.success();
-      perfectScale.value = withDelay(1200, withSequence(
-        withSpring(1.15, { damping: 6, stiffness: 180 }),
-        withSpring(1, { damping: 10, stiffness: 200 })
-      ));
+      perfectScale.value = withDelay(
+        1200,
+        withSequence(withSpring(1.15, { damping: 6, stiffness: 180 }), withSpring(1, { damping: 10, stiffness: 200 })),
+      );
     } else {
       haptic.light();
     }
   }, []);
 
   const bgStyle = useAnimatedStyle(() => ({ opacity: bgOpacity.value }));
-  const titleStyle = useAnimatedStyle(() => ({ opacity: titleOpacity.value, transform: [{ translateY: titleTranslateY.value }] }));
+  const titleStyle = useAnimatedStyle(() => ({
+    opacity: titleOpacity.value,
+    transform: [{ translateY: titleTranslateY.value }],
+  }));
   const dateStyle = useAnimatedStyle(() => ({ opacity: dateOpacity.value }));
-  const bestCardStyle = useAnimatedStyle(() => ({ opacity: bestCardOpacity.value, transform: [{ translateY: bestCardTranslateY.value }] }));
+  const bestCardStyle = useAnimatedStyle(() => ({
+    opacity: bestCardOpacity.value,
+    transform: [{ translateY: bestCardTranslateY.value }],
+  }));
   const bestWordStyle = useAnimatedStyle(() => ({ opacity: bestWordOpacity.value }));
   const bestDescStyle = useAnimatedStyle(() => ({ opacity: bestDescOpacity.value }));
   const bestRankStyle = useAnimatedStyle(() => ({ transform: [{ scale: bestRankScale.value }] }));
@@ -141,20 +150,16 @@ export function WeeklyRecapCard({ data, onDismiss }: Props) {
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {/* Header */}
-        <Animated.Text style={[styles.label, titleStyle]}>
-          {t('weekly_recap.label')}
-        </Animated.Text>
-        <Animated.Text style={[styles.dateRange, dateStyle]}>
-          {dateRange}
-        </Animated.Text>
+        <Animated.Text style={[styles.label, titleStyle]}>{t('weekly_recap.label')}</Animated.Text>
+        <Animated.Text style={[styles.dateRange, dateStyle]}>{dateRange}</Animated.Text>
 
         {/* Best of the Week card */}
         {data.best_rank_word && data.best_rank_description && (
           <Animated.View style={[styles.bestCard, bestCardStyle]}>
-            <Text style={styles.bestLabel}>{'\u2728'} {t('weekly_recap.best_label')} {'\u2728'}</Text>
-            <Animated.Text style={[styles.bestWord, bestWordStyle]}>
-              {data.best_rank_word.toUpperCase()}
-            </Animated.Text>
+            <Text style={styles.bestLabel}>
+              {'\u2728'} {t('weekly_recap.best_label')} {'\u2728'}
+            </Text>
+            <Animated.Text style={[styles.bestWord, bestWordStyle]}>{data.best_rank_word.toUpperCase()}</Animated.Text>
             <Animated.Text style={[styles.bestDesc, bestDescStyle]}>
               &ldquo;{data.best_rank_description}&rdquo;
             </Animated.Text>
@@ -168,13 +173,7 @@ export function WeeklyRecapCard({ data, onDismiss }: Props) {
         <Animated.View style={[styles.daysSection, daysStyle]}>
           <View style={styles.daysRow}>
             {dayCircles.map((played, i) => (
-              <View
-                key={i}
-                style={[
-                  styles.dayCircle,
-                  played ? styles.dayFilled : styles.dayEmpty,
-                ]}
-              />
+              <View key={i} style={[styles.dayCircle, played ? styles.dayFilled : styles.dayEmpty]} />
             ))}
           </View>
           {data.perfect_week ? (
@@ -182,9 +181,7 @@ export function WeeklyRecapCard({ data, onDismiss }: Props) {
               {t('weekly_recap.perfect_week')} {'\uD83D\uDD25'}
             </Animated.Text>
           ) : (
-            <Text style={styles.daysText}>
-              {t('weekly_recap.days_played', { count: data.days_played })}
-            </Text>
+            <Text style={styles.daysText}>{t('weekly_recap.days_played', { count: data.days_played })}</Text>
           )}
         </Animated.View>
 
@@ -208,23 +205,17 @@ export function WeeklyRecapCard({ data, onDismiss }: Props) {
             <Text style={styles.statLabel}>{t('weekly_recap.best_rank')}</Text>
           </View>
           <View style={styles.statCard}>
-            <Text style={styles.statNumber}>{getCurrentBadge(data.current_streak)?.emoji || '\uD83D\uDD25'} {data.current_streak}</Text>
+            <Text style={styles.statNumber}>
+              {getCurrentBadge(data.current_streak)?.emoji || '\uD83D\uDD25'} {data.current_streak}
+            </Text>
             <Text style={styles.statLabel}>{t('weekly_recap.day_streak')}</Text>
           </View>
         </Animated.View>
 
         {/* Buttons */}
         <Animated.View style={[styles.buttonsSection, buttonsStyle]}>
-          <Button
-            title={sharing ? '...' : t('weekly_recap.share_week')}
-            onPress={handleShare}
-            loading={sharing}
-          />
-          <Button
-            title={t('weekly_recap.see_today')}
-            onPress={handleDismiss}
-            variant="outline"
-          />
+          <Button title={sharing ? '...' : t('weekly_recap.share_week')} onPress={handleShare} loading={sharing} />
+          <Button title={t('weekly_recap.see_today')} onPress={handleDismiss} variant="outline" />
           <Text style={styles.closer}>{t('weekly_recap.closer')}</Text>
         </Animated.View>
       </ScrollView>

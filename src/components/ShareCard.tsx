@@ -12,73 +12,73 @@ interface ShareCardProps {
   streak: number;
 }
 
-export const ShareCard = forwardRef<View, ShareCardProps>(
-  ({ word, description, rank, votes, streak }, ref) => {
-    const { t } = useTranslation();
-    const rankEmoji = getRankEmoji(rank);
-    const badge = getCurrentBadge(streak);
-    const streakIcon = badge ? badge.emoji : '\u{1F525}';
+export const ShareCard = forwardRef<View, ShareCardProps>(({ word, description, rank, votes, streak }, ref) => {
+  const { t } = useTranslation();
+  const rankEmoji = getRankEmoji(rank);
+  const badge = getCurrentBadge(streak);
+  const streakIcon = badge ? badge.emoji : '\u{1F525}';
 
-    return (
-      <View ref={ref} style={styles.card} collapsable={false}>
-        {/* Gradient background layers */}
-        <View style={styles.bgBase} />
-        <View style={styles.bgOverlay} />
+  return (
+    <View ref={ref} style={styles.card} collapsable={false}>
+      {/* Gradient background layers */}
+      <View style={styles.bgBase} />
+      <View style={styles.bgOverlay} />
 
-        {/* Logo */}
-        <View style={styles.logoRow}>
-          <Text style={styles.logoOne}>one</Text>
-          <Text style={styles.logoWord}>word</Text>
-        </View>
-
-        {/* Today's word label */}
-        <Text style={styles.label}>{t('share.todays_word')}</Text>
-
-        {/* Hero word */}
-        <Text style={styles.heroWord}>{word}</Text>
-
-        {/* Decorative underline */}
-        <View style={styles.underline} />
-
-        {/* Description container */}
-        {description && (
-          <View style={styles.descriptionBox}>
-            <Text style={styles.descriptionText}>
-              {'\u201C'}{description}{'\u201D'}
-            </Text>
-          </View>
-        )}
-
-        {/* Stats row */}
-        <View style={styles.statsRow}>
-          <View style={styles.stat}>
-            <Text style={styles.statEmoji}>{rankEmoji}</Text>
-            <Text style={styles.statNumber}>{rank ?? '-'}</Text>
-            <Text style={styles.statLabel}>{t('share.rank')}</Text>
-          </View>
-
-          <View style={styles.statDivider} />
-
-          <View style={styles.stat}>
-            <Text style={styles.statNumber}>{votes ?? 0}</Text>
-            <Text style={styles.statLabel}>{t('share.votes')}</Text>
-          </View>
-
-          <View style={styles.statDivider} />
-
-          <View style={styles.stat}>
-            <Text style={styles.statEmoji}>{streakIcon}</Text>
-            <Text style={styles.statNumber}>{streak}</Text>
-            <Text style={styles.statLabel}>{t('share.streak')}</Text>
-          </View>
-        </View>
-
-        {/* Footer */}
-        <Text style={styles.footer}>{t('share.play_daily')}</Text>
+      {/* Logo */}
+      <View style={styles.logoRow}>
+        <Text style={styles.logoOne}>one</Text>
+        <Text style={styles.logoWord}>word</Text>
       </View>
-    );
-  }
-);
+
+      {/* Today's word label */}
+      <Text style={styles.label}>{t('share.todays_word')}</Text>
+
+      {/* Hero word */}
+      <Text style={styles.heroWord}>{word}</Text>
+
+      {/* Decorative underline */}
+      <View style={styles.underline} />
+
+      {/* Description container */}
+      {description && (
+        <View style={styles.descriptionBox}>
+          <Text style={styles.descriptionText}>
+            {'\u201C'}
+            {description}
+            {'\u201D'}
+          </Text>
+        </View>
+      )}
+
+      {/* Stats row */}
+      <View style={styles.statsRow}>
+        <View style={styles.stat}>
+          <Text style={styles.statEmoji}>{rankEmoji}</Text>
+          <Text style={styles.statNumber}>{rank ?? '-'}</Text>
+          <Text style={styles.statLabel}>{t('share.rank')}</Text>
+        </View>
+
+        <View style={styles.statDivider} />
+
+        <View style={styles.stat}>
+          <Text style={styles.statNumber}>{votes ?? 0}</Text>
+          <Text style={styles.statLabel}>{t('share.votes')}</Text>
+        </View>
+
+        <View style={styles.statDivider} />
+
+        <View style={styles.stat}>
+          <Text style={styles.statEmoji}>{streakIcon}</Text>
+          <Text style={styles.statNumber}>{streak}</Text>
+          <Text style={styles.statLabel}>{t('share.streak')}</Text>
+        </View>
+      </View>
+
+      {/* Footer */}
+      <Text style={styles.footer}>{t('share.play_daily')}</Text>
+    </View>
+  );
+});
 
 // Card rendered at 4:5 ratio (Instagram-friendly). Captured at higher res.
 const CARD_WIDTH = 320;

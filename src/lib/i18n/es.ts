@@ -53,7 +53,8 @@ export default {
     forgot_subtitle: 'Ingresa tu correo y te enviaremos un enlace para restablecerla.',
     forgot_send: 'Enviar enlace',
     reset_sent_title: 'Revisa tu correo',
-    reset_sent_subtitle: 'Enviamos un enlace para restablecer tu contrase\u00F1a a {{email}}. Toca el enlace para crear una nueva.',
+    reset_sent_subtitle:
+      'Enviamos un enlace para restablecer tu contrase\u00F1a a {{email}}. Toca el enlace para crear una nueva.',
     new_password_title: 'Nueva contrase\u00F1a',
     new_password_subtitle: 'Elige una nueva contrase\u00F1a para tu cuenta.',
     new_password: 'Nueva contrase\u00F1a',
@@ -235,7 +236,8 @@ export default {
     friend_request_failed: 'No se pudo enviar la solicitud',
     search_failed: 'Búsqueda no disponible ahora',
     try_again: 'Reintentar',
-    delete_confirm: '\u00BFEst\u00E1s seguro? Esto eliminar\u00E1 permanentemente tu cuenta y todos tus datos. No se puede deshacer.',
+    delete_confirm:
+      '\u00BFEst\u00E1s seguro? Esto eliminar\u00E1 permanentemente tu cuenta y todos tus datos. No se puede deshacer.',
     delete_type_username: 'Escribe tu nombre de usuario para confirmar',
     logout_confirm: '\u00BFSeguro que quieres cerrar sesi\u00F3n?',
     max_friends: 'Has alcanzado el l\u00EDmite de amigos (50)',

@@ -47,28 +47,28 @@ export default function FriendsScreen() {
   const [showAddModal, setShowAddModal] = useState(false);
   const processingRef = useRef(new Set<string>());
 
-  const loadData = useCallback(async (showFullLoading = true) => {
-    if (!userId) return;
-    if (showFullLoading) setLoading(true);
-    setLoadError(false);
-    try {
-      const [friendsData, requestsData] = await Promise.all([
-        getFriends(userId),
-        getPendingRequests(userId),
-      ]);
-      setFriends(friendsData);
-      setRequests(requestsData);
+  const loadData = useCallback(
+    async (showFullLoading = true) => {
+      if (!userId) return;
+      if (showFullLoading) setLoading(true);
+      setLoadError(false);
+      try {
+        const [friendsData, requestsData] = await Promise.all([getFriends(userId), getPendingRequests(userId)]);
+        setFriends(friendsData);
+        setRequests(requestsData);
 
-      if (todayWord?.id && friendsData.length > 0) {
-        const descs = await getFriendsDescriptions(userId, todayWord.id);
-        setDescriptions(descs);
+        if (todayWord?.id && friendsData.length > 0) {
+          const descs = await getFriendsDescriptions(userId, todayWord.id);
+          setDescriptions(descs);
+        }
+      } catch (err) {
+        console.warn('[FriendsScreen] Failed to load data:', err);
+        setLoadError(true);
       }
-    } catch (err) {
-      console.warn('[FriendsScreen] Failed to load data:', err);
-      setLoadError(true);
-    }
-    if (showFullLoading) setLoading(false);
-  }, [userId, todayWord?.id]);
+      if (showFullLoading) setLoading(false);
+    },
+    [userId, todayWord?.id],
+  );
 
   useEffect(() => {
     loadData();
@@ -182,10 +182,7 @@ export default function FriendsScreen() {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <ThemeToggle />
-        <RetryState
-          type={!isOnline ? 'offline' : 'error'}
-          onRetry={loadData}
-        />
+        <RetryState type={!isOnline ? 'offline' : 'error'} onRetry={loadData} />
       </View>
     );
   }
@@ -197,17 +194,10 @@ export default function FriendsScreen() {
         <ThemeToggle />
         <View style={styles.emptyState}>
           <Text style={styles.emptyIcon}>{'\uD83D\uDC65'}</Text>
-          <Text style={[styles.emptyTitle, { color: colors.text }]}>
-            {t('friends.empty_title')}
-          </Text>
-          <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>
-            {t('friends.empty_subtitle')}
-          </Text>
+          <Text style={[styles.emptyTitle, { color: colors.text }]}>{t('friends.empty_title')}</Text>
+          <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>{t('friends.empty_subtitle')}</Text>
           <View style={styles.emptyBtn}>
-            <Button
-              title={'+ ' + t('friends.add_friends')}
-              onPress={() => setShowAddModal(true)}
-            />
+            <Button title={'+ ' + t('friends.add_friends')} onPress={() => setShowAddModal(true)} />
           </View>
         </View>
 
@@ -239,33 +229,24 @@ export default function FriendsScreen() {
         }
       >
         {/* Section 1: Friend Requests */}
-        <FriendRequests
-          requests={requests}
-          onAccept={handleAccept}
-          onDecline={handleDecline}
-        />
+        <FriendRequests requests={requests} onAccept={handleAccept} onDecline={handleDecline} />
 
         {/* Section 2: Today's word — friends' descriptions */}
         {todayWord && descriptions.length > 0 ? (
-          <FriendsToday
-            descriptions={descriptions}
-            wordText={todayWord.word}
-            userHasPlayed={hasSubmitted}
-          />
-        ) : todayWord && friends.length > 0 && (
-          <View style={styles.noFriendsPlayed}>
-            <Text style={[styles.noFriendsPlayedText, { color: colors.textMuted }]}>
-              {t('empty.no_friends_played')}
-            </Text>
-          </View>
+          <FriendsToday descriptions={descriptions} wordText={todayWord.word} userHasPlayed={hasSubmitted} />
+        ) : (
+          todayWord &&
+          friends.length > 0 && (
+            <View style={styles.noFriendsPlayed}>
+              <Text style={[styles.noFriendsPlayedText, { color: colors.textMuted }]}>
+                {t('empty.no_friends_played')}
+              </Text>
+            </View>
+          )
         )}
 
         {/* Section 3: All friends */}
-        <FriendsList
-          friends={friends}
-          onRemove={handleRemove}
-          onAddPress={() => setShowAddModal(true)}
-        />
+        <FriendsList friends={friends} onRemove={handleRemove} onAddPress={() => setShowAddModal(true)} />
       </ScrollView>
 
       {userId && (

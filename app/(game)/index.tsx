@@ -29,7 +29,14 @@ import { BadgePill } from '../../src/components/BadgePill';
 import { useToast } from '../../src/components/Toast';
 import { useNetwork } from '../../src/contexts/NetworkContext';
 import { fontSize, spacing, borderRadius, withOpacity } from '../../src/constants/theme';
-import { DESCRIPTION_WORD_COUNT, DESCRIPTION_MAX_LENGTH, TOAST_DURATION_MS, USERNAME_MIN_LENGTH, USERNAME_MAX_LENGTH, PASSWORD_MIN_LENGTH } from '../../src/constants/app';
+import {
+  DESCRIPTION_WORD_COUNT,
+  DESCRIPTION_MAX_LENGTH,
+  TOAST_DURATION_MS,
+  USERNAME_MIN_LENGTH,
+  USERNAME_MAX_LENGTH,
+  PASSWORD_MIN_LENGTH,
+} from '../../src/constants/app';
 import { haptic } from '../../src/lib/haptics';
 import { getGameDate, getGameDay, getGameMonday } from '../../src/lib/gameDate';
 import { getCurrentBadge, type BadgeTier } from '../../src/lib/badges';
@@ -42,7 +49,10 @@ import {
   triggerMilestoneNotification,
   parseTimeString,
 } from '../../src/lib/notifications';
-import { NotificationPermissionPrompt, shouldShowNotificationPrompt } from '../../src/components/NotificationPermissionPrompt';
+import {
+  NotificationPermissionPrompt,
+  shouldShowNotificationPrompt,
+} from '../../src/components/NotificationPermissionPrompt';
 import type { YesterdayWinner, WeeklyRecap } from '../../src/types/database';
 
 export default function HomeScreen() {
@@ -50,7 +60,18 @@ export default function HomeScreen() {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const auth = useAuthContext();
-  const { todayWord, hasSubmitted, userDescription, loading: gameLoading, loadError: gameError, hasPendingDescription, submitDescription, getYesterdayWinner, getWeeklyRecap, refresh } = useGameContext();
+  const {
+    todayWord,
+    hasSubmitted,
+    userDescription,
+    loading: gameLoading,
+    loadError: gameError,
+    hasPendingDescription,
+    submitDescription,
+    getYesterdayWinner,
+    getWeeklyRecap,
+    refresh,
+  } = useGameContext();
   const { isOnline } = useNetwork();
 
   const { showToast } = useToast();
@@ -147,7 +168,14 @@ export default function HomeScreen() {
           const winner = await getYesterdayWinnerRef.current();
           if (!mountedRef.current) return;
           if (__DEV__) {
-            console.log('[Interstitial] gameDate:', gameDateStr, 'lastDismissed:', d?.winner_dismissed_date, 'winner:', winner);
+            console.log(
+              '[Interstitial] gameDate:',
+              gameDateStr,
+              'lastDismissed:',
+              d?.winner_dismissed_date,
+              'winner:',
+              winner,
+            );
           }
           if (winner) {
             setYesterdayData(winner);
@@ -181,7 +209,9 @@ export default function HomeScreen() {
         p_field: 'recap_dismissed_week',
         p_value: getGameMonday(),
       });
-    } catch (err) { console.warn('[HomeScreen] Failed to dismiss weekly recap:', err); }
+    } catch (err) {
+      console.warn('[HomeScreen] Failed to dismiss weekly recap:', err);
+    }
   }, [auth.session]);
 
   const dismissYesterdayWinner = useCallback(async () => {
@@ -193,11 +223,17 @@ export default function HomeScreen() {
         p_field: 'winner_dismissed_date',
         p_value: getGameDate(),
       });
-    } catch (err) { console.warn('[HomeScreen] Failed to dismiss yesterday winner:', err); }
+    } catch (err) {
+      console.warn('[HomeScreen] Failed to dismiss yesterday winner:', err);
+    }
   }, [auth.session]);
 
   // Normalize Unicode whitespace (non-breaking space, em space, etc.) to regular spaces
-  const wordCount = input.replace(/[\u00A0\u2000-\u200A\u202F\u205F\u3000]/g, ' ').trim().split(/\s+/).filter(Boolean).length;
+  const wordCount = input
+    .replace(/[\u00A0\u2000-\u200A\u202F\u205F\u3000]/g, ' ')
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean).length;
   const isExactlyFive = wordCount === DESCRIPTION_WORD_COUNT;
   const prevWordCount = useRef(0);
 
@@ -249,7 +285,12 @@ export default function HomeScreen() {
               }
               // Reschedule streak risk for tomorrow evening
               if (auth.profile?.notify_streak_risk) {
-                await scheduleStreakRisk(20, 0, t('notifications.streak_risk_title'), t('notifications.streak_risk_body'));
+                await scheduleStreakRisk(
+                  20,
+                  0,
+                  t('notifications.streak_risk_title'),
+                  t('notifications.streak_risk_body'),
+                );
               }
             } catch (err) {
               console.warn('[HomeScreen] Post-submit notification scheduling failed:', err);
@@ -305,7 +346,8 @@ export default function HomeScreen() {
     if (!emailRegex.test(email)) return t('errors.invalid_email');
     if (password.length < PASSWORD_MIN_LENGTH) return t('errors.password_short');
     if (authMode === 'signup') {
-      if (username.length < USERNAME_MIN_LENGTH || username.length > USERNAME_MAX_LENGTH) return t('errors.username_length');
+      if (username.length < USERNAME_MIN_LENGTH || username.length > USERNAME_MAX_LENGTH)
+        return t('errors.username_length');
       if (!/^[a-zA-Z0-9_]+$/.test(username)) return t('errors.username_format');
     }
     return null;
@@ -437,10 +479,15 @@ export default function HomeScreen() {
         <ScrollView contentContainerStyle={styles.authContainer} keyboardShouldPersistTaps="handled">
           <Text style={styles.verifyEmoji}>{'\uD83D\uDD12'}</Text>
           <Text style={[styles.verifyTitle, { color: colors.text }]}>{t('auth.new_password_title')}</Text>
-          <Text style={[styles.verifySubtitle, { color: colors.textSecondary }]}>{t('auth.new_password_subtitle')}</Text>
+          <Text style={[styles.verifySubtitle, { color: colors.textSecondary }]}>
+            {t('auth.new_password_subtitle')}
+          </Text>
           <View style={styles.authForm}>
             <TextInput
-              style={[styles.input, { backgroundColor: colors.surface, color: colors.text, borderColor: colors.border }]}
+              style={[
+                styles.input,
+                { backgroundColor: colors.surface, color: colors.text, borderColor: colors.border },
+              ]}
               placeholder={t('auth.new_password')}
               placeholderTextColor={colors.textMuted}
               value={newPassword}
@@ -448,7 +495,10 @@ export default function HomeScreen() {
               secureTextEntry
             />
             <TextInput
-              style={[styles.input, { backgroundColor: colors.surface, color: colors.text, borderColor: colors.border }]}
+              style={[
+                styles.input,
+                { backgroundColor: colors.surface, color: colors.text, borderColor: colors.border },
+              ]}
               placeholder={t('auth.confirm_password')}
               placeholderTextColor={colors.textMuted}
               value={confirmPassword}
@@ -486,11 +536,7 @@ export default function HomeScreen() {
               disabled={resent}
               variant="outline"
             />
-            <Button
-              title={t('auth.verify_back')}
-              onPress={() => auth.clearPendingVerification()}
-              variant="outline"
-            />
+            <Button title={t('auth.verify_back')} onPress={() => auth.clearPendingVerification()} variant="outline" />
           </View>
         </View>
       </View>
@@ -512,7 +558,11 @@ export default function HomeScreen() {
             <View style={styles.verifyActions}>
               <Button
                 title={t('auth.verify_back')}
-                onPress={() => { setResetSent(false); setForgotMode(false); setResetEmail(''); }}
+                onPress={() => {
+                  setResetSent(false);
+                  setForgotMode(false);
+                  setResetEmail('');
+                }}
                 variant="outline"
               />
             </View>
@@ -535,7 +585,10 @@ export default function HomeScreen() {
             <Text style={[styles.verifySubtitle, { color: colors.textSecondary }]}>{t('auth.forgot_subtitle')}</Text>
             <View style={styles.authForm}>
               <TextInput
-                style={[styles.input, { backgroundColor: colors.surface, color: colors.text, borderColor: colors.border }]}
+                style={[
+                  styles.input,
+                  { backgroundColor: colors.surface, color: colors.text, borderColor: colors.border },
+                ]}
                 placeholder={t('auth.signup_email')}
                 placeholderTextColor={colors.textMuted}
                 value={resetEmail}
@@ -552,7 +605,10 @@ export default function HomeScreen() {
               />
               <Button
                 title={t('auth.verify_back')}
-                onPress={() => { setForgotMode(false); setResetError(''); }}
+                onPress={() => {
+                  setForgotMode(false);
+                  setResetError('');
+                }}
                 variant="outline"
               />
             </View>
@@ -577,7 +633,10 @@ export default function HomeScreen() {
           <View style={styles.authForm}>
             {authMode === 'signup' && (
               <TextInput
-                style={[styles.input, { backgroundColor: colors.surface, color: colors.text, borderColor: colors.border }]}
+                style={[
+                  styles.input,
+                  { backgroundColor: colors.surface, color: colors.text, borderColor: colors.border },
+                ]}
                 placeholder={t('auth.signup_username')}
                 placeholderTextColor={colors.textMuted}
                 value={username}
@@ -586,7 +645,10 @@ export default function HomeScreen() {
               />
             )}
             <TextInput
-              style={[styles.input, { backgroundColor: colors.surface, color: colors.text, borderColor: colors.border }]}
+              style={[
+                styles.input,
+                { backgroundColor: colors.surface, color: colors.text, borderColor: colors.border },
+              ]}
               placeholder={t('auth.signup_email')}
               placeholderTextColor={colors.textMuted}
               value={email}
@@ -595,7 +657,10 @@ export default function HomeScreen() {
               keyboardType="email-address"
             />
             <TextInput
-              style={[styles.input, { backgroundColor: colors.surface, color: colors.text, borderColor: colors.border }]}
+              style={[
+                styles.input,
+                { backgroundColor: colors.surface, color: colors.text, borderColor: colors.border },
+              ]}
               placeholder={t('auth.signup_password')}
               placeholderTextColor={colors.textMuted}
               value={password}
@@ -617,7 +682,12 @@ export default function HomeScreen() {
                     onPress={() => handleLangSwitch('en')}
                     activeOpacity={0.7}
                   >
-                    <Text style={[styles.langPillText, selectedLang === 'en' ? { color: '#FFF' } : { color: colors.primary }]}>
+                    <Text
+                      style={[
+                        styles.langPillText,
+                        selectedLang === 'en' ? { color: '#FFF' } : { color: colors.primary },
+                      ]}
+                    >
                       English
                     </Text>
                   </TouchableOpacity>
@@ -630,7 +700,12 @@ export default function HomeScreen() {
                     onPress={() => handleLangSwitch('es')}
                     activeOpacity={0.7}
                   >
-                    <Text style={[styles.langPillText, selectedLang === 'es' ? { color: '#FFF' } : { color: colors.primary }]}>
+                    <Text
+                      style={[
+                        styles.langPillText,
+                        selectedLang === 'es' ? { color: '#FFF' } : { color: colors.primary },
+                      ]}
+                    >
                       Espa{'\u00F1'}ol
                     </Text>
                   </TouchableOpacity>
@@ -651,14 +726,34 @@ export default function HomeScreen() {
                 {t('legal.agree_prefix')}
                 <Text
                   style={{ color: colors.primary }}
-                  onPress={() => router.push({ pathname: '/webview', params: { url: selectedLang === 'es' ? 'https://playoneword.app/es/terms' : 'https://playoneword.app/terms', title: t('legal.terms_of_use') } })}
+                  onPress={() =>
+                    router.push({
+                      pathname: '/webview',
+                      params: {
+                        url:
+                          selectedLang === 'es' ? 'https://playoneword.app/es/terms' : 'https://playoneword.app/terms',
+                        title: t('legal.terms_of_use'),
+                      },
+                    })
+                  }
                 >
                   {t('legal.terms_of_use')}
                 </Text>
                 {t('legal.and')}
                 <Text
                   style={{ color: colors.primary }}
-                  onPress={() => router.push({ pathname: '/webview', params: { url: selectedLang === 'es' ? 'https://playoneword.app/es/privacy' : 'https://playoneword.app/privacy', title: t('legal.privacy_policy') } })}
+                  onPress={() =>
+                    router.push({
+                      pathname: '/webview',
+                      params: {
+                        url:
+                          selectedLang === 'es'
+                            ? 'https://playoneword.app/es/privacy'
+                            : 'https://playoneword.app/privacy',
+                        title: t('legal.privacy_policy'),
+                      },
+                    })
+                  }
                 >
                   {t('legal.privacy_policy')}
                 </Text>
@@ -699,11 +794,7 @@ export default function HomeScreen() {
     return (
       <View style={[styles.center, { backgroundColor: colors.background }]}>
         <ThemeToggle />
-        <EmptyState
-          emoji={'\uD83D\uDCC5'}
-          title={t('empty.no_word')}
-          subtitle={t('empty.no_word_sub')}
-        />
+        <EmptyState emoji={'\uD83D\uDCC5'} title={t('empty.no_word')} subtitle={t('empty.no_word_sub')} />
       </View>
     );
   }
@@ -713,14 +804,30 @@ export default function HomeScreen() {
       <ScrollView
         style={[styles.container, { backgroundColor: colors.background }]}
         contentContainerStyle={styles.scrollContent}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} colors={[colors.primary]} />}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={colors.primary}
+            colors={[colors.primary]}
+          />
+        }
       >
         <ThemeToggle />
-        <TouchableOpacity style={styles.header} onPress={() => { haptic.light(); router.push('/profile'); }} activeOpacity={0.7}>
+        <TouchableOpacity
+          style={styles.header}
+          onPress={() => {
+            haptic.light();
+            router.push('/profile');
+          }}
+          activeOpacity={0.7}
+        >
           <View style={[styles.avatarSmall, { backgroundColor: colors.primaryFaded, borderColor: colors.primary }]}>
             <Text style={styles.avatarSmallText}>{auth.profile?.avatar_url || '\uD83C\uDFAD'}</Text>
           </View>
-          <Text style={[styles.greeting, { color: colors.textSecondary }]}>{t('game.greeting', { username: auth.profile?.username ?? 'player' })}</Text>
+          <Text style={[styles.greeting, { color: colors.textSecondary }]}>
+            {t('game.greeting', { username: auth.profile?.username ?? 'player' })}
+          </Text>
           {auth.profile && auth.profile.current_streak > 0 && (
             <View style={styles.streakRow}>
               <BadgePill streak={auth.profile.current_streak} />
@@ -741,8 +848,21 @@ export default function HomeScreen() {
         </View>
 
         <View style={styles.actions}>
-          <Button title={t('game.vote_others')} onPress={() => { haptic.medium(); router.push('/vote'); }} />
-          <Button title={t('game.see_results')} onPress={() => { haptic.medium(); router.push('/results'); }} variant="outline" />
+          <Button
+            title={t('game.vote_others')}
+            onPress={() => {
+              haptic.medium();
+              router.push('/vote');
+            }}
+          />
+          <Button
+            title={t('game.see_results')}
+            onPress={() => {
+              haptic.medium();
+              router.push('/results');
+            }}
+            variant="outline"
+          />
         </View>
 
         {/* Streak Celebration Modal */}
@@ -755,10 +875,7 @@ export default function HomeScreen() {
         )}
 
         {/* Notification Permission Prompt */}
-        <NotificationPermissionPrompt
-          visible={showNotifPrompt}
-          onDismiss={() => setShowNotifPrompt(false)}
-        />
+        <NotificationPermissionPrompt visible={showNotifPrompt} onDismiss={() => setShowNotifPrompt(false)} />
       </ScrollView>
     );
   }
@@ -769,11 +886,20 @@ export default function HomeScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <ThemeToggle />
-      <TouchableOpacity style={styles.header} onPress={() => { haptic.light(); router.push('/profile'); }} activeOpacity={0.7}>
+      <TouchableOpacity
+        style={styles.header}
+        onPress={() => {
+          haptic.light();
+          router.push('/profile');
+        }}
+        activeOpacity={0.7}
+      >
         <View style={[styles.avatarSmall, { backgroundColor: colors.primaryFaded, borderColor: colors.primary }]}>
           <Text style={styles.avatarSmallText}>{auth.profile?.avatar_url || '\uD83C\uDFAD'}</Text>
         </View>
-        <Text style={[styles.greeting, { color: colors.textSecondary }]}>{t('game.greeting', { username: auth.profile?.username ?? 'player' })}</Text>
+        <Text style={[styles.greeting, { color: colors.textSecondary }]}>
+          {t('game.greeting', { username: auth.profile?.username ?? 'player' })}
+        </Text>
         <Text style={[styles.todayLabel, { color: colors.textMuted }]}>{t('game.todays_word')}</Text>
       </TouchableOpacity>
 
@@ -784,7 +910,10 @@ export default function HomeScreen() {
       <View style={styles.inputSection}>
         <Text style={[styles.prompt, { color: colors.textSecondary }]}>{t('game.prompt')}</Text>
         <TextInput
-          style={[styles.descriptionInput, { backgroundColor: colors.surface, color: colors.text, borderColor: colors.border }]}
+          style={[
+            styles.descriptionInput,
+            { backgroundColor: colors.surface, color: colors.text, borderColor: colors.border },
+          ]}
           placeholder={t('game.placeholder')}
           placeholderTextColor={colors.textMuted}
           value={input}

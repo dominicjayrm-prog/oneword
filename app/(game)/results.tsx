@@ -52,7 +52,9 @@ export default function ResultsScreen() {
   const shareCardRef = useRef<View>(null);
   const mountedRef = useRef(true);
   useEffect(() => {
-    return () => { mountedRef.current = false; };
+    return () => {
+      mountedRef.current = false;
+    };
   }, []);
 
   const loadResults = useCallback(async () => {
@@ -126,14 +128,15 @@ export default function ResultsScreen() {
         <View style={[styles.center, { backgroundColor: colors.background }]}>
           <Text style={styles.lockIcon}>{'\uD83D\uDD12'}</Text>
           {todayWord && <WordDisplay word={todayWord.word} category={todayWord.category} />}
-          <Text style={[styles.lockedMessage, { color: colors.textSecondary }]}>
-            {t('results.locked_message')}
-          </Text>
+          <Text style={[styles.lockedMessage, { color: colors.textSecondary }]}>{t('results.locked_message')}</Text>
         </View>
         <View style={styles.actions}>
           <Button
             title={t('results.go_to_today')}
-            onPress={() => { haptic.medium(); router.replace('/'); }}
+            onPress={() => {
+              haptic.medium();
+              router.replace('/');
+            }}
           />
         </View>
       </View>
@@ -149,7 +152,10 @@ export default function ResultsScreen() {
       <View style={[styles.segmentedControl, { backgroundColor: colors.surface, borderColor: colors.border }]}>
         <TouchableOpacity
           style={[styles.segment, tab === 'global' && { backgroundColor: colors.primary }]}
-          onPress={() => { haptic.light(); setTab('global'); }}
+          onPress={() => {
+            haptic.light();
+            setTab('global');
+          }}
           activeOpacity={0.7}
         >
           <Text style={[styles.segmentText, { color: tab === 'global' ? '#FFFFFF' : colors.textMuted }]}>
@@ -158,7 +164,10 @@ export default function ResultsScreen() {
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.segment, tab === 'friends' && { backgroundColor: colors.primary }]}
-          onPress={() => { haptic.light(); setTab('friends'); }}
+          onPress={() => {
+            haptic.light();
+            setTab('friends');
+          }}
           activeOpacity={0.7}
         >
           <Text style={[styles.segmentText, { color: tab === 'friends' ? '#FFFFFF' : colors.textMuted }]}>
@@ -174,16 +183,9 @@ export default function ResultsScreen() {
           <LoadingSpinner message={t('loading.results')} />
         </View>
       ) : loadError ? (
-        <RetryState
-          type={!isOnline ? 'offline' : 'error'}
-          onRetry={loadResults}
-        />
+        <RetryState type={!isOnline ? 'offline' : 'error'} onRetry={loadResults} />
       ) : leaderboard.length === 0 ? (
-        <EmptyState
-          emoji={'\uD83D\uDDF3'}
-          title={t('empty.no_results')}
-          subtitle={t('empty.no_results_sub')}
-        />
+        <EmptyState emoji={'\uD83D\uDDF3'} title={t('empty.no_results')} subtitle={t('empty.no_results_sub')} />
       ) : (
         <FlatList
           data={leaderboard}

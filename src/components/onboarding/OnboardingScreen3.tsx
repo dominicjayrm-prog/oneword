@@ -14,8 +14,15 @@ const STAT_EMOJIS = ['\uD83D\uDD25', '\uD83C\uDFC6', '\uD83D\uDCE4'];
 export function OnboardingScreen3({ isActive }: Props) {
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const entries = t('onboarding.screen3_entries', { returnObjects: true }) as unknown as Array<{ desc: string; user: string; votes: number }>;
-  const stats = t('onboarding.screen3_stats', { returnObjects: true }) as unknown as Array<{ label: string; value: string }>;
+  const entries = t('onboarding.screen3_entries', { returnObjects: true }) as unknown as Array<{
+    desc: string;
+    user: string;
+    votes: number;
+  }>;
+  const stats = t('onboarding.screen3_stats', { returnObjects: true }) as unknown as Array<{
+    label: string;
+    value: string;
+  }>;
 
   const labelOpacity = useRef(new Animated.Value(0)).current;
   const titleOpacity = useRef(new Animated.Value(0)).current;
@@ -41,7 +48,7 @@ export function OnboardingScreen3({ isActive }: Props) {
         Animated.parallel([
           Animated.timing(entryOpacities[i], { toValue: 1, duration: 400, useNativeDriver: true }),
           Animated.spring(entryTranslateYs[i], { toValue: 0, damping: 14, stiffness: 120, useNativeDriver: true }),
-        ])
+        ]),
       );
 
       Animated.sequence([
@@ -119,7 +126,10 @@ export function OnboardingScreen3({ isActive }: Props) {
         ]}
       >
         {stats.map((stat, i) => (
-          <View key={stat.label} style={[styles.statItem, i < stats.length - 1 && { borderRightWidth: 1, borderRightColor: colors.border }]}>
+          <View
+            key={stat.label}
+            style={[styles.statItem, i < stats.length - 1 && { borderRightWidth: 1, borderRightColor: colors.border }]}
+          >
             <Text style={styles.statEmoji}>{STAT_EMOJIS[i]}</Text>
             <Text style={[styles.statValue, { color: colors.text }]}>{stat.value}</Text>
             <Text style={[styles.statLabel, { color: colors.textMuted }]}>{stat.label}</Text>

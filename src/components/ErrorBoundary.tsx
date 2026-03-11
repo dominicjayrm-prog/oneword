@@ -47,10 +47,7 @@ function ErrorFallback({ onRetry }: { onRetry: () => void }) {
       <Text style={styles.emoji}>{'\uD83D\uDE05'}</Text>
       <Text style={[styles.title, { color: colors.text }]}>{i18next.t('errors.crash_title')}</Text>
       <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{i18next.t('errors.crash_subtitle')}</Text>
-      <TouchableOpacity
-        style={[styles.button, { backgroundColor: colors.primary }]}
-        onPress={onRetry}
-      >
+      <TouchableOpacity style={[styles.button, { backgroundColor: colors.primary }]} onPress={onRetry}>
         <Text style={styles.buttonText}>{i18next.t('errors.try_again')}</Text>
       </TouchableOpacity>
     </View>

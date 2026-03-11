@@ -46,10 +46,10 @@ export function YesterdayWinnerCard({ data, onDismiss }: Props) {
 
     if (data.user_was_winner) {
       haptic.success();
-      celebScale.value = withDelay(200, withSequence(
-        withSpring(1.15, { damping: 6, stiffness: 180 }),
-        withSpring(1, { damping: 10, stiffness: 200 })
-      ));
+      celebScale.value = withDelay(
+        200,
+        withSequence(withSpring(1.15, { damping: 6, stiffness: 180 }), withSpring(1, { damping: 10, stiffness: 200 })),
+      );
     } else {
       haptic.light();
     }
@@ -98,21 +98,21 @@ export function YesterdayWinnerCard({ data, onDismiss }: Props) {
             {'\uD83C\uDF89 '}YOU WON{' \uD83C\uDF89'}
           </Animated.Text>
           <Animated.View style={celebStyle}>
-            <Text style={[styles.celebTitle, { color: colors.gold }]}>
-              {t('yesterday_winner.you_won')}
-            </Text>
+            <Text style={[styles.celebTitle, { color: colors.gold }]}>{t('yesterday_winner.you_won')}</Text>
           </Animated.View>
 
           <View style={styles.wordRow}>
-            <Text style={[styles.wordText, { color: colors.text }]}>
-              {data.word.toUpperCase()}
-            </Text>
-            <Text style={[styles.wordMeta, { color: colors.textMuted }]}>
-              {data.word_category}
-            </Text>
+            <Text style={[styles.wordText, { color: colors.text }]}>{data.word.toUpperCase()}</Text>
+            <Text style={[styles.wordMeta, { color: colors.textMuted }]}>{data.word_category}</Text>
           </View>
 
-          <Animated.View style={[styles.descriptionBox, { backgroundColor: colors.background, borderColor: withOpacity(colors.gold, 0.19) }, descStyle]}>
+          <Animated.View
+            style={[
+              styles.descriptionBox,
+              { backgroundColor: colors.background, borderColor: withOpacity(colors.gold, 0.19) },
+              descStyle,
+            ]}
+          >
             <Text style={styles.medal}>{'\uD83E\uDD47'}</Text>
             <Text style={[styles.descriptionText, { color: colors.text }]}>
               &ldquo;{data.winner_description}&rdquo;
@@ -134,24 +134,18 @@ export function YesterdayWinnerCard({ data, onDismiss }: Props) {
   return (
     <Animated.View style={[styles.container, cardStyle]}>
       <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-        <Text style={[styles.label, { color: colors.textMuted }]}>
-          {t('yesterday_winner.label')}
-        </Text>
+        <Text style={[styles.label, { color: colors.textMuted }]}>{t('yesterday_winner.label')}</Text>
 
         <View style={styles.wordRow}>
-          <Text style={[styles.wordText, { color: colors.text }]}>
-            {data.word.toUpperCase()}
-          </Text>
-          <Text style={[styles.wordMeta, { color: colors.textMuted }]}>
-            {data.word_category}
-          </Text>
+          <Text style={[styles.wordText, { color: colors.text }]}>{data.word.toUpperCase()}</Text>
+          <Text style={[styles.wordMeta, { color: colors.textMuted }]}>{data.word_category}</Text>
         </View>
 
-        <Animated.View style={[styles.descriptionBox, { backgroundColor: colors.background, borderColor: colors.border }, descStyle]}>
+        <Animated.View
+          style={[styles.descriptionBox, { backgroundColor: colors.background, borderColor: colors.border }, descStyle]}
+        >
           <Animated.Text style={[styles.medal, medalStyle]}>{'\uD83E\uDD47'}</Animated.Text>
-          <Text style={[styles.descriptionText, { color: colors.text }]}>
-            &ldquo;{data.winner_description}&rdquo;
-          </Text>
+          <Text style={[styles.descriptionText, { color: colors.text }]}>&ldquo;{data.winner_description}&rdquo;</Text>
           <Animated.View style={userInfoStyle}>
             <Text style={[styles.winnerInfo, { color: colors.textMuted }]}>
               @{data.winner_username} {'  \u00B7  '}
@@ -167,22 +161,16 @@ export function YesterdayWinnerCard({ data, onDismiss }: Props) {
               <Text style={[styles.userRank, { color: colors.textSecondary }]}>
                 {t('yesterday_winner.your_rank', { rank: data.user_rank, total: data.total_descriptions })}
               </Text>
-              <Text style={[styles.userDesc, { color: colors.textMuted }]}>
-                &ldquo;{data.user_description}&rdquo;
-              </Text>
+              <Text style={[styles.userDesc, { color: colors.textMuted }]}>&ldquo;{data.user_description}&rdquo;</Text>
             </>
           ) : (
-            <Text style={[styles.didntPlay, { color: colors.textMuted }]}>
-              {t('yesterday_winner.didnt_play')}
-            </Text>
+            <Text style={[styles.didntPlay, { color: colors.textMuted }]}>{t('yesterday_winner.didnt_play')}</Text>
           )}
         </Animated.View>
 
         <Animated.View style={[styles.bottomSection, buttonStyle]}>
           <Button title={t('yesterday_winner.see_today')} onPress={handleDismiss} />
-          <Text style={[styles.motivational, { color: colors.textMuted }]}>
-            {t('yesterday_winner.beat_this')}
-          </Text>
+          <Text style={[styles.motivational, { color: colors.textMuted }]}>{t('yesterday_winner.beat_this')}</Text>
         </Animated.View>
       </View>
     </Animated.View>

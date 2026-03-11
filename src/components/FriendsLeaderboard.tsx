@@ -52,10 +52,7 @@ export function FriendsLeaderboard() {
   if (loadError) {
     return (
       <View style={styles.center}>
-        <ErrorState
-          title={t('errors.load_friends_leaderboard')}
-          onRetry={load}
-        />
+        <ErrorState title={t('errors.load_friends_leaderboard')} onRetry={load} />
       </View>
     );
   }
@@ -63,9 +60,7 @@ export function FriendsLeaderboard() {
   if (!hasSubmitted) {
     return (
       <View style={styles.center}>
-        <Text style={[styles.lockText, { color: colors.primary }]}>
-          {t('friends.play_first')}
-        </Text>
+        <Text style={[styles.lockText, { color: colors.primary }]}>{t('friends.play_first')}</Text>
       </View>
     );
   }
@@ -73,9 +68,7 @@ export function FriendsLeaderboard() {
   if (descriptions.length === 0) {
     return (
       <View style={styles.center}>
-        <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-          {t('friends.empty_title')}
-        </Text>
+        <Text style={[styles.emptyText, { color: colors.textSecondary }]}>{t('friends.empty_title')}</Text>
       </View>
     );
   }

@@ -39,11 +39,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   const colors = mode === 'light' ? lightColors : darkColors;
 
-  return (
-    <ThemeContext.Provider value={{ colors, mode, toggleTheme }}>
-      {children}
-    </ThemeContext.Provider>
-  );
+  return <ThemeContext.Provider value={{ colors, mode, toggleTheme }}>{children}</ThemeContext.Provider>;
 }
 
 export function useTheme() {

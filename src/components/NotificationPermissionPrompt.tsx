@@ -5,7 +5,12 @@ import { useTranslation } from 'react-i18next';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuthContext } from '../contexts/AuthContext';
 import { Button } from './Button';
-import { registerForPushNotifications, scheduleDailyReminder, scheduleStreakRisk, getNotificationPermissionStatus } from '../lib/notifications';
+import {
+  registerForPushNotifications,
+  scheduleDailyReminder,
+  scheduleStreakRisk,
+  getNotificationPermissionStatus,
+} from '../lib/notifications';
 import { haptic } from '../lib/haptics';
 import { fontSize, spacing, borderRadius } from '../constants/theme';
 
@@ -38,7 +43,9 @@ export function NotificationPermissionPrompt({ visible, onDismiss }: Props) {
         const { Alert } = require('react-native');
         Alert.alert(
           t('notifications.denied_title', { defaultValue: 'Notifications Blocked' }),
-          t('notifications.denied_body', { defaultValue: 'You can enable notifications later in your device Settings.' }),
+          t('notifications.denied_body', {
+            defaultValue: 'You can enable notifications later in your device Settings.',
+          }),
         );
       }
     } catch {
@@ -66,22 +73,13 @@ export function NotificationPermissionPrompt({ visible, onDismiss }: Props) {
   }
 
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="fade"
-      statusBarTranslucent
-    >
+    <Modal visible={visible} transparent animationType="fade" statusBarTranslucent>
       <View style={styles.overlay}>
         <View style={[styles.card, { backgroundColor: colors.background, borderColor: colors.border }]}>
           <Text style={styles.bellEmoji}>{'\uD83D\uDD14'}</Text>
           <Text style={[styles.title, { color: colors.text }]}>{t('notifications.permission_title')}</Text>
           <Text style={[styles.body, { color: colors.textSecondary }]}>{t('notifications.permission_body')}</Text>
-          <Button
-            title={t('notifications.permission_enable')}
-            onPress={handleEnable}
-            loading={enabling}
-          />
+          <Button title={t('notifications.permission_enable')} onPress={handleEnable} loading={enabling} />
           <TouchableOpacity onPress={handleLater} activeOpacity={0.7} style={styles.laterBtn}>
             <Text style={[styles.laterText, { color: colors.textMuted }]}>{t('notifications.permission_later')}</Text>
           </TouchableOpacity>

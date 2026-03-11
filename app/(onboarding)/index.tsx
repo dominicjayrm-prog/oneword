@@ -96,7 +96,12 @@ export default function OnboardingScreen() {
   const isLast = currentIndex === 2;
 
   return (
-    <View style={[styles.root, { backgroundColor: colors.background, paddingTop: insets.top + 16, paddingBottom: insets.bottom + 16 }]}>
+    <View
+      style={[
+        styles.root,
+        { backgroundColor: colors.background, paddingTop: insets.top + 16, paddingBottom: insets.bottom + 16 },
+      ]}
+    >
       {/* Logo */}
       <View style={styles.logoContainer}>
         <Text style={[styles.logoOne, { color: colors.text }]}>one</Text>
@@ -134,7 +139,11 @@ export default function OnboardingScreen() {
 
         <View style={styles.buttons}>
           {currentIndex > 0 && (
-            <TouchableOpacity style={[styles.backButton, { borderColor: colors.border }]} onPress={goBack} activeOpacity={0.7}>
+            <TouchableOpacity
+              style={[styles.backButton, { borderColor: colors.border }]}
+              onPress={goBack}
+              activeOpacity={0.7}
+            >
               <Text style={[styles.backButtonText, { color: colors.text }]}>{t('nav_back')}</Text>
             </TouchableOpacity>
           )}

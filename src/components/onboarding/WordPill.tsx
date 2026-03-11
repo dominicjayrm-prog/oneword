@@ -1,12 +1,6 @@
 import { useEffect } from 'react';
 import { Text, StyleSheet } from 'react-native';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
-  withDelay,
-  withTiming,
-} from 'react-native-reanimated';
+import Animated, { useSharedValue, useAnimatedStyle, withSpring, withDelay, withTiming } from 'react-native-reanimated';
 import { haptic } from '../../lib/haptics';
 
 interface WordPillProps {
@@ -25,10 +19,7 @@ export function WordPill({ word, index, isActive, baseDelay = 2400 }: WordPillPr
       const delay = baseDelay + index * 300;
       scale.value = 0;
       opacity.value = 0;
-      scale.value = withDelay(
-        delay,
-        withSpring(1, { damping: 8, stiffness: 150, mass: 0.6 })
-      );
+      scale.value = withDelay(delay, withSpring(1, { damping: 8, stiffness: 150, mass: 0.6 }));
       opacity.value = withDelay(delay, withTiming(1, { duration: 200 }));
       // Haptic on pop
       const timer = setTimeout(() => {

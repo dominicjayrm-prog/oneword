@@ -42,8 +42,8 @@ function InnerLayout() {
       .then((value) => {
         setHasSeenOnboarding(value === 'true');
       })
-      .catch(() => {
-        // If storage read fails, default to not seen
+      .catch((err) => {
+        console.warn('[RootLayout] Failed to read onboarding state:', err);
       })
       .finally(() => {
         setOnboardingChecked(true);
@@ -130,7 +130,7 @@ function InnerLayout() {
 }
 
 export default function RootLayout() {
-  const [fontsLoaded] = useFonts({
+  const [fontsLoaded, fontError] = useFonts({
     PlayfairDisplay_400Regular,
     PlayfairDisplay_700Bold,
     DMSans_400Regular,
@@ -140,7 +140,13 @@ export default function RootLayout() {
     DMMono_500Medium,
   });
 
-  if (!fontsLoaded) {
+  // If fonts fail to load, render the app anyway with system font fallbacks
+  // rather than blocking indefinitely on the loading spinner
+  if (fontError) {
+    console.warn('[RootLayout] Font loading failed, using system fallbacks:', fontError);
+  }
+
+  if (!fontsLoaded && !fontError) {
     return (
       <View style={styles.loading}>
         <ActivityIndicator color="#FF6B4A" />

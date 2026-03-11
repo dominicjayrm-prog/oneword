@@ -435,6 +435,7 @@ const styles = StyleSheet.create({
     fontSize: fontSize.xl,
     fontFamily: 'DMMono_500Medium',
     fontWeight: '800',
+    // fontFamily will gracefully fall back to system monospace if DMMono fails to load
   },
   statLabel: {
     fontSize: fontSize.xs,

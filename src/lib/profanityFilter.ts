@@ -111,6 +111,46 @@ function stripAccents(s: string): string {
   return s.replace(/á/g, 'a').replace(/é/g, 'e').replace(/í/g, 'i').replace(/ó/g, 'o').replace(/ú/g, 'u').replace(/ü/g, 'u').replace(/ñ/g, 'n');
 }
 
+/**
+ * Normalize Unicode confusables and fullwidth characters to ASCII equivalents.
+ * Catches evasion attempts like ＦＵＣＫusing fullwidth Latin (U+FF01-U+FF5E),
+ * Cyrillic lookalikes, mathematical alphanumerics, etc.
+ */
+function normalizeUnicode(s: string): string {
+  let result = s;
+
+  // Fullwidth ASCII variants (U+FF01-U+FF5E → U+0021-U+007E)
+  result = result.replace(/[\uFF01-\uFF5E]/g, (ch) =>
+    String.fromCharCode(ch.charCodeAt(0) - 0xFEE0)
+  );
+
+  // Common Cyrillic lookalikes → Latin
+  const cyrillicMap: Record<string, string> = {
+    '\u0430': 'a', '\u0435': 'e', '\u043E': 'o', '\u0440': 'p', '\u0441': 'c',
+    '\u0443': 'y', '\u0445': 'x', '\u0456': 'i', '\u0410': 'a', '\u0415': 'e',
+    '\u041E': 'o', '\u0420': 'p', '\u0421': 'c', '\u0423': 'y', '\u0425': 'x',
+  };
+  result = result.replace(/[\u0400-\u04FF]/g, (ch) => cyrillicMap[ch] || ch);
+
+  // Mathematical bold/italic/script Latin letters → ASCII
+  // Bold A-Z: U+1D400-U+1D419, a-z: U+1D41A-U+1D433
+  // Italic A-Z: U+1D434-U+1D44D, a-z: U+1D44E-U+1D467
+  result = result.replace(/[\u{1D400}-\u{1D7FF}]/gu, (ch) => {
+    const cp = ch.codePointAt(0)!;
+    // Bold uppercase A-Z
+    if (cp >= 0x1D400 && cp <= 0x1D419) return String.fromCharCode(cp - 0x1D400 + 65);
+    // Bold lowercase a-z
+    if (cp >= 0x1D41A && cp <= 0x1D433) return String.fromCharCode(cp - 0x1D41A + 97);
+    // Italic uppercase A-Z
+    if (cp >= 0x1D434 && cp <= 0x1D44D) return String.fromCharCode(cp - 0x1D434 + 65);
+    // Italic lowercase a-z
+    if (cp >= 0x1D44E && cp <= 0x1D467) return String.fromCharCode(cp - 0x1D44E + 97);
+    return ch;
+  });
+
+  return result;
+}
+
 // Pre-compute accent-stripped Spanish blocked set so that stripped input
 // is compared against stripped blocked words (not the accented originals).
 const BLOCKED_WORDS_ES_STRIPPED = new Set(
@@ -124,7 +164,12 @@ const BLOCKED_WORDS_ES_STRIPPED = new Set(
  */
 export function checkProfanity(text: string): { clean: boolean; flaggedWord?: string } {
   // Strip zero-width and invisible Unicode characters that could bypass the filter
-  const lower = text.toLowerCase().replace(/[\u200B-\u200D\uFEFF\u00AD\u034F\u061C\u2060-\u2064\u2066-\u206F]/g, '');
+  let cleaned = text.toLowerCase().replace(/[\u200B-\u200D\uFEFF\u00AD\u034F\u061C\u2060-\u2064\u2066-\u206F]/g, '');
+
+  // Normalize Unicode confusables (fullwidth, Cyrillic lookalikes, math symbols)
+  cleaned = normalizeUnicode(cleaned);
+
+  const lower = cleaned;
 
   // Split keeping Spanish characters intact
   const words = lower.replace(/[^a-záéíóúñü0-9\s]/g, '').split(/\s+/).filter(Boolean);
@@ -140,16 +185,24 @@ export function checkProfanity(text: string): { clean: boolean; flaggedWord?: st
     }
   }
 
-  // Check for l33t speak substitutions
+  // Check for l33t speak substitutions (extended mapping)
   const deLeeted = lower
     .replace(/0/g, 'o')
     .replace(/1/g, 'i')
     .replace(/3/g, 'e')
     .replace(/4/g, 'a')
     .replace(/5/g, 's')
+    .replace(/6/g, 'g')
     .replace(/7/g, 't')
+    .replace(/8/g, 'b')
+    .replace(/9/g, 'g')
     .replace(/\$/g, 's')
     .replace(/@/g, 'a')
+    .replace(/!/g, 'i')
+    .replace(/\|/g, 'l')
+    .replace(/\+/g, 't')
+    .replace(/\(/g, 'c')
+    .replace(/\{/g, 'c')
     .replace(/[^a-záéíóúñü\s]/g, '')
     .split(/\s+/)
     .filter(Boolean);

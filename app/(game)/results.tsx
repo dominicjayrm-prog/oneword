@@ -13,6 +13,7 @@ import { captureRef } from 'react-native-view-shot';
 import * as Sharing from 'expo-sharing';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
+import { useToast } from '../../src/components/Toast';
 import { useAuthContext } from '../../src/contexts/AuthContext';
 import { useGameContext } from '../../src/contexts/GameContext';
 import { useTheme } from '../../src/contexts/ThemeContext';
@@ -34,6 +35,7 @@ export default function ResultsScreen() {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const { profile } = useAuthContext();
+  const { showToast } = useToast();
   const { todayWord, hasSubmitted, userDescription, getLeaderboard } = useGameContext();
 
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
@@ -55,7 +57,8 @@ export default function ResultsScreen() {
     try {
       const data = await getLeaderboard();
       setLeaderboard(data);
-    } catch {
+    } catch (err) {
+      console.warn('[ResultsScreen] Failed to load leaderboard:', err);
       setLoadError(true);
     }
     setLoading(false);
@@ -104,8 +107,9 @@ export default function ResultsScreen() {
         dialogTitle: t('results.share_dialog_title'),
         UTI: 'public.png',
       });
-    } catch {
-      // user cancelled or error
+    } catch (err) {
+      console.warn('[ResultsScreen] Share failed:', err);
+      showToast(t('errors.share_failed'), 'error');
     } finally {
       setSharing(false);
     }

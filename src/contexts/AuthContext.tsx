@@ -108,8 +108,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           .update({ timezone: deviceTimezone })
           .eq('id', userId);
       }
-    } catch {
-      // Non-critical — don't block profile load if timezone sync fails
+    } catch (err) {
+      console.warn('[AuthContext] Timezone sync failed:', err);
     }
   }
 

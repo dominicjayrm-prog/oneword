@@ -72,8 +72,8 @@ export default function NotificationsScreen() {
             notify_welcome_back: data.notify_welcome_back ?? true,
           });
         }
-      } catch {
-        // Use defaults
+      } catch (err) {
+        console.warn('[NotificationsScreen] Failed to load preferences:', err);
       } finally {
         setLoading(false);
       }
@@ -82,9 +82,19 @@ export default function NotificationsScreen() {
 
   const saveField = useCallback(async (field: keyof NotificationPrefs, value: boolean | string) => {
     if (!session?.user?.id) return;
+    const prevValue = prefs[field];
     setPrefs((prev) => ({ ...prev, [field]: value }));
-    await supabase.from('profiles').update({ [field]: value }).eq('id', session.user.id);
-  }, [session?.user?.id]);
+    try {
+      const { error } = await supabase.from('profiles').update({ [field]: value }).eq('id', session.user.id);
+      if (error) {
+        console.warn('[NotificationsScreen] Failed to save setting:', error);
+        setPrefs((prev) => ({ ...prev, [field]: prevValue }));
+      }
+    } catch (err) {
+      console.warn('[NotificationsScreen] Failed to save setting:', err);
+      setPrefs((prev) => ({ ...prev, [field]: prevValue }));
+    }
+  }, [session?.user?.id, prefs]);
 
   const handleToggle = useCallback(async (field: keyof NotificationPrefs, value: boolean) => {
     haptic.light();

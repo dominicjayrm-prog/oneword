@@ -60,7 +60,8 @@ export default function FriendsScreen() {
         const descs = await getFriendsDescriptions(userId, todayWord.id);
         setDescriptions(descs);
       }
-    } catch {
+    } catch (err) {
+      console.warn('[FriendsScreen] Failed to load data:', err);
       setLoadError(true);
     }
     if (showFullLoading) setLoading(false);

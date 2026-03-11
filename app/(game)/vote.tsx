@@ -67,7 +67,7 @@ export default function VoteScreen() {
             setBatchExhausted(true);
           }
         }
-      } catch { /* non-critical */ }
+      } catch (err) { console.warn('[VoteScreen] Failed to restore vote count:', err); }
     })();
   }, [todayWord, hasSubmitted, session]);
 
@@ -118,7 +118,8 @@ export default function VoteScreen() {
         pairsShownRef.current += 1;
       }
       setPair(p);
-    } catch {
+    } catch (err) {
+      console.warn('[VoteScreen] Failed to load vote pair:', err);
       setLoadError(true);
     }
     setLoading(false);

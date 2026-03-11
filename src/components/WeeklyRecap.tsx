@@ -127,8 +127,8 @@ export function WeeklyRecapCard({ data, onDismiss }: Props) {
         mimeType: 'image/png',
         UTI: 'public.png',
       });
-    } catch {
-      // user cancelled
+    } catch (err) {
+      console.warn('[WeeklyRecap] Share failed:', err);
     } finally {
       setSharing(false);
     }

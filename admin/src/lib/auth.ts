@@ -2,7 +2,6 @@ import { cookies } from 'next/headers';
 import crypto from 'crypto';
 
 const COOKIE_NAME = 'oneword_admin_auth';
-const CSRF_COOKIE = 'oneword_csrf';
 
 // --- Rate limiting (in-memory, per-process) ---
 const loginAttempts = new Map<string, { count: number; resetAt: number }>();
@@ -94,26 +93,30 @@ export async function setAuthenticated() {
   });
 }
 
-// --- CSRF protection ---
-export async function generateCsrfToken(): Promise<string> {
-  const token = crypto.randomBytes(32).toString('hex');
-  const cookieStore = await cookies();
-  cookieStore.set(CSRF_COOKIE, token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
-    maxAge: 60 * 60, // 1 hour
-    path: '/',
-  });
-  return token;
+// --- CSRF protection (HMAC-based, no cookie needed during render) ---
+export function generateCsrfToken(): string {
+  const timestamp = Date.now().toString();
+  const nonce = crypto.randomBytes(16).toString('hex');
+  const payload = `${timestamp}:${nonce}`;
+  const signature = crypto.createHmac('sha256', getSecret()).update(payload).digest('hex');
+  return `${payload}.${signature}`;
 }
 
-export async function validateCsrfToken(token: string): Promise<boolean> {
-  const cookieStore = await cookies();
-  const stored = cookieStore.get(CSRF_COOKIE)?.value;
-  if (!stored || !token) return false;
+export function validateCsrfToken(token: string): boolean {
+  if (!token) return false;
   try {
-    return crypto.timingSafeEqual(Buffer.from(stored), Buffer.from(token));
+    const lastDot = token.lastIndexOf('.');
+    if (lastDot === -1) return false;
+    const payload = token.substring(0, lastDot);
+    const signature = token.substring(lastDot + 1);
+    const expected = crypto.createHmac('sha256', getSecret()).update(payload).digest('hex');
+    if (!crypto.timingSafeEqual(Buffer.from(signature, 'hex'), Buffer.from(expected, 'hex'))) {
+      return false;
+    }
+    // Check token age (1 hour max)
+    const timestamp = parseInt(payload.split(':')[0], 10);
+    if (Date.now() - timestamp > 60 * 60 * 1000) return false;
+    return true;
   } catch {
     return false;
   }

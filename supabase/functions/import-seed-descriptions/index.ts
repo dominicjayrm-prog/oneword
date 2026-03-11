@@ -18,6 +18,58 @@ function countWords(text: string): number {
   return text.trim().split(/\s+/).filter(Boolean).length;
 }
 
+// Profanity check — blocks hard profanity, slurs, and explicit content.
+// Mirrors the client-side profanityFilter.ts blocked word lists.
+const BLOCKED_WORDS = new Set([
+  // English hard profanity
+  'fuck', 'fucking', 'fucked', 'fucker', 'fuckers', 'fucks',
+  'shit', 'shitting', 'shitty', 'shits', 'bullshit',
+  'asshole', 'assholes', 'bitch', 'bitches',
+  'cunt', 'cunts', 'cock', 'cocks', 'cocksucker',
+  'dick', 'dicks', 'dickhead', 'pussy', 'pussies',
+  'whore', 'whores', 'slut', 'sluts',
+  'wank', 'wanker', 'wankers', 'twat', 'twats',
+  // Slurs
+  'nigger', 'niggers', 'nigga', 'niggas',
+  'faggot', 'faggots', 'fag', 'fags',
+  'retard', 'retards', 'retarded',
+  'spic', 'chink', 'kike',
+  'tranny', 'trannies',
+  // Sexually explicit
+  'blowjob', 'handjob', 'cum', 'cumming', 'cumshot',
+  'porn', 'porno', 'hentai',
+  // Violence
+  'rape', 'raping', 'rapist', 'pedophile', 'pedo',
+  // Spanish hard profanity
+  'puta', 'putas', 'perra', 'perras', 'zorra', 'zorras',
+  'joder', 'jodido', 'jodida', 'chingar', 'chingado', 'chingada',
+  'verga', 'vergas', 'polla', 'pollas', 'concha',
+  // Spanish slurs
+  'maricón', 'maricon', 'maricones', 'marica',
+  'joto', 'jotos',
+  // Spanish sexually explicit
+  'mamada', 'mamadas', 'follar', 'follando',
+  // Common evasions
+  'fck', 'fcking', 'fking', 'stfu', 'gtfo',
+]);
+
+function containsProfanity(text: string): string | null {
+  const lower = text.toLowerCase();
+  const words = lower.replace(/[^a-záéíóúñü0-9\s]/g, '').split(/\s+/).filter(Boolean);
+  for (const word of words) {
+    if (BLOCKED_WORDS.has(word)) return word;
+  }
+  // Check accent-stripped version
+  const stripped = lower
+    .replace(/á/g, 'a').replace(/é/g, 'e').replace(/í/g, 'i')
+    .replace(/ó/g, 'o').replace(/ú/g, 'u').replace(/ñ/g, 'n');
+  const strippedWords = stripped.replace(/[^a-z0-9\s]/g, '').split(/\s+/).filter(Boolean);
+  for (const word of strippedWords) {
+    if (BLOCKED_WORDS.has(word)) return word;
+  }
+  return null;
+}
+
 interface SeedDescInput {
   word: string;
   language: string;
@@ -77,6 +129,14 @@ Deno.serve(async (req) => {
     const wordCount = countWords(item.description);
     if (wordCount !== 5) {
       errors.push({ index: i, reason: `Has ${wordCount} words, need exactly 5`, item });
+      skipped++;
+      continue;
+    }
+
+    // Profanity check
+    const flaggedWord = containsProfanity(item.description);
+    if (flaggedWord) {
+      errors.push({ index: i, reason: `Contains blocked word: "${flaggedWord}"`, item });
       skipped++;
       continue;
     }

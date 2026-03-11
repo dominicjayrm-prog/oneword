@@ -83,20 +83,28 @@ export default function FriendsScreen() {
   async function handleAccept(friendshipId: string) {
     if (processingRef.current.has(friendshipId)) return;
     processingRef.current.add(friendshipId);
-    const prevRequests = requests;
-    setRequests((prev) => prev.filter((r) => r.friendship_id !== friendshipId));
+    // Capture the removed item for rollback using functional updates
+    let removedRequest: PendingRequest | undefined;
+    setRequests((prev) => {
+      removedRequest = prev.find((r) => r.friendship_id === friendshipId);
+      return prev.filter((r) => r.friendship_id !== friendshipId);
+    });
     try {
       const { error } = await acceptFriendRequest(friendshipId, userId!);
       if (error) {
         showToast(t('errors.generic'), 'error');
-        setRequests(prevRequests);
+        if (removedRequest) {
+          setRequests((prev) => [...prev, removedRequest!]);
+        }
       } else {
         showToast(t('success.friend_accepted'), 'success');
       }
       await loadData(false);
     } catch {
       showToast(t('errors.generic'), 'error');
-      setRequests(prevRequests);
+      if (removedRequest) {
+        setRequests((prev) => [...prev, removedRequest!]);
+      }
     } finally {
       processingRef.current.delete(friendshipId);
     }
@@ -105,17 +113,24 @@ export default function FriendsScreen() {
   async function handleDecline(friendshipId: string) {
     if (processingRef.current.has(friendshipId)) return;
     processingRef.current.add(friendshipId);
-    const prevRequests = requests;
-    setRequests((prev) => prev.filter((r) => r.friendship_id !== friendshipId));
+    let removedRequest: PendingRequest | undefined;
+    setRequests((prev) => {
+      removedRequest = prev.find((r) => r.friendship_id === friendshipId);
+      return prev.filter((r) => r.friendship_id !== friendshipId);
+    });
     try {
       const { error } = await declineFriendRequest(friendshipId);
       if (error) {
         showToast(t('errors.generic'), 'error');
-        setRequests(prevRequests);
+        if (removedRequest) {
+          setRequests((prev) => [...prev, removedRequest!]);
+        }
       }
     } catch {
       showToast(t('errors.generic'), 'error');
-      setRequests(prevRequests);
+      if (removedRequest) {
+        setRequests((prev) => [...prev, removedRequest!]);
+      }
     } finally {
       processingRef.current.delete(friendshipId);
     }
@@ -124,25 +139,32 @@ export default function FriendsScreen() {
   async function handleRemove(friendshipId: string) {
     if (processingRef.current.has(friendshipId)) return;
     processingRef.current.add(friendshipId);
-    const prevFriends = friends;
-    const prevDescriptions = descriptions;
-    const friendToRemove = friends.find((f) => f.friendship_id === friendshipId);
-    setFriends((prev) => prev.filter((f) => f.friendship_id !== friendshipId));
+    // Capture removed items for rollback using functional updates
+    let removedFriend: Friend | undefined;
+    let removedDescs: FriendDescription[] = [];
+    setFriends((prev) => {
+      removedFriend = prev.find((f) => f.friendship_id === friendshipId);
+      return prev.filter((f) => f.friendship_id !== friendshipId);
+    });
     // Also remove from descriptions so FriendsToday updates immediately
-    if (friendToRemove) {
-      setDescriptions((prev) => prev.filter((d) => d.friend_id !== friendToRemove.friend_id));
+    if (removedFriend) {
+      const friendId = removedFriend.friend_id;
+      setDescriptions((prev) => {
+        removedDescs = prev.filter((d) => d.friend_id === friendId);
+        return prev.filter((d) => d.friend_id !== friendId);
+      });
     }
     try {
       const { error } = await removeFriend(friendshipId);
       if (error) {
         showToast(t('errors.generic'), 'error');
-        setFriends(prevFriends);
-        setDescriptions(prevDescriptions);
+        if (removedFriend) setFriends((prev) => [...prev, removedFriend!]);
+        if (removedDescs.length > 0) setDescriptions((prev) => [...prev, ...removedDescs]);
       }
     } catch {
       showToast(t('errors.generic'), 'error');
-      setFriends(prevFriends);
-      setDescriptions(prevDescriptions);
+      if (removedFriend) setFriends((prev) => [...prev, removedFriend!]);
+      if (removedDescs.length > 0) setDescriptions((prev) => [...prev, ...removedDescs]);
     } finally {
       processingRef.current.delete(friendshipId);
     }

@@ -85,6 +85,7 @@ export default function HomeScreen() {
   const [showNotifPrompt, setShowNotifPrompt] = useState(false);
 
   const resentTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const mountedRef = useRef(true);
 
   // Keep stable refs to the callbacks so the interstitial effect doesn't
   // restart every time userId/language changes recreate these functions.
@@ -96,6 +97,7 @@ export default function HomeScreen() {
   // Cleanup timers on unmount
   useEffect(() => {
     return () => {
+      mountedRef.current = false;
       if (resentTimerRef.current) clearTimeout(resentTimerRef.current);
     };
   }, []);
@@ -125,11 +127,14 @@ export default function HomeScreen() {
         });
         const d = dismissals && dismissals.length > 0 ? dismissals[0] : null;
 
+        if (!mountedRef.current) return;
+
         // Check recap first (Mondays only, based on game day)
         if (getGameDay() === 1) {
           const thisMonday = getGameMonday(gameDateStr);
           if (d?.recap_dismissed_week !== thisMonday) {
             const recap = await getWeeklyRecapRef.current();
+            if (!mountedRef.current) return;
             if (recap) {
               setRecapData(recap);
               setShowWeeklyRecap(true);
@@ -140,6 +145,7 @@ export default function HomeScreen() {
         // Always pre-fetch yesterday's winner (won't display until recap is dismissed)
         if (d?.winner_dismissed_date !== gameDateStr) {
           const winner = await getYesterdayWinnerRef.current();
+          if (!mountedRef.current) return;
           if (__DEV__) {
             console.log('[Interstitial] gameDate:', gameDateStr, 'lastDismissed:', d?.winner_dismissed_date, 'winner:', winner);
           }

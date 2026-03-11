@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { Linking } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { rateLimits, resetRateLimit } from '../lib/rateLimit';
@@ -144,7 +144,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Guard to prevent fetchProfile from racing with signUp's profile creation.
   // signUp sets this before its own upsert so that concurrent fetchProfile calls
   // skip the "create from metadata" path and just wait for signUp to finish.
-  let signUpInProgress = false;
+  // Uses a ref so the value persists across renders and isn't reset.
+  const signUpInProgressRef = useRef(false);
 
   async function fetchProfile(userId: string) {
     try {
@@ -157,7 +158,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (error && error.code === 'PGRST116') {
         // Profile doesn't exist yet.
         // If signUp is currently creating it, skip — signUp will call fetchProfile when done.
-        if (signUpInProgress) {
+        if (signUpInProgressRef.current) {
           return;
         }
         // Create it from auth metadata
@@ -211,7 +212,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!rateLimits.signUp()) {
       return { error: new Error('Too many attempts. Please wait a moment.') };
     }
-    signUpInProgress = true;
+    signUpInProgressRef.current = true;
     try {
       const userLang = lang || language;
       const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
@@ -291,7 +292,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       return { error: null };
     } finally {
-      signUpInProgress = false;
+      signUpInProgressRef.current = false;
     }
   }
 

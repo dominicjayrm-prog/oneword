@@ -177,6 +177,8 @@ export default function VoteScreen() {
       voteFailed = true;
     }
 
+    if (!mountedRef.current) return;
+
     if (voteFailed) {
       haptic.warning();
       showToast(t('offline.vote_failed') + ' ' + t('offline.vote_try_again'), 'error');

@@ -4,6 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import NetInfo from '@react-native-community/netinfo';
 import { supabase } from '../lib/supabase';
 import { checkProfanity } from '../lib/profanityFilter';
+import i18n from '../lib/i18n';
 import { withTimeout } from '../lib/withTimeout';
 import { rateLimits } from '../lib/rateLimit';
 import { getGameDate, hasWordRolledOver } from '../lib/gameDate';
@@ -218,7 +219,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
     const profanityCheck = checkProfanity(description);
     if (!profanityCheck.clean) {
-      return { error: new Error('Your description contains inappropriate language. Please try again.') };
+      return { error: new Error(i18n.t('errors.profanity', { word: profanityCheck.flaggedWord })) };
     }
 
     const cleaned = words.join(' ');

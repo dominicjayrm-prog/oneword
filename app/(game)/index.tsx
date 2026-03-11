@@ -196,7 +196,8 @@ export default function HomeScreen() {
     } catch (err) { console.warn('[HomeScreen] Failed to dismiss yesterday winner:', err); }
   }, [auth.session]);
 
-  const wordCount = input.trim().split(/\s+/).filter(Boolean).length;
+  // Normalize Unicode whitespace (non-breaking space, em space, etc.) to regular spaces
+  const wordCount = input.replace(/[\u00A0\u2000-\u200A\u202F\u205F\u3000]/g, ' ').trim().split(/\s+/).filter(Boolean).length;
   const isExactlyFive = wordCount === DESCRIPTION_WORD_COUNT;
   const prevWordCount = useRef(0);
 

@@ -471,7 +471,7 @@ export default function VoteScreen() {
               )}
             </View>
 
-            <Animated.Text style={[styles.vs, { color: colors.textMuted }, vsStyle]}>VS</Animated.Text>
+            <Animated.Text style={[styles.vs, { color: colors.textMuted }, vsStyle]}>{t('vote.vs')}</Animated.Text>
 
             {/* Card 2 */}
             <View>

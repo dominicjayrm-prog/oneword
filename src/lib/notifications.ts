@@ -161,8 +161,8 @@ export async function getNotificationPermissionStatus(): Promise<string> {
 export function parseTimeString(timeStr: string | null | undefined): [number, number] {
   if (!timeStr) return [9, 0];
   const parts = timeStr.split(':').map(Number);
-  const h = Number.isFinite(parts[0]) ? parts[0] : 9;
-  const m = Number.isFinite(parts[1]) ? parts[1] : 0;
+  const h = Number.isFinite(parts[0]) && parts[0] >= 0 && parts[0] <= 23 ? parts[0] : 9;
+  const m = Number.isFinite(parts[1]) && parts[1] >= 0 && parts[1] <= 59 ? parts[1] : 0;
   return [h, m];
 }
 

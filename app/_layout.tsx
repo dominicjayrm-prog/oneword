@@ -45,11 +45,31 @@ function InnerLayout() {
 
     const inOnboarding = segments[0] === '(onboarding)';
 
-    if (!hasSeenOnboarding && !inOnboarding) {
-      router.replace('/(onboarding)');
-    } else if (hasSeenOnboarding && inOnboarding) {
-      router.replace('/');
-    }
+    // Re-read the flag from storage to catch writes from the onboarding screen,
+    // which updates AsyncStorage directly without being able to set this component's state.
+    AsyncStorage.getItem('hasSeenOnboarding')
+      .then((value) => {
+        const seen = value === 'true';
+        if (seen !== hasSeenOnboarding) {
+          setHasSeenOnboarding(seen);
+          // State update will re-trigger this effect with the correct value
+          return;
+        }
+
+        if (!seen && !inOnboarding) {
+          router.replace('/(onboarding)');
+        } else if (seen && inOnboarding) {
+          router.replace('/');
+        }
+      })
+      .catch(() => {
+        // Fall back to current state if read fails
+        if (!hasSeenOnboarding && !inOnboarding) {
+          router.replace('/(onboarding)');
+        } else if (hasSeenOnboarding && inOnboarding) {
+          router.replace('/');
+        }
+      });
   }, [onboardingChecked, hasSeenOnboarding, segments]);
 
   // Handle notification taps — navigate to the relevant screen

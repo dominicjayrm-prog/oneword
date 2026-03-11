@@ -71,3 +71,48 @@ BEGIN
   ON CONFLICT (reporter_id, description_id) DO NOTHING;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- #3: Restore best_rank update to get_leaderboard.
+-- Migration 028 recreated get_leaderboard as a pure read query, dropping
+-- the best_rank side effect that existed since migration 013. Without it,
+-- profiles.best_rank is never updated and profile stats are stale.
+DROP FUNCTION IF EXISTS get_leaderboard(UUID, INTEGER);
+
+CREATE FUNCTION get_leaderboard(p_word_id UUID, p_limit INTEGER DEFAULT 50)
+RETURNS TABLE(
+  description_id UUID,
+  description_text TEXT,
+  username TEXT,
+  votes BIGINT,
+  rank BIGINT,
+  streak_badge_emoji TEXT
+) AS $$
+BEGIN
+  -- Update best_rank for all users who submitted for this word
+  WITH ranked AS (
+    SELECT d.user_id, ROW_NUMBER() OVER (ORDER BY d.vote_count DESC, d.created_at ASC) AS r
+    FROM descriptions d
+    WHERE d.word_id = p_word_id
+  )
+  UPDATE profiles p
+  SET best_rank = LEAST(COALESCE(p.best_rank, ranked.r::INTEGER), ranked.r::INTEGER),
+      updated_at = NOW()
+  FROM ranked
+  WHERE p.id = ranked.user_id;
+
+  -- Return the leaderboard
+  RETURN QUERY
+  SELECT
+    d.id AS description_id,
+    d.description AS description_text,
+    p.username,
+    d.vote_count::BIGINT AS votes,
+    ROW_NUMBER() OVER (ORDER BY d.vote_count DESC, d.created_at ASC) AS rank,
+    p.streak_badge_emoji
+  FROM descriptions d
+  JOIN profiles p ON d.user_id = p.id
+  WHERE d.word_id = p_word_id
+  ORDER BY d.vote_count DESC, d.created_at ASC
+  LIMIT p_limit;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;

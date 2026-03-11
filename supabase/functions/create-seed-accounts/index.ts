@@ -124,6 +124,8 @@ Deno.serve(async (req) => {
       });
 
       if (profileError) {
+        // Clean up orphaned auth user since profile creation failed
+        await supabaseAdmin.auth.admin.deleteUser(userId).catch(() => {});
         results.push({ username: account.username, status: "profile_error", userId, error: profileError.message });
         continue;
       }

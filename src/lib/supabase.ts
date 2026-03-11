@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import * as SecureStore from 'expo-secure-store';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL ?? '';
@@ -14,16 +15,25 @@ if (!supabaseUrl || !supabaseAnonKey) {
 // Web: use sessionStorage instead of localStorage to limit XSS exposure.
 // sessionStorage is scoped to the tab and cleared when the tab closes,
 // so stolen tokens have a shorter window of exploitation.
-// Native: use SecureStore (encrypted keychain / keystore).
+// Native: use SecureStore (encrypted keychain / keystore) with AsyncStorage
+// as a fallback for values that exceed SecureStore's 2048-byte limit.
 const ExpoSecureStoreAdapter = {
   getItem: async (key: string) => {
     if (Platform.OS === 'web') {
       return sessionStorage.getItem(key);
     }
     try {
-      return await SecureStore.getItemAsync(key);
+      // Try SecureStore first, then fall back to AsyncStorage
+      const value = await SecureStore.getItemAsync(key);
+      if (value !== null) return value;
+      return await AsyncStorage.getItem(key);
     } catch {
-      return null;
+      // SecureStore may fail on some devices; try AsyncStorage
+      try {
+        return await AsyncStorage.getItem(key);
+      } catch {
+        return null;
+      }
     }
   },
   setItem: async (key: string, value: string) => {
@@ -35,9 +45,13 @@ const ExpoSecureStoreAdapter = {
       await SecureStore.setItemAsync(key, value);
     } catch {
       // SecureStore has a 2048-byte limit per value; large session tokens
-      // may exceed this. Swallow the error so the app doesn't crash —
-      // the session will still work in-memory for this app session.
-      console.warn(`SecureStore: failed to persist key "${key}" (${value.length} bytes)`);
+      // may exceed this. Fall back to AsyncStorage so session persists
+      // across app restarts (less secure but functional).
+      try {
+        await AsyncStorage.setItem(key, value);
+      } catch {
+        console.warn(`Storage: failed to persist key "${key}" (${value.length} bytes)`);
+      }
     }
   },
   removeItem: async (key: string) => {
@@ -47,6 +61,12 @@ const ExpoSecureStoreAdapter = {
     }
     try {
       await SecureStore.deleteItemAsync(key);
+    } catch {
+      // ignore
+    }
+    // Also clean up AsyncStorage fallback
+    try {
+      await AsyncStorage.removeItem(key);
     } catch {
       // ignore
     }

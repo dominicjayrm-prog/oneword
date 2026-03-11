@@ -81,14 +81,16 @@ export default function OnboardingScreen() {
     haptic.heavy();
     try {
       await AsyncStorage.setItem('hasSeenOnboarding', 'true');
-    } catch {
-      // If storage write fails, continue anyway to avoid infinite onboarding loop
+    } catch (err) {
+      // Retry once — if storage write fails, onboarding will loop on next launch
+      console.warn('Failed to persist onboarding flag, retrying:', err);
+      try {
+        await AsyncStorage.setItem('hasSeenOnboarding', 'true');
+      } catch {
+        // Continue to home anyway — worst case user sees onboarding again next launch
+      }
     }
-    if (Platform.OS === 'web') {
-      window.location.href = '/';
-    } else {
-      router.replace('/');
-    }
+    router.replace('/');
   };
 
   const isLast = currentIndex === 2;

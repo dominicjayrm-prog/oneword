@@ -192,8 +192,12 @@ async function runSeedVoting(
     const votesToCast = Math.max(0, 10 - (existingVotes || 0));
 
     for (let i = 0; i < votesToCast; i++) {
-      // Pick two random descriptions
-      const shuffled = [...votableDescs].sort(() => Math.random() - 0.5);
+      // Pick two random descriptions using Fisher-Yates shuffle
+      const shuffled = [...votableDescs];
+      for (let j = shuffled.length - 1; j > 0; j--) {
+        const k = Math.floor(Math.random() * (j + 1));
+        [shuffled[j], shuffled[k]] = [shuffled[k], shuffled[j]];
+      }
       const desc1 = shuffled[0];
       const desc2 = shuffled[1];
       if (!desc1 || !desc2) break;

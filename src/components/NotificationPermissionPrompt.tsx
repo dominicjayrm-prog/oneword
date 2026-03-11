@@ -33,6 +33,13 @@ export function NotificationPermissionPrompt({ visible, onDismiss }: Props) {
         // Schedule default notifications
         await scheduleDailyReminder(9, 0, t('notifications.daily_title'), t('notifications.daily_body'));
         await scheduleStreakRisk(20, 0, t('notifications.streak_risk_title'), t('notifications.streak_risk_body'));
+      } else {
+        // Permission was denied by the OS — let the user know
+        const { Alert } = require('react-native');
+        Alert.alert(
+          t('notifications.denied_title', { defaultValue: 'Notifications Blocked' }),
+          t('notifications.denied_body', { defaultValue: 'You can enable notifications later in your device Settings.' }),
+        );
       }
     } catch {
       // Non-critical

@@ -167,6 +167,13 @@ export function GameProvider({ children }: { children: ReactNode }) {
           return;
         }
 
+        // Don't submit if the game day has rolled over — the word has changed
+        if (todayWord && wordId !== todayWord.id) {
+          await AsyncStorage.removeItem(PENDING_DESCRIPTION_KEY);
+          setHasPendingDescription(false);
+          return;
+        }
+
         const { error } = await supabase.from('descriptions').insert({
           user_id: userId,
           word_id: wordId,
@@ -193,7 +200,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     });
 
     return () => unsubscribe();
-  }, [userId, refreshProfile]);
+  }, [userId, todayWord, refreshProfile]);
 
   const submitDescription = useCallback(
     async (description: string) => {

@@ -262,8 +262,13 @@ export default function HomeScreen() {
     try {
       const { error, oldStreak } = await submitDescription(input);
       if (error) {
-        // If the description was saved locally (pending), show a warning instead of error
-        if (hasPendingDescription) {
+        // If this was a network error and the description was saved locally, show info toast
+        const isNetworkError = hasPendingDescription && (
+          error.message.includes('Network') ||
+          error.message.includes('timed out') ||
+          error.message.includes('fetch')
+        );
+        if (isNetworkError) {
           haptic.warning();
           showToast(t('offline.description_saved') + ' ' + t('offline.will_submit_when_online'), 'info');
         } else {

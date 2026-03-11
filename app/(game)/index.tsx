@@ -27,7 +27,7 @@ import { WeeklyRecapCard } from '../../src/components/WeeklyRecap';
 import { StreakCelebration } from '../../src/components/StreakCelebration';
 import { BadgePill } from '../../src/components/BadgePill';
 import { useToast } from '../../src/components/Toast';
-import { fontSize, spacing, borderRadius } from '../../src/constants/theme';
+import { fontSize, spacing, borderRadius, withOpacity } from '../../src/constants/theme';
 import { DESCRIPTION_WORD_COUNT, DESCRIPTION_MAX_LENGTH, TOAST_DURATION_MS, USERNAME_MIN_LENGTH, USERNAME_MAX_LENGTH, PASSWORD_MIN_LENGTH } from '../../src/constants/app';
 import { haptic } from '../../src/lib/haptics';
 import { getGameDate, getGameDay, getGameMonday } from '../../src/lib/gameDate';
@@ -702,7 +702,7 @@ export default function HomeScreen() {
           <WordDisplay word={todayWord.word} category={todayWord.category} />
           <Text style={[styles.submittedLabel, { color: colors.textMuted }]}>{t('game.your_description')}</Text>
           <Text style={[styles.submittedText, { color: colors.text }]}>{userDescription}</Text>
-          <View style={[styles.submittedCheck, { backgroundColor: colors.success + '20' }]}>
+          <View style={[styles.submittedCheck, { backgroundColor: withOpacity(colors.success, 0.125) }]}>
             <Text style={[styles.checkmark, { color: colors.success }]}>{t('game.locked_in')}</Text>
           </View>
         </View>

@@ -15,7 +15,7 @@ import {
   parseTimeString,
 } from '../src/lib/notifications';
 import { haptic } from '../src/lib/haptics';
-import { fontSize, spacing, borderRadius } from '../src/constants/theme';
+import { fontSize, spacing, borderRadius, withOpacity } from '../src/constants/theme';
 
 interface NotificationPrefs {
   notify_daily: boolean;
@@ -295,7 +295,7 @@ function ToggleRow({ label, value, onToggle, colors }: {
       <Switch
         value={value}
         onValueChange={onToggle}
-        trackColor={{ false: colors.border, true: colors.primary + '80' }}
+        trackColor={{ false: colors.border, true: withOpacity(colors.primary, 0.5) }}
         thumbColor={value ? colors.primary : colors.textMuted}
         ios_backgroundColor={colors.border}
       />

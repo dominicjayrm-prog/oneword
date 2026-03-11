@@ -10,7 +10,7 @@ import { LoadingSpinner } from '../src/components/LoadingSpinner';
 import { BadgePill } from '../src/components/BadgePill';
 import { BadgeProgress } from '../src/components/BadgeProgress';
 import { useToast } from '../src/components/Toast';
-import { fontSize, spacing, borderRadius } from '../src/constants/theme';
+import { fontSize, spacing, borderRadius, withOpacity } from '../src/constants/theme';
 import { haptic } from '../src/lib/haptics';
 
 function confirmDialog(title: string, message: string, cancelText: string, okText: string): Promise<boolean> {
@@ -217,7 +217,7 @@ export default function ProfileScreen() {
 
       {/* Delete Confirmation */}
       {showDeleteConfirm && (
-        <View style={[styles.deleteConfirmBox, { backgroundColor: colors.surface, borderColor: colors.error + '40' }]}>
+        <View style={[styles.deleteConfirmBox, { backgroundColor: colors.surface, borderColor: withOpacity(colors.error, 0.25) }]}>
           <Text style={[styles.deleteConfirmTitle, { color: colors.error }]}>
             {t('errors.delete_type_username')}
           </Text>

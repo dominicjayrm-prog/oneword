@@ -2,7 +2,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../contexts/ThemeContext';
 import { getCurrentBadge } from '../lib/badges';
-import { fontSize, spacing, borderRadius } from '../constants/theme';
+import { fontSize, spacing, borderRadius, withOpacity } from '../constants/theme';
 import type { FriendDescription } from '../lib/friends';
 
 interface Props {
@@ -27,7 +27,7 @@ export function FriendsToday({ descriptions, wordText, userHasPlayed }: Props) {
       </Text>
 
       {!userHasPlayed && (
-        <View style={[styles.lockBanner, { backgroundColor: colors.primary + '10', borderColor: colors.primary + '30' }]}>
+        <View style={[styles.lockBanner, { backgroundColor: withOpacity(colors.primary, 0.06), borderColor: withOpacity(colors.primary, 0.19) }]}>
           <Text style={[styles.lockText, { color: colors.primary }]}>
             {t('friends.play_first')}
           </Text>

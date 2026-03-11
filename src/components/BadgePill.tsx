@@ -1,6 +1,6 @@
 import { View, Text, StyleSheet } from 'react-native';
 import { getCurrentBadge } from '../lib/badges';
-import { fontSize, spacing, borderRadius } from '../constants/theme';
+import { fontSize, spacing, borderRadius, withOpacity } from '../constants/theme';
 
 interface BadgePillProps {
   streak: number;
@@ -19,7 +19,7 @@ export function BadgePill({ streak, showName = false, size = 'sm' }: BadgePillPr
   }
 
   return (
-    <View style={[styles.pill, { backgroundColor: badge.color + '1A' }]}>
+    <View style={[styles.pill, { backgroundColor: withOpacity(badge.color, 0.1) }]}>
       <Text style={{ fontSize: emojiSize }}>{badge.emoji}</Text>
       <Text style={[styles.name, { color: badge.color, fontSize: size === 'md' ? fontSize.sm : fontSize.xs }]}>
         {badge.name}

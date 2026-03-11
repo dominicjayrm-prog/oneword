@@ -15,7 +15,7 @@ import {
   parseTimeString,
 } from '../src/lib/notifications';
 import { haptic } from '../src/lib/haptics';
-import { fontSize, spacing, borderRadius } from '../src/constants/theme';
+import { fontSize, spacing, borderRadius, withOpacity } from '../src/constants/theme';
 
 interface NotificationPrefs {
   notify_daily: boolean;
@@ -72,8 +72,8 @@ export default function NotificationsScreen() {
             notify_welcome_back: data.notify_welcome_back ?? true,
           });
         }
-      } catch {
-        // Use defaults
+      } catch (err) {
+        console.warn('[NotificationsScreen] Failed to load preferences:', err);
       } finally {
         setLoading(false);
       }
@@ -82,9 +82,19 @@ export default function NotificationsScreen() {
 
   const saveField = useCallback(async (field: keyof NotificationPrefs, value: boolean | string) => {
     if (!session?.user?.id) return;
+    const prevValue = prefs[field];
     setPrefs((prev) => ({ ...prev, [field]: value }));
-    await supabase.from('profiles').update({ [field]: value }).eq('id', session.user.id);
-  }, [session?.user?.id]);
+    try {
+      const { error } = await supabase.from('profiles').update({ [field]: value }).eq('id', session.user.id);
+      if (error) {
+        console.warn('[NotificationsScreen] Failed to save setting:', error);
+        setPrefs((prev) => ({ ...prev, [field]: prevValue }));
+      }
+    } catch (err) {
+      console.warn('[NotificationsScreen] Failed to save setting:', err);
+      setPrefs((prev) => ({ ...prev, [field]: prevValue }));
+    }
+  }, [session?.user?.id, prefs]);
 
   const handleToggle = useCallback(async (field: keyof NotificationPrefs, value: boolean) => {
     haptic.light();
@@ -285,7 +295,7 @@ function ToggleRow({ label, value, onToggle, colors }: {
       <Switch
         value={value}
         onValueChange={onToggle}
-        trackColor={{ false: colors.border, true: colors.primary + '80' }}
+        trackColor={{ false: colors.border, true: withOpacity(colors.primary, 0.5) }}
         thumbColor={value ? colors.primary : colors.textMuted}
         ios_backgroundColor={colors.border}
       />

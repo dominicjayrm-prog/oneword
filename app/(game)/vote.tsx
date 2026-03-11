@@ -20,7 +20,7 @@ import { LoadingSpinner } from '../../src/components/LoadingSpinner';
 import { EmptyState } from '../../src/components/EmptyState';
 import { useToast } from '../../src/components/Toast';
 import { VOTE_BATCH_SIZE } from '../../src/constants/app';
-import { fontSize, spacing, borderRadius } from '../../src/constants/theme';
+import { fontSize, spacing, borderRadius, withOpacity } from '../../src/constants/theme';
 import { haptic } from '../../src/lib/haptics';
 import { supabase } from '../../src/lib/supabase';
 import type { VotePair } from '../../src/types/database';
@@ -67,7 +67,7 @@ export default function VoteScreen() {
             setBatchExhausted(true);
           }
         }
-      } catch { /* non-critical */ }
+      } catch (err) { console.warn('[VoteScreen] Failed to restore vote count:', err); }
     })();
   }, [todayWord, hasSubmitted, session]);
 
@@ -118,7 +118,8 @@ export default function VoteScreen() {
         pairsShownRef.current += 1;
       }
       setPair(p);
-    } catch {
+    } catch (err) {
+      console.warn('[VoteScreen] Failed to load vote pair:', err);
       setLoadError(true);
     }
     setLoading(false);
@@ -428,7 +429,7 @@ export default function VoteScreen() {
                   style={[
                     styles.card,
                     { backgroundColor: colors.surface, borderColor: selectedCard === 1 ? colors.primary : colors.border },
-                    selectedCard === 1 && { backgroundColor: colors.primary + '10' },
+                    selectedCard === 1 && { backgroundColor: withOpacity(colors.primary, 0.06) },
                   ]}
                   onPress={() => handleVote(pair.desc1_id, pair.desc2_id, true)}
                   activeOpacity={0.85}
@@ -463,7 +464,7 @@ export default function VoteScreen() {
                   style={[
                     styles.card,
                     { backgroundColor: colors.surface, borderColor: selectedCard === 2 ? colors.primary : colors.border },
-                    selectedCard === 2 && { backgroundColor: colors.primary + '10' },
+                    selectedCard === 2 && { backgroundColor: withOpacity(colors.primary, 0.06) },
                   ]}
                   onPress={() => handleVote(pair.desc2_id, pair.desc1_id, false)}
                   activeOpacity={0.85}

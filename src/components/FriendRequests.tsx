@@ -1,7 +1,7 @@
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../contexts/ThemeContext';
-import { fontSize, spacing, borderRadius } from '../constants/theme';
+import { fontSize, spacing, borderRadius, withOpacity } from '../constants/theme';
 import { haptic } from '../lib/haptics';
 import type { PendingRequest } from '../lib/friends';
 
@@ -18,7 +18,7 @@ export function FriendRequests({ requests, onAccept, onDecline }: Props) {
   if (requests.length === 0) return null;
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.primary + '10', borderColor: colors.primary + '30' }]}>
+    <View style={[styles.container, { backgroundColor: withOpacity(colors.primary, 0.06), borderColor: withOpacity(colors.primary, 0.19) }]}>
       <Text style={[styles.title, { color: colors.primary }]}>
         {t('friends.requests')} ({requests.length})
       </Text>

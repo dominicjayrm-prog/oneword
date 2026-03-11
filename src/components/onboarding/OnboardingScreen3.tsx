@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Animated } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../contexts/ThemeContext';
+import { withOpacity } from '../../constants/theme';
 
 interface Props {
   isActive: boolean;
@@ -88,7 +89,7 @@ export function OnboardingScreen3({ isActive }: Props) {
             style={[
               styles.entry,
               {
-                backgroundColor: i === 0 ? colors.gold + '1A' : colors.surface,
+                backgroundColor: i === 0 ? withOpacity(colors.gold, 0.1) : colors.surface,
                 borderColor: i === 0 ? colors.gold : colors.border,
                 opacity: entryOpacities[i],
                 transform: [{ translateY: entryTranslateYs[i] }],

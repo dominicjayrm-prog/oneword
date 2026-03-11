@@ -15,7 +15,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { useToast } from './Toast';
 import { searchUsers, sendFriendRequest, SEARCH_PAGE_SIZE, type UserSearchResult } from '../lib/friends';
 import { getCurrentBadge } from '../lib/badges';
-import { fontSize, spacing, borderRadius } from '../constants/theme';
+import { fontSize, spacing, borderRadius, withOpacity } from '../constants/theme';
 import { haptic } from '../lib/haptics';
 
 interface Props {
@@ -64,7 +64,7 @@ function SuccessToast({ visible, username, colors }: { visible: boolean; usernam
         { opacity, transform: [{ scale }] },
       ]}
     >
-      <View style={[styles.toast, { backgroundColor: colors.surface, borderColor: colors.primary + '40' }]}>
+      <View style={[styles.toast, { backgroundColor: colors.surface, borderColor: withOpacity(colors.primary, 0.25) }]}>
         <Text style={styles.toastEmoji}>{'\u2705'}</Text>
         <Text style={[styles.toastTitle, { color: colors.text }]}>{t('success.friend_sent')}</Text>
         <Text style={[styles.toastSubtitle, { color: colors.textMuted }]}>{t('success.friend_request_subtitle', { username })}</Text>
@@ -177,7 +177,7 @@ export function AddFriendModal({ visible, onClose, currentUserId, onRequestSent 
 
     if (isSending) {
       buttonLabel = '...';
-      buttonStyle = { backgroundColor: colors.textMuted + '30' };
+      buttonStyle = { backgroundColor: withOpacity(colors.textMuted, 0.19) };
       textStyle = { color: colors.textMuted };
       disabled = true;
     } else if (item.is_friend) {
@@ -187,7 +187,7 @@ export function AddFriendModal({ visible, onClose, currentUserId, onRequestSent 
       disabled = true;
     } else if (item.request_pending || isSent) {
       buttonLabel = t('friends.pending');
-      buttonStyle = { backgroundColor: colors.textMuted + '30' };
+      buttonStyle = { backgroundColor: withOpacity(colors.textMuted, 0.19) };
       textStyle = { color: colors.textMuted };
       disabled = true;
     }

@@ -6,7 +6,8 @@
     "orientation": "portrait",
     "scheme": "oneword",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "dark",
+    "userInterfaceStyle": "automatic",
+    "privacyPolicyUrl": "https://oneword.app/privacy",
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",

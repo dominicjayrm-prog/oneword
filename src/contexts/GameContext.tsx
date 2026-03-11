@@ -68,8 +68,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
         setHasSubmitted(false);
         setUserDescription(null);
       }
-    } catch {
-      console.error('Failed to fetch today word');
+    } catch (err) {
+      console.error('Failed to fetch today word:', err);
       setLoadError(true);
     } finally {
       setLoading(false);
@@ -250,8 +250,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
         return data[0];
       }
       return null;
-    } catch {
-      console.error('Failed to fetch weekly recap');
+    } catch (err) {
+      console.error('Failed to fetch weekly recap:', err);
       return null;
     }
   }, [userId, language]);

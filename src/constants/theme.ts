@@ -62,3 +62,18 @@ export const borderRadius = {
   xl: 24,
   full: 9999,
 };
+
+/**
+ * Safely apply opacity to a hex color string.
+ * Converts hex + opacity (0-1) to rgba(), avoiding fragile string concatenation
+ * like `colors.primary + '30'` which breaks if the color format changes.
+ */
+export function withOpacity(hex: string, opacity: number): string {
+  // Strip leading #
+  const h = hex.replace(/^#/, '');
+  const r = parseInt(h.substring(0, 2), 16);
+  const g = parseInt(h.substring(2, 4), 16);
+  const b = parseInt(h.substring(4, 6), 16);
+  if (isNaN(r) || isNaN(g) || isNaN(b)) return hex;
+  return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+}

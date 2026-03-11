@@ -27,7 +27,7 @@ import { WeeklyRecapCard } from '../../src/components/WeeklyRecap';
 import { StreakCelebration } from '../../src/components/StreakCelebration';
 import { BadgePill } from '../../src/components/BadgePill';
 import { useToast } from '../../src/components/Toast';
-import { fontSize, spacing, borderRadius } from '../../src/constants/theme';
+import { fontSize, spacing, borderRadius, withOpacity } from '../../src/constants/theme';
 import { DESCRIPTION_WORD_COUNT, DESCRIPTION_MAX_LENGTH, TOAST_DURATION_MS, USERNAME_MIN_LENGTH, USERNAME_MAX_LENGTH, PASSWORD_MIN_LENGTH } from '../../src/constants/app';
 import { haptic } from '../../src/lib/haptics';
 import { getGameDate, getGameDay, getGameMonday } from '../../src/lib/gameDate';
@@ -148,9 +148,10 @@ export default function HomeScreen() {
         } else if (__DEV__) {
           console.log('[Interstitial] Yesterday winner already dismissed for', gameDateStr);
         }
-      } catch {
+      } catch (err) {
         // Non-critical — just skip interstitial cards
         // Allow retry on next mount if it failed
+        console.warn('[HomeScreen] Interstitial fetch failed:', err);
         interstitialStartedRef.current = false;
       }
     })();
@@ -172,7 +173,7 @@ export default function HomeScreen() {
         p_field: 'recap_dismissed_week',
         p_value: getGameMonday(),
       });
-    } catch { /* non-critical */ }
+    } catch (err) { console.warn('[HomeScreen] Failed to dismiss weekly recap:', err); }
   }, [auth.session]);
 
   const dismissYesterdayWinner = useCallback(async () => {
@@ -184,7 +185,7 @@ export default function HomeScreen() {
         p_field: 'winner_dismissed_date',
         p_value: getGameDate(),
       });
-    } catch { /* non-critical */ }
+    } catch (err) { console.warn('[HomeScreen] Failed to dismiss yesterday winner:', err); }
   }, [auth.session]);
 
   const wordCount = input.trim().split(/\s+/).filter(Boolean).length;
@@ -235,8 +236,8 @@ export default function HomeScreen() {
               if (auth.profile?.notify_streak_risk) {
                 await scheduleStreakRisk(20, 0, t('notifications.streak_risk_title'), t('notifications.streak_risk_body'));
               }
-            } catch {
-              // Non-critical
+            } catch (err) {
+              console.warn('[HomeScreen] Post-submit notification scheduling failed:', err);
             }
           })();
         }
@@ -701,7 +702,7 @@ export default function HomeScreen() {
           <WordDisplay word={todayWord.word} category={todayWord.category} />
           <Text style={[styles.submittedLabel, { color: colors.textMuted }]}>{t('game.your_description')}</Text>
           <Text style={[styles.submittedText, { color: colors.text }]}>{userDescription}</Text>
-          <View style={[styles.submittedCheck, { backgroundColor: colors.success + '20' }]}>
+          <View style={[styles.submittedCheck, { backgroundColor: withOpacity(colors.success, 0.125) }]}>
             <Text style={[styles.checkmark, { color: colors.success }]}>{t('game.locked_in')}</Text>
           </View>
         </View>

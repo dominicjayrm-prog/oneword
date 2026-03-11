@@ -12,7 +12,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useTheme } from '../contexts/ThemeContext';
 import { Button } from './Button';
-import { fontSize, spacing, borderRadius } from '../constants/theme';
+import { fontSize, spacing, borderRadius, withOpacity } from '../constants/theme';
 import { haptic } from '../lib/haptics';
 import type { YesterdayWinner } from '../types/database';
 
@@ -93,7 +93,7 @@ export function YesterdayWinnerCard({ data, onDismiss }: Props) {
   if (data.user_was_winner) {
     return (
       <Animated.View style={[styles.container, cardStyle]}>
-        <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.gold + '40' }]}>
+        <View style={[styles.card, { backgroundColor: colors.surface, borderColor: withOpacity(colors.gold, 0.25) }]}>
           <Animated.Text style={[styles.celebEmoji, celebStyle]}>
             {'\uD83C\uDF89 '}YOU WON{' \uD83C\uDF89'}
           </Animated.Text>
@@ -112,7 +112,7 @@ export function YesterdayWinnerCard({ data, onDismiss }: Props) {
             </Text>
           </View>
 
-          <Animated.View style={[styles.descriptionBox, { backgroundColor: colors.background, borderColor: colors.gold + '30' }, descStyle]}>
+          <Animated.View style={[styles.descriptionBox, { backgroundColor: colors.background, borderColor: withOpacity(colors.gold, 0.19) }, descStyle]}>
             <Text style={styles.medal}>{'\uD83E\uDD47'}</Text>
             <Text style={[styles.descriptionText, { color: colors.text }]}>
               &ldquo;{data.winner_description}&rdquo;

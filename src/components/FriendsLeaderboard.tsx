@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../contexts/ThemeContext';
@@ -8,6 +8,7 @@ import { getFriendsDescriptions, type FriendDescription } from '../lib/friends';
 import { getCurrentBadge } from '../lib/badges';
 import { LeaderboardRow } from './LeaderboardRow';
 import { LoadingSpinner } from './LoadingSpinner';
+import { ErrorState } from './ErrorState';
 import { fontSize, spacing } from '../constants/theme';
 
 export function FriendsLeaderboard() {
@@ -17,29 +18,44 @@ export function FriendsLeaderboard() {
   const { todayWord, hasSubmitted } = useGameContext();
   const [descriptions, setDescriptions] = useState<FriendDescription[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+
+  const load = useCallback(async () => {
+    if (!session?.user?.id || !todayWord?.id) {
+      setLoading(false);
+      return;
+    }
+    setLoadError(false);
+    try {
+      const data = await getFriendsDescriptions(session.user.id, todayWord.id);
+      setDescriptions(data);
+    } catch (err) {
+      console.warn('[FriendsLeaderboard] Failed to load descriptions:', err);
+      setLoadError(true);
+    } finally {
+      setLoading(false);
+    }
+  }, [session?.user?.id, todayWord?.id]);
 
   useEffect(() => {
-    async function load() {
-      if (!session?.user?.id || !todayWord?.id) {
-        setLoading(false);
-        return;
-      }
-      try {
-        const data = await getFriendsDescriptions(session.user.id, todayWord.id);
-        setDescriptions(data);
-      } catch {
-        // Non-critical — show empty state rather than stuck spinner
-      } finally {
-        setLoading(false);
-      }
-    }
     load();
-  }, [session?.user?.id, todayWord?.id]);
+  }, [load]);
 
   if (loading) {
     return (
       <View style={styles.center}>
         <LoadingSpinner />
+      </View>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <View style={styles.center}>
+        <ErrorState
+          title={t('errors.load_friends_leaderboard')}
+          onRetry={load}
+        />
       </View>
     );
   }

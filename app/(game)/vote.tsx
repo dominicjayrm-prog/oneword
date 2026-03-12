@@ -487,7 +487,7 @@ export default function VoteScreen() {
                     descriptionId={pair.desc1_id}
                     isFavourited={favouritedIds.has(pair.desc1_id)}
                     onToggle={(fav) => toggleLocal(pair.desc1_id, fav)}
-                    size={13}
+                    size={16}
                   />
                   <TouchableOpacity
                     onPress={() => handleReport(pair.desc1_id)}
@@ -533,7 +533,7 @@ export default function VoteScreen() {
                     descriptionId={pair.desc2_id}
                     isFavourited={favouritedIds.has(pair.desc2_id)}
                     onToggle={(fav) => toggleLocal(pair.desc2_id, fav)}
-                    size={13}
+                    size={16}
                   />
                   <TouchableOpacity
                     onPress={() => handleReport(pair.desc2_id)}

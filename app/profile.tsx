@@ -21,7 +21,7 @@ import { BadgePill } from '../src/components/BadgePill';
 import { BadgeProgress } from '../src/components/BadgeProgress';
 import { useToast } from '../src/components/Toast';
 import { fontSize, spacing, borderRadius, withOpacity } from '../src/constants/theme';
-import { FavouritePhrases } from '../src/components/FavouritePhrases';
+// FavouritePhrases is shown on its own page now (app/favourites.tsx)
 import { haptic } from '../src/lib/haptics';
 
 function confirmDialog(title: string, message: string, cancelText: string, okText: string): Promise<boolean> {
@@ -307,13 +307,22 @@ export default function ProfileScreen() {
         </View>
       )}
 
-      {/* Favourite Phrases */}
-      <FavouritePhrases
-        onSeeAll={(tab) => {
-          haptic.medium();
-          router.push({ pathname: '/favourites', params: { tab } });
-        }}
-      />
+      {/* Favourite Phrases – link to full page */}
+      <View style={[styles.favouritesSection, { borderTopColor: colors.border }]}>
+        <TouchableOpacity
+          style={styles.favouritesRow}
+          onPress={() => {
+            haptic.medium();
+            router.push('/favourites');
+          }}
+          activeOpacity={0.7}
+        >
+          <Text style={[styles.favouritesLabel, { color: colors.text }]}>
+            {'\u2665'} {t('favourites.title')}
+          </Text>
+          <Text style={[styles.supportValue, { color: colors.textMuted }]}>{'\u2192'}</Text>
+        </TouchableOpacity>
+      </View>
 
       {/* Notifications */}
       <View style={[styles.supportSection, { borderTopColor: colors.border }]}>
@@ -601,6 +610,21 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     fontWeight: '600',
     paddingVertical: spacing.sm,
+  },
+  favouritesSection: {
+    marginTop: spacing.xl,
+    paddingTop: spacing.lg,
+    borderTopWidth: 1,
+  },
+  favouritesRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: spacing.sm + 2,
+  },
+  favouritesLabel: {
+    fontSize: fontSize.md,
+    fontWeight: '700',
   },
   supportSection: {
     marginTop: spacing.xl,

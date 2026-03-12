@@ -39,3 +39,34 @@ export async function removeDescription(formData: FormData) {
 
   revalidatePath('/moderation');
 }
+
+export async function shadowBanFromReport(formData: FormData) {
+  await requireAuth();
+  const supabase = createAdminClient();
+  const userId = requireUuid(formData.get('userId'), 'userId');
+  const descriptionId = requireUuid(formData.get('descriptionId'), 'descriptionId');
+
+  // Shadow ban the user
+  await supabase
+    .from('profiles')
+    .update({
+      is_shadowbanned: true,
+      shadowbanned_at: new Date().toISOString(),
+      shadowban_reason: 'Reported by community',
+    })
+    .eq('id', userId);
+
+  // Log the ban
+  await supabase.from('ban_log').insert({
+    user_id: userId,
+    action: 'shadowban',
+    reason: 'Reported by community',
+    admin_note: `Banned from report on description ${descriptionId}`,
+  });
+
+  // Mark all reports for this description as 'removed'
+  await supabase.from('reports').update({ status: 'removed' }).eq('description_id', descriptionId);
+
+  revalidatePath('/moderation');
+  revalidatePath('/users');
+}

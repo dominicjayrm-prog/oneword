@@ -219,6 +219,17 @@ export default {
     friends: 'Friends',
   },
 
+  // Validation
+  validation: {
+    word_too_short: 'Each word must be at least 2 characters',
+    word_too_long: 'Each word can be max 15 characters',
+    gibberish: "That doesn't look like a real word",
+    all_same: "All five words can't be the same",
+    too_many_repeats: 'Try using more unique words',
+    duplicate: 'This description has already been submitted. Try something more original!',
+    profanity_blocked: 'That description contains inappropriate language. Please try again.',
+  },
+
   // Errors
   errors: {
     generic: 'Something went wrong. Try again.',

@@ -4,5 +4,5 @@
     "strict": false,
     "skipLibCheck": true
   },
-  "exclude": ["node_modules", "admin", "supabase"]
+  "exclude": ["node_modules", "admin", "supabase", "brand-assets", "screenshots"]
 }

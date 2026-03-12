@@ -1,47 +1,34 @@
-import localFont from "next/font/local";
+import type { Metadata } from "next";
 import "./globals.css";
 
-const playfair = localFont({
-  src: [
-    { path: "../fonts/PlayfairDisplay_400Regular.ttf", weight: "400", style: "normal" },
-    { path: "../fonts/PlayfairDisplay_700Bold.ttf", weight: "700", style: "normal" },
-  ],
-  variable: "--font-playfair",
-});
-
-const dmSans = localFont({
-  src: [
-    { path: "../fonts/DMSans_400Regular.ttf", weight: "400", style: "normal" },
-    { path: "../fonts/DMSans_500Medium.ttf", weight: "500", style: "normal" },
-    { path: "../fonts/DMSans_600SemiBold.ttf", weight: "600", style: "normal" },
-    { path: "../fonts/DMSans_700Bold.ttf", weight: "700", style: "normal" },
-  ],
-  variable: "--font-dm-sans",
-});
-
-const dmMono = localFont({
-  src: [
-    { path: "../fonts/DMMono_400Regular.ttf", weight: "400", style: "normal" },
-    { path: "../fonts/DMMono_500Medium.ttf", weight: "500", style: "normal" },
-  ],
-  variable: "--font-dm-mono",
-});
-
-export const metadata = {
-  title: "OneWord — App Store Screenshots",
+export const metadata: Metadata = {
+  title: "OneWord App Store Screenshots",
+  description: "App Store screenshot generator for OneWord",
 };
 
 export default function RootLayout({
   children,
-}: {
+}: Readonly<{
   children: React.ReactNode;
-}) {
+}>) {
   return (
     <html lang="en">
-      <body
-        className={`${playfair.variable} ${dmSans.variable} ${dmMono.variable}`}
-        style={{ fontFamily: "var(--font-dm-sans), sans-serif" }}
-      >
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@400;700;900&display=swap"
+          rel="stylesheet"
+        />
+        <style dangerouslySetInnerHTML={{ __html: `
+          :root {
+            --font-playfair: 'Playfair Display', serif;
+            --font-sans: 'DM Sans', sans-serif;
+            --font-mono: 'DM Mono', monospace;
+          }
+        `}} />
+      </head>
+      <body className="antialiased">
         {children}
       </body>
     </html>

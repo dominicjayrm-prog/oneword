@@ -67,10 +67,7 @@ export function FavouriteButton({ descriptionId, isFavourited, onToggle, size = 
     <Pressable
       onPress={handleToggle}
       hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-      style={({ pressed }) => [
-        styles.button,
-        pressed && { opacity: 0.6 },
-      ]}
+      style={({ pressed }) => [styles.button, pressed && { opacity: 0.6 }]}
       disabled={toggling}
       accessibilityRole="button"
       accessibilityLabel={favourited ? t('favourites.unfavourite') : t('favourites.favourite')}

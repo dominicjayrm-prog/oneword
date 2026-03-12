@@ -28,6 +28,7 @@ export interface FriendDescription {
   elo_rating: number | null;
   friend_streak: number;
   has_played: boolean;
+  description_id: string | null;
 }
 
 export interface UserSearchResult {
@@ -121,7 +122,7 @@ export async function getFriendsDescriptions(userId: string, wordId: string): Pr
 
   const { data: descs } = await supabase
     .from('descriptions')
-    .select('user_id, description, vote_count, elo_rating')
+    .select('id, user_id, description, vote_count, elo_rating')
     .eq('word_id', wordId)
     .in('user_id', friendIds);
 
@@ -136,6 +137,7 @@ export async function getFriendsDescriptions(userId: string, wordId: string): Pr
       elo_rating: desc?.elo_rating ?? null,
       friend_streak: f.friend_current_streak,
       has_played: !!desc,
+      description_id: desc?.id ?? null,
     };
   });
 }

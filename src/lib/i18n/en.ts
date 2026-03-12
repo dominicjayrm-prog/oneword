@@ -390,6 +390,20 @@ export default {
     and: ' and ',
   },
 
+  // Favourites
+  favourites: {
+    title: 'Favourite Phrases',
+    mine: 'Mine',
+    community: 'Community',
+    emptyMine: 'Your best work lives here.',
+    emptyMineSubtitle: 'Star your favourite descriptions to save them.',
+    emptyCommunity: 'Discover brilliance.',
+    emptyCommunitySubtitle: 'Tap the heart on any description you love.',
+    seeAll: 'See all',
+    unfavourited: 'Removed from favourites',
+    favourited: 'Saved to favourites',
+  },
+
   // Language names
   lang: {
     en: 'English',

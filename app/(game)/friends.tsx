@@ -26,6 +26,7 @@ import {
   type PendingRequest,
   type FriendDescription,
 } from '../../src/lib/friends';
+import { useFavouritedIds } from '../../src/hooks/useFavourites';
 import { fontSize, spacing } from '../../src/constants/theme';
 
 export default function FriendsScreen() {
@@ -46,6 +47,7 @@ export default function FriendsScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const processingRef = useRef(new Set<string>());
+  const { favouritedIds, checkFavourited, toggleLocal } = useFavouritedIds();
 
   const loadData = useCallback(
     async (showFullLoading = true) => {
@@ -60,6 +62,8 @@ export default function FriendsScreen() {
         if (todayWord?.id && friendsData.length > 0) {
           const descs = await getFriendsDescriptions(userId, todayWord.id);
           setDescriptions(descs);
+          const descIds = descs.map((d) => d.description_id).filter(Boolean) as string[];
+          if (descIds.length > 0) checkFavourited(descIds);
         }
       } catch (err) {
         console.warn('[FriendsScreen] Failed to load data:', err);
@@ -67,7 +71,7 @@ export default function FriendsScreen() {
       }
       if (showFullLoading) setLoading(false);
     },
-    [userId, todayWord?.id],
+    [userId, todayWord?.id, checkFavourited],
   );
 
   useEffect(() => {
@@ -233,7 +237,13 @@ export default function FriendsScreen() {
 
         {/* Section 2: Today's word — friends' descriptions */}
         {todayWord && descriptions.length > 0 ? (
-          <FriendsToday descriptions={descriptions} wordText={todayWord.word} userHasPlayed={hasSubmitted} />
+          <FriendsToday
+            descriptions={descriptions}
+            wordText={todayWord.word}
+            userHasPlayed={hasSubmitted}
+            favouritedIds={favouritedIds}
+            onFavouriteToggle={toggleLocal}
+          />
         ) : (
           todayWord &&
           friends.length > 0 && (

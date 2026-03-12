@@ -1,6 +1,7 @@
 import { View, Text, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../contexts/ThemeContext';
+import { FavouriteButton } from './FavouriteButton';
 import { fontSize, spacing, borderRadius } from '../constants/theme';
 
 interface LeaderboardRowProps {
@@ -10,9 +11,22 @@ interface LeaderboardRowProps {
   votes: number;
   isCurrentUser?: boolean;
   badgeEmoji?: string | null;
+  descriptionId?: string;
+  isFavourited?: boolean;
+  onFavouriteToggle?: (nowFavourited: boolean) => void;
 }
 
-export function LeaderboardRow({ rank, username, description, votes, isCurrentUser, badgeEmoji }: LeaderboardRowProps) {
+export function LeaderboardRow({
+  rank,
+  username,
+  description,
+  votes,
+  isCurrentUser,
+  badgeEmoji,
+  descriptionId,
+  isFavourited,
+  onFavouriteToggle,
+}: LeaderboardRowProps) {
   const { t } = useTranslation();
   const { colors } = useTheme();
 
@@ -45,6 +59,16 @@ export function LeaderboardRow({ rank, username, description, votes, isCurrentUs
         <Text style={[styles.votes, { color: colors.primary }]}>{votes}</Text>
         <Text style={[styles.votesLabel, { color: colors.textMuted }]}>{t('share.votes')}</Text>
       </View>
+      {descriptionId && (
+        <View style={styles.heartContainer}>
+          <FavouriteButton
+            descriptionId={descriptionId}
+            isFavourited={isFavourited ?? false}
+            onToggle={onFavouriteToggle}
+            size={13}
+          />
+        </View>
+      )}
     </View>
   );
 }
@@ -93,5 +117,8 @@ const styles = StyleSheet.create({
   votesLabel: {
     fontSize: 10,
     textTransform: 'uppercase',
+  },
+  heartContainer: {
+    marginLeft: spacing.sm,
   },
 });

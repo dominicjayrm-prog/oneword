@@ -7,10 +7,39 @@
 // Common English words without standard vowels (a, e, i, o, u).
 // "y" counts as a vowel for the check.
 const VOWELLESS_WHITELIST = new Set([
-  'rhythm', 'hymn', 'shy', 'fly', 'cry', 'dry', 'gym', 'myth', 'lynx',
-  'my', 'by', 'try', 'fry', 'why', 'sky', 'spy', 'sly', 'thy', 'wry',
-  'crypt', 'glyph', 'nymph', 'psych', 'sync', 'pygmy', 'tryst', 'cyst',
-  'gyms', 'myths', 'hymns', 'dryly', 'shyly', 'slyly',
+  'rhythm',
+  'hymn',
+  'shy',
+  'fly',
+  'cry',
+  'dry',
+  'gym',
+  'myth',
+  'lynx',
+  'my',
+  'by',
+  'try',
+  'fry',
+  'why',
+  'sky',
+  'spy',
+  'sly',
+  'thy',
+  'wry',
+  'crypt',
+  'glyph',
+  'nymph',
+  'psych',
+  'sync',
+  'pygmy',
+  'tryst',
+  'cyst',
+  'gyms',
+  'myths',
+  'hymns',
+  'dryly',
+  'shyly',
+  'slyly',
 ]);
 
 // Allowed single-letter words per language
@@ -33,10 +62,7 @@ export type ValidationError = {
  * Validate a 5-word description.
  * Returns null if valid, or a ValidationError if invalid.
  */
-export function validateDescription(
-  words: string[],
-  language: string = 'en',
-): ValidationError | null {
+export function validateDescription(words: string[], language: string = 'en'): ValidationError | null {
   const singleAllowed = language === 'es' ? SINGLE_LETTER_ES : SINGLE_LETTER_EN;
   const lowerWords = words.map((w) => w.toLowerCase().trim());
 
@@ -54,10 +80,7 @@ export function validateDescription(
 
     // Must contain at least one vowel (a, e, i, o, u, y) or be whitelisted
     // Also allow Spanish accented vowels
-    if (
-      !/[aeiouyáéíóú]/i.test(word) &&
-      !VOWELLESS_WHITELIST.has(word)
-    ) {
+    if (!/[aeiouyáéíóú]/i.test(word) && !VOWELLESS_WHITELIST.has(word)) {
       return { code: 'GIBBERISH_DETECTED', message: 'validation.gibberish', word };
     }
 

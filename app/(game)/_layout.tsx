@@ -33,13 +33,17 @@ export default function GameLayout() {
 
   useEffect(() => {
     if (!session?.user?.id) return;
-    getPendingRequests(session.user.id).then((requests) => {
-      setPendingCount(requests.length);
-    }).catch(() => {});
-    const interval = setInterval(() => {
-      getPendingRequests(session.user.id).then((requests) => {
+    getPendingRequests(session.user.id)
+      .then((requests) => {
         setPendingCount(requests.length);
-      }).catch(() => {});
+      })
+      .catch(() => {});
+    const interval = setInterval(() => {
+      getPendingRequests(session.user.id)
+        .then((requests) => {
+          setPendingCount(requests.length);
+        })
+        .catch(() => {});
     }, 30000);
     return () => clearInterval(interval);
   }, [session?.user?.id]);

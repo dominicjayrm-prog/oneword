@@ -295,10 +295,21 @@ const BLOCKED_WORDS_ES_STRIPPED = new Set([...BLOCKED_WORDS_ES].map(stripAccents
 // Slurs that should be caught even when embedded in longer words (partial matching).
 // Only the most severe slurs — we don't want false positives on common words.
 const PARTIAL_MATCH_SLURS = [
-  'nigger', 'nigga', 'faggot', 'kike', 'chink', 'spic',
-  'wetback', 'beaner', 'tranny', 'gook', 'raghead', 'towelhead',
+  'nigger',
+  'nigga',
+  'faggot',
+  'kike',
+  'chink',
+  'spic',
+  'wetback',
+  'beaner',
+  'tranny',
+  'gook',
+  'raghead',
+  'towelhead',
   // Spanish slurs
-  'maricon', 'maricón',
+  'maricon',
+  'maricón',
 ];
 
 function checkWordAgainstLists(word: string): string | undefined {

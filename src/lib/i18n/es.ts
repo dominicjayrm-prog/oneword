@@ -404,6 +404,8 @@ export default {
     seeAll: 'Ver todo',
     unfavourited: 'Eliminado de favoritos',
     favourited: 'Guardado en favoritos',
+    favourite: 'Agregar a favoritos',
+    unfavourite: 'Eliminar de favoritos',
   },
 
   // Language names

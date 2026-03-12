@@ -402,6 +402,8 @@ export default {
     seeAll: 'See all',
     unfavourited: 'Removed from favourites',
     favourited: 'Saved to favourites',
+    favourite: 'Add to favourites',
+    unfavourite: 'Remove from favourites',
   },
 
   // Language names

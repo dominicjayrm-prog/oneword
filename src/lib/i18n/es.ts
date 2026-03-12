@@ -392,6 +392,20 @@ export default {
     and: ' y ',
   },
 
+  // Favourites
+  favourites: {
+    title: 'Frases Favoritas',
+    mine: 'M\u00EDas',
+    community: 'Comunidad',
+    emptyMine: 'Tus mejores obras viven aqu\u00ED.',
+    emptyMineSubtitle: 'Marca tus descripciones favoritas para guardarlas.',
+    emptyCommunity: 'Descubre la brillantez.',
+    emptyCommunitySubtitle: 'Toca el coraz\u00F3n en cualquier descripci\u00F3n que te encante.',
+    seeAll: 'Ver todo',
+    unfavourited: 'Eliminado de favoritos',
+    favourited: 'Guardado en favoritos',
+  },
+
   // Language names
   lang: {
     en: 'English',

@@ -134,6 +134,13 @@ function InnerLayout() {
           }}
         />
         <Stack.Screen
+          name="favourites"
+          options={{
+            presentation: 'modal',
+            animation: 'slide_from_bottom',
+          }}
+        />
+        <Stack.Screen
           name="webview"
           options={{
             presentation: 'modal',

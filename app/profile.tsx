@@ -21,6 +21,7 @@ import { BadgePill } from '../src/components/BadgePill';
 import { BadgeProgress } from '../src/components/BadgeProgress';
 import { useToast } from '../src/components/Toast';
 import { fontSize, spacing, borderRadius, withOpacity } from '../src/constants/theme';
+import { FavouritePhrases } from '../src/components/FavouritePhrases';
 import { haptic } from '../src/lib/haptics';
 
 function confirmDialog(title: string, message: string, cancelText: string, okText: string): Promise<boolean> {
@@ -305,6 +306,14 @@ export default function ProfileScreen() {
           </View>
         </View>
       )}
+
+      {/* Favourite Phrases */}
+      <FavouritePhrases
+        onSeeAll={(tab) => {
+          haptic.medium();
+          router.push({ pathname: '/favourites', params: { tab } });
+        }}
+      />
 
       {/* Notifications */}
       <View style={[styles.supportSection, { borderTopColor: colors.border }]}>

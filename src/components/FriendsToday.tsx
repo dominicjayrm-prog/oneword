@@ -2,6 +2,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../contexts/ThemeContext';
 import { getCurrentBadge } from '../lib/badges';
+import { FavouriteButton } from './FavouriteButton';
 import { fontSize, spacing, borderRadius, withOpacity } from '../constants/theme';
 import type { FriendDescription } from '../lib/friends';
 
@@ -9,9 +10,11 @@ interface Props {
   descriptions: FriendDescription[];
   wordText: string;
   userHasPlayed: boolean;
+  favouritedIds?: Set<string>;
+  onFavouriteToggle?: (descriptionId: string, nowFavourited: boolean) => void;
 }
 
-export function FriendsToday({ descriptions, wordText, userHasPlayed }: Props) {
+export function FriendsToday({ descriptions, wordText, userHasPlayed, favouritedIds, onFavouriteToggle }: Props) {
   const { t } = useTranslation();
   const { colors } = useTheme();
 
@@ -60,6 +63,14 @@ export function FriendsToday({ descriptions, wordText, userHasPlayed }: Props) {
                 {fd.description_text}
                 {'\u201D'}
               </Text>
+              {fd.description_id && (
+                <FavouriteButton
+                  descriptionId={fd.description_id}
+                  isFavourited={favouritedIds?.has(fd.description_id) ?? false}
+                  onToggle={(fav) => onFavouriteToggle?.(fd.description_id!, fav)}
+                  size={13}
+                />
+              )}
             </View>
           ) : (
             <Text style={[styles.notPlayed, { color: colors.textMuted }]}>{t('friends.hasnt_played')}</Text>

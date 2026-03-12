@@ -30,6 +30,7 @@ import { RetryState } from '../../src/components/RetryState';
 import { useNetwork } from '../../src/contexts/NetworkContext';
 import { fontSize, spacing, borderRadius } from '../../src/constants/theme';
 import { haptic } from '../../src/lib/haptics';
+import { useFavouritedIds } from '../../src/hooks/useFavourites';
 import type { LeaderboardEntry } from '../../src/types/database';
 
 export default function ResultsScreen() {
@@ -48,6 +49,7 @@ export default function ResultsScreen() {
   const [showPreview, setShowPreview] = useState(false);
   const [sharing, setSharing] = useState(false);
   const [tab, setTab] = useState<'global' | 'friends'>('global');
+  const { favouritedIds, checkFavourited, toggleLocal } = useFavouritedIds();
 
   const shareCardRef = useRef<View>(null);
   const mountedRef = useRef(true);
@@ -62,12 +64,13 @@ export default function ResultsScreen() {
     try {
       const data = await getLeaderboard();
       setLeaderboard(data);
+      checkFavourited(data.map((e) => e.description_id));
     } catch (err) {
       console.warn('[ResultsScreen] Failed to load leaderboard:', err);
       setLoadError(true);
     }
     setLoading(false);
-  }, [getLeaderboard]);
+  }, [getLeaderboard, checkFavourited]);
 
   useEffect(() => {
     loadResults();
@@ -198,6 +201,9 @@ export default function ResultsScreen() {
               votes={item.votes}
               isCurrentUser={item.username === profile?.username}
               badgeEmoji={item.streak_badge_emoji}
+              descriptionId={item.description_id}
+              isFavourited={favouritedIds.has(item.description_id)}
+              onFavouriteToggle={(fav) => toggleLocal(item.description_id, fav)}
             />
           )}
           contentContainerStyle={styles.list}

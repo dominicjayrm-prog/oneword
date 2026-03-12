@@ -25,6 +25,8 @@ import { VOTE_BATCH_SIZE } from '../../src/constants/app';
 import { fontSize, spacing, borderRadius, withOpacity } from '../../src/constants/theme';
 import { haptic } from '../../src/lib/haptics';
 import { supabase } from '../../src/lib/supabase';
+import { FavouriteButton } from '../../src/components/FavouriteButton';
+import { useFavouritedIds } from '../../src/hooks/useFavourites';
 import type { VotePair } from '../../src/types/database';
 
 export default function VoteScreen() {
@@ -45,6 +47,7 @@ export default function VoteScreen() {
   const [voting, setVoting] = useState(false);
   const [loadError, setLoadError] = useState(false);
   const [selectedCard, setSelectedCard] = useState<1 | 2 | null>(null);
+  const { favouritedIds, checkFavourited, toggleLocal } = useFavouritedIds();
   // Total pairs voted on today (restored from server + new votes this session).
   // The batch limit is per-day across all sessions, not per-session.
   const pairsShownRef = useRef(0);
@@ -138,8 +141,9 @@ export default function VoteScreen() {
     if (pair && !loading) {
       animatePairIn();
       haptic.light();
+      checkFavourited([pair.desc1_id, pair.desc2_id]);
     }
-  }, [pair, loading, animatePairIn]);
+  }, [pair, loading, animatePairIn, checkFavourited]);
 
   // Animate vote count bump
   useEffect(() => {
@@ -478,13 +482,20 @@ export default function VoteScreen() {
                     {pair.desc1_badge_emoji ? ` ${pair.desc1_badge_emoji}` : ''}
                   </Text>
                 </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.reportButton}
-                  onPress={() => handleReport(pair.desc1_id)}
-                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                >
-                  <Text style={[styles.reportText, { color: colors.textMuted }]}>{t('vote.report')}</Text>
-                </TouchableOpacity>
+                <View style={styles.cardActions}>
+                  <FavouriteButton
+                    descriptionId={pair.desc1_id}
+                    isFavourited={favouritedIds.has(pair.desc1_id)}
+                    onToggle={(fav) => toggleLocal(pair.desc1_id, fav)}
+                    size={13}
+                  />
+                  <TouchableOpacity
+                    onPress={() => handleReport(pair.desc1_id)}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  >
+                    <Text style={[styles.reportText, { color: colors.textMuted }]}>{t('vote.report')}</Text>
+                  </TouchableOpacity>
+                </View>
               </Animated.View>
               {selectedCard === 1 && (
                 <Animated.View style={[styles.pickBadge, { backgroundColor: colors.primary }, badgeStyle]}>
@@ -517,13 +528,20 @@ export default function VoteScreen() {
                     {pair.desc2_badge_emoji ? ` ${pair.desc2_badge_emoji}` : ''}
                   </Text>
                 </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.reportButton}
-                  onPress={() => handleReport(pair.desc2_id)}
-                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                >
-                  <Text style={[styles.reportText, { color: colors.textMuted }]}>{t('vote.report')}</Text>
-                </TouchableOpacity>
+                <View style={styles.cardActions}>
+                  <FavouriteButton
+                    descriptionId={pair.desc2_id}
+                    isFavourited={favouritedIds.has(pair.desc2_id)}
+                    onToggle={(fav) => toggleLocal(pair.desc2_id, fav)}
+                    size={13}
+                  />
+                  <TouchableOpacity
+                    onPress={() => handleReport(pair.desc2_id)}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  >
+                    <Text style={[styles.reportText, { color: colors.textMuted }]}>{t('vote.report')}</Text>
+                  </TouchableOpacity>
+                </View>
               </Animated.View>
               {selectedCard === 2 && (
                 <Animated.View style={[styles.pickBadge, { backgroundColor: colors.primary }, badgeStyle]}>
@@ -585,9 +603,10 @@ const styles = StyleSheet.create({
     fontSize: fontSize.xs,
     marginTop: spacing.xs,
   },
-  reportButton: {
-    alignSelf: 'flex-end',
-    paddingVertical: spacing.xs,
+  cardActions: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     paddingHorizontal: spacing.sm,
     marginTop: 4,
   },

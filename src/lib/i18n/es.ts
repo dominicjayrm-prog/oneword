@@ -147,6 +147,7 @@ export default {
     share_btn: 'COMPARTIR',
     share_dialog_title: 'Comparte tu resultado de OneWord',
     cancel: 'CANCELAR',
+    browse_past_words: 'Explorar palabras anteriores',
   },
 
   // Profile
@@ -177,6 +178,7 @@ export default {
     website: 'Sitio Web',
     privacy_policy: 'Pol\u00EDtica de Privacidad',
     terms_of_use: 'T\u00E9rminos de Uso',
+    word_archive: 'Archivo de Palabras',
   },
 
   // Share card

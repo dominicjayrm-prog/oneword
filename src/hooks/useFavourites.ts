@@ -17,10 +17,11 @@ export function useFavouritedIds() {
         return;
       }
       try {
-        const { data, error } = await supabase.rpc('get_favourited_ids', {
-          p_user_id: session.user.id,
-          p_description_ids: descriptionIds,
-        });
+        const { data, error } = await supabase
+          .from('favourites')
+          .select('description_id')
+          .eq('user_id', session.user.id)
+          .in('description_id', descriptionIds);
         if (!error && data) {
           setFavouritedIds(new Set(data.map((r: { description_id: string }) => r.description_id)));
         }

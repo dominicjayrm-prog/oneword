@@ -390,6 +390,24 @@ export default function ProfileScreen() {
           <Text style={[styles.supportLabel, { color: colors.textSecondary }]}>{t('profile.terms_of_use')}</Text>
           <Text style={[styles.supportValue, { color: colors.textMuted }]}>{'\u2192'}</Text>
         </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.supportRow}
+          onPress={() =>
+            router.push({
+              pathname: '/webview',
+              params: {
+                url: language === 'es' ? 'https://playoneword.app/es/archive' : 'https://playoneword.app/archive',
+                title: t('profile.word_archive'),
+              },
+            })
+          }
+          activeOpacity={0.7}
+        >
+          <Text style={[styles.supportLabel, { color: colors.textSecondary }]}>
+            {'\uD83D\uDCDA'} {t('profile.word_archive')}
+          </Text>
+          <Text style={[styles.supportValue, { color: colors.textMuted }]}>{'\u2192'}</Text>
+        </TouchableOpacity>
       </View>
 
       {/* Language – small, at the very bottom */}

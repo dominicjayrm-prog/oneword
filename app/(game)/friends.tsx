@@ -71,7 +71,7 @@ export default function FriendsScreen() {
       }
       if (showFullLoading) setLoading(false);
     },
-    [userId, todayWord?.id],
+    [userId, todayWord?.id, checkFavourited],
   );
 
   useEffect(() => {

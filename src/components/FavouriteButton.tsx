@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { TouchableOpacity, Text, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useAuthContext } from '../contexts/AuthContext';
@@ -23,9 +23,11 @@ export function FavouriteButton({ descriptionId, isFavourited, onToggle, size = 
   const [toggling, setToggling] = useState(false);
 
   // Sync external prop changes
-  if (isFavourited !== favourited && !toggling) {
-    setFavourited(isFavourited);
-  }
+  useEffect(() => {
+    if (!toggling) {
+      setFavourited(isFavourited);
+    }
+  }, [isFavourited, toggling]);
 
   const handleToggle = useCallback(async () => {
     if (toggling || !session?.user) return;

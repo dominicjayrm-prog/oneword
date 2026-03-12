@@ -64,7 +64,9 @@ export default function ResultsScreen() {
     try {
       const data = await getLeaderboard();
       setLeaderboard(data);
-      checkFavourited(data.map((e) => e.description_id));
+      if (data.length > 0) {
+        checkFavourited(data.map((e) => e.description_id));
+      }
     } catch (err) {
       console.warn('[ResultsScreen] Failed to load leaderboard:', err);
       setLoadError(true);

@@ -250,24 +250,24 @@ BEGIN
   END IF;
 
   RETURN QUERY
-  WITH ranked AS (
+  WITH all_ranked AS (
     SELECT
       d.description,
       p.username,
       d.vote_count,
       d.user_id,
+      p.is_shadowbanned,
       ROW_NUMBER() OVER (ORDER BY d.vote_count DESC, d.created_at ASC) as rnk,
       COUNT(*) OVER () as total
     FROM descriptions d
     JOIN profiles p ON d.user_id = p.id
     WHERE d.word_id = yesterday_word_id
-    AND p.is_shadowbanned = false
   ),
   winner AS (
-    SELECT * FROM ranked WHERE rnk = 1
+    SELECT * FROM all_ranked WHERE rnk = 1 AND is_shadowbanned = false
   ),
   user_entry AS (
-    SELECT * FROM ranked WHERE user_id = p_user_id
+    SELECT * FROM all_ranked WHERE user_id = p_user_id
   )
   SELECT
     yesterday_word,
@@ -277,10 +277,10 @@ BEGIN
     w.vote_count,
     ue.description,
     ue.rnk,
-    w.total,
+    COALESCE(w.total, ue.total),
     COALESCE(w.user_id = p_user_id, FALSE)
-  FROM winner w
-  LEFT JOIN user_entry ue ON TRUE;
+  FROM user_entry ue
+  FULL OUTER JOIN winner w ON TRUE;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
@@ -346,6 +346,8 @@ BEGIN
 
     -- Min length: 2 chars (unless allowed single letter)
     IF length(v_word) < 2 AND NOT (v_word = ANY(v_single_allowed)) THEN
+      INSERT INTO moderation_log (user_id, word_id, attempted_description, rejection_reason)
+      VALUES (p_user_id, p_word_id, TRIM(p_description), 'gibberish');
       RETURN QUERY SELECT false, 'INVALID_WORD_LENGTH'::TEXT,
         format('Word "%s" is too short (min 2 characters)', v_word);
       RETURN;
@@ -353,6 +355,8 @@ BEGIN
 
     -- Max length: 15 chars
     IF length(v_word) > 15 THEN
+      INSERT INTO moderation_log (user_id, word_id, attempted_description, rejection_reason)
+      VALUES (p_user_id, p_word_id, TRIM(p_description), 'gibberish');
       RETURN QUERY SELECT false, 'INVALID_WORD_LENGTH'::TEXT,
         format('Word "%s" is too long (max 15 characters)', v_word);
       RETURN;
@@ -360,6 +364,8 @@ BEGIN
 
     -- Must contain a vowel (a, e, i, o, u, y) unless whitelisted
     IF NOT (v_word ~ '[aeiouyáéíóú]') AND NOT (v_word = ANY(v_vowel_whitelist)) THEN
+      INSERT INTO moderation_log (user_id, word_id, attempted_description, rejection_reason)
+      VALUES (p_user_id, p_word_id, TRIM(p_description), 'gibberish');
       RETURN QUERY SELECT false, 'GIBBERISH_DETECTED'::TEXT,
         format('"%s" does not look like a real word', v_word);
       RETURN;
@@ -367,6 +373,8 @@ BEGIN
 
     -- No more than 3 consecutive same characters
     IF v_word ~ '(.)\1{3,}' THEN
+      INSERT INTO moderation_log (user_id, word_id, attempted_description, rejection_reason)
+      VALUES (p_user_id, p_word_id, TRIM(p_description), 'gibberish');
       RETURN QUERY SELECT false, 'GIBBERISH_DETECTED'::TEXT,
         format('"%s" contains too many repeated characters', v_word);
       RETURN;
@@ -376,6 +384,8 @@ BEGIN
   -- All 5 words cannot be identical
   v_unique_words := ARRAY(SELECT DISTINCT unnest(v_words));
   IF array_length(v_unique_words, 1) = 1 THEN
+    INSERT INTO moderation_log (user_id, word_id, attempted_description, rejection_reason)
+    VALUES (p_user_id, p_word_id, TRIM(p_description), 'spam');
     RETURN QUERY SELECT false, 'TOO_MANY_REPEATS'::TEXT,
       'All five words cannot be the same'::TEXT;
     RETURN;
@@ -383,6 +393,8 @@ BEGIN
 
   -- Must have at least 3 unique words
   IF array_length(v_unique_words, 1) < 3 THEN
+    INSERT INTO moderation_log (user_id, word_id, attempted_description, rejection_reason)
+    VALUES (p_user_id, p_word_id, TRIM(p_description), 'spam');
     RETURN QUERY SELECT false, 'TOO_MANY_REPEATS'::TEXT,
       'Description must have at least 3 unique words'::TEXT;
     RETURN;
@@ -397,6 +409,8 @@ BEGIN
       END IF;
     END LOOP;
     IF v_max_count > 2 THEN
+      INSERT INTO moderation_log (user_id, word_id, attempted_description, rejection_reason)
+      VALUES (p_user_id, p_word_id, TRIM(p_description), 'spam');
       RETURN QUERY SELECT false, 'TOO_MANY_REPEATS'::TEXT,
         format('"%s" appears too many times', v_unique_words[i]);
       RETURN;
@@ -409,6 +423,8 @@ BEGIN
     WHERE word_id = p_word_id
     AND LOWER(TRIM(description)) = v_cleaned
   ) THEN
+    INSERT INTO moderation_log (user_id, word_id, attempted_description, rejection_reason)
+    VALUES (p_user_id, p_word_id, TRIM(p_description), 'duplicate');
     RETURN QUERY SELECT false, 'DUPLICATE_DESCRIPTION'::TEXT,
       'This description has already been submitted'::TEXT;
     RETURN;

@@ -17,18 +17,15 @@ export default async function UserDetailPage({ params }: { params: Promise<{ id:
   if (!profile) notFound();
 
   // Fetch all data in parallel
-  const [descriptionsRes, reportsRes, banLogRes, moderationLogRes] = await Promise.all([
+  const [descriptionsRes, , banLogRes, moderationLogRes] = await Promise.all([
     supabase
       .from('descriptions')
       .select('id, description, vote_count, rank, created_at, word_id')
       .eq('user_id', id)
       .order('created_at', { ascending: false })
       .limit(50),
-    supabase
-      .from('reports')
-      .select('id, reason, status, created_at, description_id')
-      .eq('description_id', id)
-      .limit(50),
+    // Placeholder — real reports-on-user fetched below via description IDs
+    Promise.resolve({ data: [] }),
     supabase
       .from('ban_log')
       .select('*')

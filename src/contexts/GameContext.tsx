@@ -177,11 +177,18 @@ export function GameProvider({ children }: { children: ReactNode }) {
           return;
         }
 
-        const { error } = await supabase.from('descriptions').insert({
-          user_id: userId,
-          word_id: wordId,
-          description,
+        const { data, error } = await supabase.rpc('validate_and_submit_description', {
+          p_user_id: userId,
+          p_word_id: wordId,
+          p_description: description,
         });
+
+        // If server validation rejects it, just drop the pending description
+        if (!error && data && data.length > 0 && !data[0].success) {
+          await AsyncStorage.removeItem(PENDING_DESCRIPTION_KEY);
+          setHasPendingDescription(false);
+          return;
+        }
 
         if (!error) {
           await AsyncStorage.removeItem(PENDING_DESCRIPTION_KEY);

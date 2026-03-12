@@ -77,6 +77,7 @@ export async function removeShadowBan(formData: FormData) {
 }
 
 export async function searchUsers(query: string) {
+  await requireAuth();
   if (!query || query.length < 1) return [];
   const supabase = createAdminClient();
   const safeQuery = query.replace(/[%_\\]/g, '\\$&');

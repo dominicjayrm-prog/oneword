@@ -59,7 +59,7 @@ export function FavouriteButton({ descriptionId, isFavourited, onToggle, size = 
   return (
     <TouchableOpacity
       onPress={handleToggle}
-      hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+      hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
       activeOpacity={0.6}
       style={styles.button}
       disabled={toggling}
@@ -73,6 +73,10 @@ export function FavouriteButton({ descriptionId, isFavourited, onToggle, size = 
 
 const styles = StyleSheet.create({
   button: {
-    padding: 2,
+    padding: 8,
+    minWidth: 32,
+    minHeight: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

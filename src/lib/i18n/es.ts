@@ -220,6 +220,17 @@ export default {
     friends: 'Amigos',
   },
 
+  // Validation
+  validation: {
+    word_too_short: 'Cada palabra debe tener al menos 2 caracteres',
+    word_too_long: 'Cada palabra puede tener m\u00E1ximo 15 caracteres',
+    gibberish: 'Eso no parece una palabra real',
+    all_same: 'Las cinco palabras no pueden ser iguales',
+    too_many_repeats: 'Intenta usar palabras m\u00E1s variadas',
+    duplicate: 'Esta descripci\u00F3n ya ha sido enviada. \u00A1Prueba algo m\u00E1s original!',
+    profanity_blocked: 'Esa descripci\u00F3n contiene lenguaje inapropiado. Por favor, int\u00E9ntalo de nuevo.',
+  },
+
   // Errors
   errors: {
     generic: 'Algo sali\u00F3 mal. Int\u00E9ntalo de nuevo.',

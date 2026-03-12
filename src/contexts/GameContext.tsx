@@ -4,6 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import NetInfo from '@react-native-community/netinfo';
 import { supabase } from '../lib/supabase';
 import { checkProfanity } from '../lib/profanityFilter';
+import { validateDescription } from '../lib/descriptionValidator';
 import i18n from '../lib/i18n';
 import { withTimeout } from '../lib/withTimeout';
 import { rateLimits } from '../lib/rateLimit';
@@ -176,11 +177,18 @@ export function GameProvider({ children }: { children: ReactNode }) {
           return;
         }
 
-        const { error } = await supabase.from('descriptions').insert({
-          user_id: userId,
-          word_id: wordId,
-          description,
+        const { data, error } = await supabase.rpc('validate_and_submit_description', {
+          p_user_id: userId,
+          p_word_id: wordId,
+          p_description: description,
         });
+
+        // If server validation rejects it, just drop the pending description
+        if (!error && data && data.length > 0 && !data[0].success) {
+          await AsyncStorage.removeItem(PENDING_DESCRIPTION_KEY);
+          setHasPendingDescription(false);
+          return;
+        }
 
         if (!error) {
           await AsyncStorage.removeItem(PENDING_DESCRIPTION_KEY);
@@ -226,9 +234,16 @@ export function GameProvider({ children }: { children: ReactNode }) {
         }
       }
 
+      // Client-side gibberish/spam validation
+      const validationError = validateDescription(words, language);
+      if (validationError) {
+        return { error: new Error(i18n.t(validationError.message)) };
+      }
+
+      // Client-side profanity check
       const profanityCheck = checkProfanity(description);
       if (!profanityCheck.clean) {
-        return { error: new Error(i18n.t('errors.profanity', { word: profanityCheck.flaggedWord })) };
+        return { error: new Error(i18n.t('validation.profanity_blocked')) };
       }
 
       const cleaned = words.join(' ');
@@ -247,34 +262,66 @@ export function GameProvider({ children }: { children: ReactNode }) {
       setHasPendingDescription(true);
 
       try {
-        const { error } = await withTimeout(
-          supabase.from('descriptions').insert({
-            user_id: userId,
-            word_id: todayWord.id,
-            description: cleaned,
+        // Use server-side validation + insertion function
+        const { data, error: rpcError } = await withTimeout(
+          supabase.rpc('validate_and_submit_description', {
+            p_user_id: userId,
+            p_word_id: todayWord.id,
+            p_description: cleaned,
           }),
         );
 
-        if (!error) {
-          // Success — clear the pending description
-          await AsyncStorage.removeItem(PENDING_DESCRIPTION_KEY);
-          setHasPendingDescription(false);
-          setHasSubmitted(true);
-          setUserDescription(cleaned);
-          await cacheData(CACHE_KEYS.MY_DESCRIPTION, cleaned);
-          await withTimeout(supabase.rpc('update_streak', { p_user_id: userId }));
-          // Refresh profile so badge fields + streak are up to date
-          await refreshProfile();
+        if (rpcError) {
+          return { error: rpcError, oldStreak };
         }
 
-        return { error, oldStreak };
+        const result = data && data.length > 0 ? data[0] : null;
+
+        if (result && !result.success) {
+          // Server rejected — clear pending and return user-friendly error
+          await AsyncStorage.removeItem(PENDING_DESCRIPTION_KEY);
+          setHasPendingDescription(false);
+
+          // Map server error codes to i18n messages
+          let errorMessage: string;
+          switch (result.error_code) {
+            case 'DUPLICATE_DESCRIPTION':
+              errorMessage = i18n.t('validation.duplicate');
+              break;
+            case 'INVALID_WORD_LENGTH':
+            case 'GIBBERISH_DETECTED':
+              errorMessage = i18n.t('validation.gibberish');
+              break;
+            case 'TOO_MANY_REPEATS':
+              errorMessage = i18n.t('validation.too_many_repeats');
+              break;
+            case 'ALREADY_SUBMITTED':
+              errorMessage = i18n.t('errors.submit_failed');
+              break;
+            default:
+              errorMessage = result.error_message || i18n.t('errors.submit_failed');
+          }
+          return { error: new Error(errorMessage), oldStreak };
+        }
+
+        // Success — clear the pending description
+        await AsyncStorage.removeItem(PENDING_DESCRIPTION_KEY);
+        setHasPendingDescription(false);
+        setHasSubmitted(true);
+        setUserDescription(cleaned);
+        await cacheData(CACHE_KEYS.MY_DESCRIPTION, cleaned);
+        await withTimeout(supabase.rpc('update_streak', { p_user_id: userId }));
+        // Refresh profile so badge fields + streak are up to date
+        await refreshProfile();
+
+        return { error: null, oldStreak };
       } catch (err) {
         // Network failed — description is safely stored locally
         // Return a special 'pending' state — not a hard error since data is saved
         return { error: err instanceof Error ? err : new Error('Network error. Please try again.'), oldStreak };
       }
     },
-    [todayWord, userId, authProfile?.current_streak, refreshProfile],
+    [todayWord, userId, language, authProfile?.current_streak, refreshProfile],
   );
 
   const getVotePair = useCallback(async (): Promise<VotePair | null> => {

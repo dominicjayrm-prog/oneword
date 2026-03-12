@@ -292,9 +292,58 @@ function normalizeUnicode(s: string): string {
 // is compared against stripped blocked words (not the accented originals).
 const BLOCKED_WORDS_ES_STRIPPED = new Set([...BLOCKED_WORDS_ES].map(stripAccents));
 
+// Slurs that should be caught even when embedded in longer words (partial matching).
+// Only the most severe slurs — we don't want false positives on common words.
+const PARTIAL_MATCH_SLURS = [
+  'nigger',
+  'nigga',
+  'faggot',
+  'kike',
+  'chink',
+  'spic',
+  'wetback',
+  'beaner',
+  'tranny',
+  'gook',
+  'raghead',
+  'towelhead',
+  // Spanish slurs
+  'maricon',
+  'maricón',
+];
+
+function checkWordAgainstLists(word: string): string | undefined {
+  if (BLOCKED_WORDS_EN.has(word) || BLOCKED_WORDS_ES.has(word)) return word;
+  const stripped = stripAccents(word);
+  if (BLOCKED_WORDS_ES_STRIPPED.has(stripped)) return word;
+  return undefined;
+}
+
+function deLeeted(text: string): string {
+  return text
+    .replace(/0/g, 'o')
+    .replace(/1/g, 'i')
+    .replace(/3/g, 'e')
+    .replace(/4/g, 'a')
+    .replace(/5/g, 's')
+    .replace(/6/g, 'g')
+    .replace(/7/g, 't')
+    .replace(/8/g, 'b')
+    .replace(/9/g, 'g')
+    .replace(/\$/g, 's')
+    .replace(/@/g, 'a')
+    .replace(/!/g, 'i')
+    .replace(/\|/g, 'l')
+    .replace(/\+/g, 't')
+    .replace(/\(/g, 'c')
+    .replace(/\{/g, 'c');
+}
+
 /**
  * Check if a description contains profanity.
  * Checks against both English and Spanish blocked word lists.
+ * Also checks concatenated text to catch split words like "f u c k"
+ * and partial matching for slurs embedded in longer words.
  * Returns { clean: boolean, flaggedWord?: string }
  */
 export function checkProfanity(text: string): { clean: boolean; flaggedWord?: string } {
@@ -312,46 +361,51 @@ export function checkProfanity(text: string): { clean: boolean; flaggedWord?: st
     .split(/\s+/)
     .filter(Boolean);
 
+  // 1. Check each word individually
   for (const word of words) {
-    if (BLOCKED_WORDS_EN.has(word) || BLOCKED_WORDS_ES.has(word)) {
-      return { clean: false, flaggedWord: word };
-    }
-    // Check accent-stripped version against Spanish list (catches "maricon" for "maricón")
-    const stripped = stripAccents(word);
-    if (BLOCKED_WORDS_ES_STRIPPED.has(stripped)) {
-      return { clean: false, flaggedWord: word };
-    }
+    const flagged = checkWordAgainstLists(word);
+    if (flagged) return { clean: false, flaggedWord: flagged };
   }
 
-  // Check for l33t speak substitutions (extended mapping)
-  const deLeeted = lower
-    .replace(/0/g, 'o')
-    .replace(/1/g, 'i')
-    .replace(/3/g, 'e')
-    .replace(/4/g, 'a')
-    .replace(/5/g, 's')
-    .replace(/6/g, 'g')
-    .replace(/7/g, 't')
-    .replace(/8/g, 'b')
-    .replace(/9/g, 'g')
-    .replace(/\$/g, 's')
-    .replace(/@/g, 'a')
-    .replace(/!/g, 'i')
-    .replace(/\|/g, 'l')
-    .replace(/\+/g, 't')
-    .replace(/\(/g, 'c')
-    .replace(/\{/g, 'c')
+  // 2. Check l33t speak substitutions per word
+  const deLeetedWords = deLeeted(lower)
     .replace(/[^a-záéíóúñü\s]/g, '')
     .split(/\s+/)
     .filter(Boolean);
 
-  for (const word of deLeeted) {
-    if (BLOCKED_WORDS_EN.has(word) || BLOCKED_WORDS_ES.has(word)) {
-      return { clean: false, flaggedWord: word };
+  for (const word of deLeetedWords) {
+    const flagged = checkWordAgainstLists(word);
+    if (flagged) return { clean: false, flaggedWord: flagged };
+  }
+
+  // 3. Check concatenated text (catches "f u c k", "s h i t" split across words)
+  const concatenated = words.join('');
+  const concatenatedDeleeted = deLeeted(concatenated).replace(/[^a-záéíóúñü]/g, '');
+
+  for (const slur of PARTIAL_MATCH_SLURS) {
+    const slurNorm = stripAccents(slur);
+    if (concatenated.includes(slur) || concatenated.includes(slurNorm)) {
+      return { clean: false, flaggedWord: slur };
     }
-    const stripped = stripAccents(word);
-    if (BLOCKED_WORDS_ES_STRIPPED.has(stripped)) {
-      return { clean: false, flaggedWord: word };
+    if (concatenatedDeleeted.includes(slur) || concatenatedDeleeted.includes(slurNorm)) {
+      return { clean: false, flaggedWord: slur };
+    }
+  }
+
+  // Also check full concatenation against full block lists (catches "fu ck" → "fuck")
+  const concatFlagged = checkWordAgainstLists(concatenated);
+  if (concatFlagged) return { clean: false, flaggedWord: concatFlagged };
+  const concatDeleetFlagged = checkWordAgainstLists(concatenatedDeleeted);
+  if (concatDeleetFlagged) return { clean: false, flaggedWord: concatDeleetFlagged };
+
+  // 4. Partial matching: check if slurs are embedded in longer words
+  for (const word of words) {
+    const wordStripped = stripAccents(word);
+    for (const slur of PARTIAL_MATCH_SLURS) {
+      const slurNorm = stripAccents(slur);
+      if (word.length > slur.length && (word.includes(slur) || wordStripped.includes(slurNorm))) {
+        return { clean: false, flaggedWord: slur };
+      }
     }
   }
 

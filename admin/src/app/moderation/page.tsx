@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation';
 import { isAuthenticated } from '@/lib/auth';
 import { createAdminClient } from '@/lib/supabase';
 import { NavBar } from '@/components/NavBar';
-import { dismissReport, removeDescription } from './actions';
+import { dismissReport, removeDescription, shadowBanFromReport } from './actions';
 
 export const dynamic = 'force-dynamic';
 
@@ -52,6 +52,7 @@ export default async function ModerationPage() {
       descriptionText: desc?.description ?? '[deleted]',
       reporterUsername: reporter?.username ?? 'unknown',
       authorUsername: author?.username ?? 'unknown',
+      authorId: desc?.user_id ?? null,
       word: word?.word ?? 'unknown',
       wordDate: word?.date ?? '',
     };
@@ -102,7 +103,7 @@ export default async function ModerationPage() {
                       {new Date(r.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                     </td>
                     <td>
-                      <div className="flex gap-2">
+                      <div className="flex gap-2" style={{ flexWrap: 'wrap' }}>
                         <form action={removeDescription}>
                           <input type="hidden" name="descriptionId" value={r.description_id} />
                           <button type="submit" className="btn btn-danger" style={{ padding: '4px 12px', fontSize: 12 }}>
@@ -115,6 +116,15 @@ export default async function ModerationPage() {
                             Dismiss
                           </button>
                         </form>
+                        {r.authorId && (
+                          <form action={shadowBanFromReport}>
+                            <input type="hidden" name="userId" value={r.authorId} />
+                            <input type="hidden" name="descriptionId" value={r.description_id} />
+                            <button type="submit" className="btn" style={{ padding: '4px 12px', fontSize: 12, background: 'var(--warning)', color: '#000', fontWeight: 700 }}>
+                              Shadow Ban
+                            </button>
+                          </form>
+                        )}
                       </div>
                     </td>
                   </tr>

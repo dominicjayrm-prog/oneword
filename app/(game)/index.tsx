@@ -135,10 +135,22 @@ export default function HomeScreen() {
   // auth.profile can change reference multiple times during login (fetchProfile runs
   // from both getSession and onAuthStateChange), which would cancel in-flight fetches.
   const interstitialStartedRef = useRef(false);
+  // Capture the user's total_plays when their profile first loads this session.
+  // This prevents post-submission profile refreshes (total_plays 0→1) from
+  // triggering the yesterday-winner interstitial for first-time users.
+  const initialTotalPlaysRef = useRef<number | null>(null);
   // Reset the guard on logout so re-login shows interstitials again
   useEffect(() => {
-    if (!auth.session) interstitialStartedRef.current = false;
+    if (!auth.session) {
+      interstitialStartedRef.current = false;
+      initialTotalPlaysRef.current = null;
+    }
   }, [auth.session]);
+  useEffect(() => {
+    if (auth.profile && initialTotalPlaysRef.current === null) {
+      initialTotalPlaysRef.current = auth.profile.total_plays ?? 0;
+    }
+  }, [auth.profile]);
   useEffect(() => {
     if (!auth.session || !auth.profile || gameLoading) return;
     if (interstitialStartedRef.current) return;
@@ -171,8 +183,11 @@ export default function HomeScreen() {
         }
 
         // Always pre-fetch yesterday's winner (won't display until recap is dismissed)
-        // Don't show to brand-new users who haven't played yet
-        const hasPlayed = auth.profile && (auth.profile.total_plays ?? 0) > 0;
+        // Don't show to brand-new users who haven't played yet.
+        // Use the initial total_plays snapshot so that a first-time submission
+        // (which bumps total_plays 0→1 and refreshes the profile) doesn't
+        // retroactively trigger the yesterday-winner card on the same day.
+        const hasPlayed = initialTotalPlaysRef.current !== null && initialTotalPlaysRef.current > 0;
         if (hasPlayed && d?.winner_dismissed_date !== gameDateStr) {
           const winner = await getYesterdayWinnerRef.current();
           if (!mountedRef.current) return;
@@ -194,10 +209,12 @@ export default function HomeScreen() {
           console.log('[Interstitial] Yesterday winner already dismissed for', gameDateStr);
         }
       } catch (err) {
-        // Non-critical — just skip interstitial cards
-        // Allow retry on next mount if it failed
+        // Non-critical — just skip interstitial cards.
+        // Don't reset interstitialStartedRef here: a profile refresh (e.g. after
+        // first submission) would re-trigger the effect and could show yesterday's
+        // winner to a first-time user whose total_plays just went from 0 to 1.
+        // The interstitial will retry on next app mount / session change instead.
         console.warn('[HomeScreen] Interstitial fetch failed:', err);
-        interstitialStartedRef.current = false;
       }
     })();
   }, [auth.session, auth.profile, gameLoading]);
@@ -861,26 +878,8 @@ export default function HomeScreen() {
     return <WeeklyRecapCard data={recapData} onDismiss={dismissWeeklyRecap} />;
   }
 
-  // Yesterday's Winner card — shown once per day before today's word
-  if (showYesterdayWinner && yesterdayData) {
-    return (
-      <View style={[styles.container, { backgroundColor: colors.background }]}>
-        <ThemeToggle />
-        <YesterdayWinnerCard data={yesterdayData} onDismiss={dismissYesterdayWinner} />
-      </View>
-    );
-  }
-
-  if (!todayWord) {
-    return (
-      <View style={[styles.center, { backgroundColor: colors.background }]}>
-        <ThemeToggle />
-        <EmptyState emoji={'\uD83D\uDCC5'} title={t('empty.no_word')} subtitle={t('empty.no_word_sub')} />
-      </View>
-    );
-  }
-
-  // First submission celebration — submitting stage or celebration stage
+  // First submission celebration — takes priority over yesterday's winner.
+  // A new user who just submitted should see confetti, not the winner card.
   if (firstSubmitSubmitting || showFirstSubmitCelebration) {
     if (firstSubmitSubmitting && !showFirstSubmitCelebration) {
       // Stage 1: Submitting spinner
@@ -909,6 +908,25 @@ export default function HomeScreen() {
           router.push('/results');
         }}
       />
+    );
+  }
+
+  // Yesterday's Winner card — shown once per day before today's word
+  if (showYesterdayWinner && yesterdayData) {
+    return (
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <ThemeToggle />
+        <YesterdayWinnerCard data={yesterdayData} onDismiss={dismissYesterdayWinner} />
+      </View>
+    );
+  }
+
+  if (!todayWord) {
+    return (
+      <View style={[styles.center, { backgroundColor: colors.background }]}>
+        <ThemeToggle />
+        <EmptyState emoji={'\uD83D\uDCC5'} title={t('empty.no_word')} subtitle={t('empty.no_word_sub')} />
+      </View>
     );
   }
 

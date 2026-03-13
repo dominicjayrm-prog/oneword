@@ -15,6 +15,7 @@ import { useAuthContext } from './AuthContext';
 import type { DailyWord, VotePair, LeaderboardEntry, YesterdayWinner, WeeklyRecap } from '../types/database';
 
 const PENDING_DESCRIPTION_KEY = 'pending_description';
+const PENDING_VOTES_KEY = 'pending_votes';
 
 interface GameContextType {
   todayWord: DailyWord | null;
@@ -27,7 +28,7 @@ interface GameContextType {
     description: string,
   ) => Promise<{ error: Error | null; oldStreak?: number; savedLocally?: boolean }>;
   getVotePair: () => Promise<VotePair | null>;
-  submitVote: (winnerId: string, loserId: string) => Promise<{ error: Error | null }>;
+  submitVote: (winnerId: string, loserId: string) => Promise<{ error: Error | null; savedLocally?: boolean }>;
   getLeaderboard: () => Promise<LeaderboardEntry[]>;
   reportDescription: (descriptionId: string) => Promise<{ error: Error | null }>;
   getYesterdayWinner: () => Promise<YesterdayWinner | null>;
@@ -217,6 +218,59 @@ export function GameProvider({ children }: { children: ReactNode }) {
     return () => unsubscribe();
   }, [userId, todayWord, refreshProfile]);
 
+  // Auto-retry pending votes on network reconnection
+  useEffect(() => {
+    if (!userId) return;
+
+    const unsubscribe = NetInfo.addEventListener(async (state) => {
+      if (!state.isConnected) return;
+
+      try {
+        const raw = await AsyncStorage.getItem(PENDING_VOTES_KEY);
+        if (!raw) return;
+
+        const queue: Array<{ wordId: string; winnerId: string; loserId: string; timestamp: number }> = JSON.parse(raw);
+        if (queue.length === 0) return;
+
+        // Filter out votes older than 24 hours
+        const valid = queue.filter((v) => Date.now() - v.timestamp < 24 * 60 * 60 * 1000);
+        if (valid.length === 0) {
+          await AsyncStorage.removeItem(PENDING_VOTES_KEY);
+          return;
+        }
+
+        const failed: typeof valid = [];
+        for (const vote of valid) {
+          try {
+            const { error } = await supabase.rpc('submit_vote', {
+              p_voter_id: userId,
+              p_word_id: vote.wordId,
+              p_winner_id: vote.winnerId,
+              p_loser_id: vote.loserId,
+            });
+            if (error) {
+              // Server error (e.g. duplicate) — drop it
+              console.warn('[GameContext] Pending vote server error:', error.message);
+            }
+          } catch {
+            // Network still failing — keep in queue
+            failed.push(vote);
+          }
+        }
+
+        if (failed.length > 0) {
+          await AsyncStorage.setItem(PENDING_VOTES_KEY, JSON.stringify(failed));
+        } else {
+          await AsyncStorage.removeItem(PENDING_VOTES_KEY);
+        }
+      } catch {
+        // ignore
+      }
+    });
+
+    return () => unsubscribe();
+  }, [userId]);
+
   const submitDescription = useCallback(
     async (description: string) => {
       if (!todayWord || !userId) return { error: new Error('Not ready') };
@@ -386,8 +440,19 @@ export function GameProvider({ children }: { children: ReactNode }) {
           }),
         );
         return { error };
-      } catch (err) {
-        return { error: err instanceof Error ? err : new Error('Network error. Please try again.') };
+      } catch {
+        // Network/timeout error — queue vote for later retry
+        try {
+          const raw = await AsyncStorage.getItem(PENDING_VOTES_KEY);
+          const queue: Array<{ wordId: string; winnerId: string; loserId: string; timestamp: number }> = raw
+            ? JSON.parse(raw)
+            : [];
+          queue.push({ wordId: todayWord.id, winnerId, loserId, timestamp: Date.now() });
+          await AsyncStorage.setItem(PENDING_VOTES_KEY, JSON.stringify(queue));
+        } catch {
+          // Couldn't save to queue — truly lost
+        }
+        return { error: null, savedLocally: true };
       }
     },
     [todayWord, userId],

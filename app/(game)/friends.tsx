@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { View, Text, StyleSheet, ScrollView, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, RefreshControl, Platform } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTranslation } from 'react-i18next';
 import { useAuthContext } from '../../src/contexts/AuthContext';
 import { useGameContext } from '../../src/contexts/GameContext';
@@ -27,12 +28,15 @@ import {
   type FriendDescription,
 } from '../../src/lib/friends';
 import { useFavouritedIds } from '../../src/hooks/useFavourites';
+import { haptic } from '../../src/lib/haptics';
+import { triggerFriendActivityNotification } from '../../src/lib/notifications';
+import { getGameDate } from '../../src/lib/gameDate';
 import { fontSize, spacing } from '../../src/constants/theme';
 
 export default function FriendsScreen() {
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const { session } = useAuthContext();
+  const { session, profile } = useAuthContext();
   const { todayWord, hasSubmitted } = useGameContext();
 
   const { showToast } = useToast();
@@ -78,7 +82,39 @@ export default function FriendsScreen() {
     loadData();
   }, [loadData]);
 
+  // Fire local notification for new friend activity (once per game day)
+  useEffect(() => {
+    if (Platform.OS === 'web' || !profile?.notify_friend_activity) return;
+    if (descriptions.length === 0 || loading) return;
+
+    const friendsWhoPlayed = descriptions.filter((d) => d.has_played).map((d) => d.friend_username);
+    if (friendsWhoPlayed.length === 0) return;
+
+    const gameDate = getGameDate();
+    const storageKey = `@oneword_friend_activity_notified_${gameDate}`;
+
+    (async () => {
+      try {
+        const already = await AsyncStorage.getItem(storageKey);
+        if (already) {
+          // Check if there are new friends who played since last notification
+          const prevNotified: string[] = JSON.parse(already);
+          const newPlayers = friendsWhoPlayed.filter((u) => !prevNotified.includes(u));
+          if (newPlayers.length === 0) return;
+          await triggerFriendActivityNotification(newPlayers);
+          await AsyncStorage.setItem(storageKey, JSON.stringify([...prevNotified, ...newPlayers]));
+        } else {
+          await triggerFriendActivityNotification(friendsWhoPlayed);
+          await AsyncStorage.setItem(storageKey, JSON.stringify(friendsWhoPlayed));
+        }
+      } catch {
+        // non-critical
+      }
+    })();
+  }, [descriptions, loading, profile?.notify_friend_activity]);
+
   const handleRefresh = useCallback(async () => {
+    haptic.medium();
     setRefreshing(true);
     await loadData(false);
     setRefreshing(false);

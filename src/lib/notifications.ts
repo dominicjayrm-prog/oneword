@@ -137,6 +137,39 @@ export async function triggerMilestoneNotification(emoji: string, streak: number
 }
 
 /**
+ * Fire a local notification when friends submit their descriptions.
+ */
+export async function triggerFriendActivityNotification(friendUsernames: string[]) {
+  if (friendUsernames.length === 0) return;
+  const names = friendUsernames.slice(0, 3).map((u) => `@${u}`).join(', ');
+  const more = friendUsernames.length > 3 ? ` +${friendUsernames.length - 3} more` : '';
+  await Notifications.scheduleNotificationAsync({
+    content: {
+      title: 'Friends are playing!',
+      body: `${names}${more} submitted today. Check out their descriptions!`,
+      sound: true,
+      data: { type: 'friend_activity' },
+    },
+    trigger: null, // immediate
+  });
+}
+
+/**
+ * Fire a local notification when a friend beats you on the leaderboard.
+ */
+export async function triggerFriendBeatYouNotification(friendUsername: string, friendRank: number) {
+  await Notifications.scheduleNotificationAsync({
+    content: {
+      title: `@${friendUsername} is at #${friendRank}!`,
+      body: 'Your friend is climbing the leaderboard. Can you beat them?',
+      sound: true,
+      data: { type: 'friend_activity' },
+    },
+    trigger: null, // immediate
+  });
+}
+
+/**
  * Set the app badge count (1 = hasn't played, 0 = played/clear).
  */
 export async function setBadgeCount(count: number) {

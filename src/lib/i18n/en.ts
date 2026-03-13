@@ -77,6 +77,10 @@ export default {
     no_word_sub: 'Check back soon!',
     day_streak: '{{count}} day streak',
     greeting: 'Hi, {{username}}',
+    next_word_in: 'Next word in {{time}}',
+    share_description: 'Share your description',
+    share_description_message:
+      'My description for "{{word}}" on OneWord:\n\n"{{description}}"\n\nPlay daily at playoneword.app',
   },
 
   // Weekly Recap
@@ -125,6 +129,7 @@ export default {
     go_to_today: "Go to Today's Word \u2192",
     your_pick: 'YOUR PICK \u2713',
     vs: 'VS',
+    skip: 'Skip',
     report_title: 'Report Description',
     report_message: 'Flag this description as inappropriate?',
     report_cancel: 'Cancel',
@@ -387,6 +392,7 @@ export default {
     description_submitted: 'Your description was submitted successfully.',
     vote_failed: "Vote didn't go through",
     vote_try_again: 'Tap your choice again to retry.',
+    vote_queued: "Vote saved! We'll submit it when you're back online.",
     connect_for_word: "Connect to the internet to get today's word.",
     connect_to_vote: 'Voting requires an internet connection.',
     connect_for_results: "Connect to see today's results.",

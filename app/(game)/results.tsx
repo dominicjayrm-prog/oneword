@@ -8,6 +8,7 @@ import {
   Modal,
   TouchableOpacity,
   RefreshControl,
+  Platform,
 } from 'react-native';
 import { captureRef } from 'react-native-view-shot';
 import * as Sharing from 'expo-sharing';
@@ -28,8 +29,12 @@ import { ErrorState } from '../../src/components/ErrorState';
 import { EmptyState } from '../../src/components/EmptyState';
 import { RetryState } from '../../src/components/RetryState';
 import { useNetwork } from '../../src/contexts/NetworkContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { fontSize, spacing, borderRadius } from '../../src/constants/theme';
 import { haptic } from '../../src/lib/haptics';
+import { triggerFriendBeatYouNotification } from '../../src/lib/notifications';
+import { getGameDate } from '../../src/lib/gameDate';
+import { getFriends } from '../../src/lib/friends';
 import { useFavouritedIds } from '../../src/hooks/useFavourites';
 import type { LeaderboardEntry } from '../../src/types/database';
 
@@ -37,7 +42,7 @@ export default function ResultsScreen() {
   const router = useRouter();
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const { profile, language } = useAuthContext();
+  const { session, profile, language } = useAuthContext();
   const { showToast } = useToast();
   const { todayWord, hasSubmitted, userDescription, getLeaderboard } = useGameContext();
   const { isOnline } = useNetwork();
@@ -79,6 +84,7 @@ export default function ResultsScreen() {
   }, [loadResults]);
 
   const handleRefresh = useCallback(async () => {
+    haptic.medium();
     setRefreshing(true);
     await loadResults();
     setRefreshing(false);
@@ -92,6 +98,39 @@ export default function ResultsScreen() {
       haptic.success();
     }
   }, [myEntry?.rank, loading]);
+
+  // Notify when a friend beats you on the leaderboard (once per game day)
+  useEffect(() => {
+    if (Platform.OS === 'web' || !profile?.notify_friend_activity) return;
+    if (!myEntry || !session?.user?.id || loading || leaderboard.length === 0) return;
+
+    const gameDate = getGameDate();
+    const storageKey = `@oneword_friend_beat_notified_${gameDate}`;
+
+    (async () => {
+      try {
+        const already = await AsyncStorage.getItem(storageKey);
+        if (already) return; // Already notified today
+
+        const friends = await getFriends(session.user.id);
+        const friendUsernames = new Set(friends.map((f) => f.friend_username));
+
+        // Find friends ranked above the user
+        const friendsAhead = leaderboard.filter(
+          (e) => friendUsernames.has(e.username) && e.rank < (myEntry.rank ?? Infinity),
+        );
+
+        if (friendsAhead.length > 0) {
+          // Notify about the highest-ranked friend
+          const topFriend = friendsAhead[0];
+          await triggerFriendBeatYouNotification(topFriend.username, topFriend.rank);
+          await AsyncStorage.setItem(storageKey, 'true');
+        }
+      } catch {
+        // non-critical
+      }
+    })();
+  }, [myEntry, session?.user?.id, loading, leaderboard, profile?.notify_friend_activity]);
 
   const handleSharePress = () => {
     haptic.medium();

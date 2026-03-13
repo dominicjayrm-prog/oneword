@@ -36,10 +36,14 @@ BEGIN
   END IF;
 
   -- Ensure the user has a profile row (self-heal if trigger missed it)
+  -- Pull the intended username from auth.users metadata when available
   INSERT INTO profiles (id, username)
   VALUES (
     p_user_id,
-    'player_' || LEFT(p_user_id::TEXT, 8)
+    COALESCE(
+      (SELECT raw_user_meta_data->>'username' FROM auth.users WHERE id = p_user_id),
+      'player_' || LEFT(p_user_id::TEXT, 8)
+    )
   )
   ON CONFLICT (id) DO NOTHING;
 
@@ -165,3 +169,18 @@ EXCEPTION
       'You have already submitted a description for this word'::TEXT;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Fix any existing profiles stuck with player_ fallback usernames
+-- when the user's intended username is available in auth.users metadata
+UPDATE profiles p
+SET username = au.raw_user_meta_data->>'username'
+FROM auth.users au
+WHERE p.id = au.id
+  AND p.username LIKE 'player\_%'
+  AND au.raw_user_meta_data->>'username' IS NOT NULL
+  AND au.raw_user_meta_data->>'username' != ''
+  AND NOT EXISTS (
+    SELECT 1 FROM profiles p2
+    WHERE p2.username = au.raw_user_meta_data->>'username'
+      AND p2.id != p.id
+  );

@@ -254,6 +254,7 @@ export default {
     delete_type_username: 'Escribe tu nombre de usuario para confirmar',
     logout_confirm: '\u00BFSeguro que quieres cerrar sesi\u00F3n?',
     max_friends: 'Has alcanzado el l\u00EDmite de amigos (50)',
+    email_already_registered: 'Ya existe una cuenta con ese correo. Inicia sesi\u00F3n en su lugar.',
     username_taken: 'Este nombre de usuario ya est\u00E1 en uso',
     username_length: 'El nombre de usuario debe tener entre 3 y 20 caracteres',
     username_format: 'El nombre de usuario solo puede contener letras, n\u00FAmeros y guiones bajos',

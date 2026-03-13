@@ -171,7 +171,9 @@ export default function HomeScreen() {
         }
 
         // Always pre-fetch yesterday's winner (won't display until recap is dismissed)
-        if (d?.winner_dismissed_date !== gameDateStr) {
+        // Don't show to brand-new users who haven't played yet
+        const hasPlayed = auth.profile && (auth.profile.total_plays ?? 0) > 0;
+        if (hasPlayed && d?.winner_dismissed_date !== gameDateStr) {
           const winner = await getYesterdayWinnerRef.current();
           if (!mountedRef.current) return;
           if (__DEV__) {
@@ -272,7 +274,9 @@ export default function HomeScreen() {
     let isFirstSubmit = false;
     try {
       const celebrated = await AsyncStorage.getItem('@oneword_first_submit_celebrated');
-      if (!celebrated && auth.profile && auth.profile.total_plays === 0) {
+      // Show celebration if never celebrated AND user has no prior plays
+      // (treat missing/null profile as first-time too — profile may be auto-created server-side)
+      if (!celebrated && (!auth.profile || (auth.profile.total_plays ?? 0) === 0)) {
         isFirstSubmit = true;
       }
     } catch {

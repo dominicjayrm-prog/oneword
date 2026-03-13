@@ -123,7 +123,7 @@ export default function FriendsScreen() {
       return prev.filter((r) => r.friendship_id !== friendshipId);
     });
     try {
-      const { error } = await declineFriendRequest(friendshipId);
+      const { error } = await declineFriendRequest(friendshipId, userId!);
       if (error) {
         showToast(t('errors.generic'), 'error');
         if (removedRequest) {
@@ -159,7 +159,7 @@ export default function FriendsScreen() {
       });
     }
     try {
-      const { error } = await removeFriend(friendshipId);
+      const { error } = await removeFriend(friendshipId, userId!);
       if (error) {
         showToast(t('errors.generic'), 'error');
         if (removedFriend) setFriends((prev) => [...prev, removedFriend!]);

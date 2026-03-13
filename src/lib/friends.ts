@@ -221,14 +221,27 @@ export async function acceptFriendRequest(
   return { error: null };
 }
 
-export async function declineFriendRequest(friendshipId: string): Promise<{ error: Error | null }> {
-  const { error } = await supabase.from('friendships').delete().eq('id', friendshipId);
+export async function declineFriendRequest(
+  friendshipId: string,
+  currentUserId: string,
+): Promise<{ error: Error | null }> {
+  // Filter by addressee_id so only the recipient can decline (defense-in-depth behind RLS)
+  const { error } = await supabase
+    .from('friendships')
+    .delete()
+    .eq('id', friendshipId)
+    .eq('addressee_id', currentUserId);
   if (error) return { error: new Error(error.message) };
   return { error: null };
 }
 
-export async function removeFriend(friendshipId: string): Promise<{ error: Error | null }> {
-  const { error } = await supabase.from('friendships').delete().eq('id', friendshipId);
+export async function removeFriend(friendshipId: string, currentUserId: string): Promise<{ error: Error | null }> {
+  // Filter by user being a party to the friendship (defense-in-depth behind RLS)
+  const { error } = await supabase
+    .from('friendships')
+    .delete()
+    .eq('id', friendshipId)
+    .or(`requester_id.eq.${currentUserId},addressee_id.eq.${currentUserId}`);
   if (error) return { error: new Error(error.message) };
   return { error: null };
 }

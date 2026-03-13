@@ -23,7 +23,9 @@ interface GameContextType {
   loading: boolean;
   loadError: boolean;
   hasPendingDescription: boolean;
-  submitDescription: (description: string) => Promise<{ error: Error | null; oldStreak?: number; savedLocally?: boolean }>;
+  submitDescription: (
+    description: string,
+  ) => Promise<{ error: Error | null; oldStreak?: number; savedLocally?: boolean }>;
   getVotePair: () => Promise<VotePair | null>;
   submitVote: (winnerId: string, loserId: string) => Promise<{ error: Error | null }>;
   getLeaderboard: () => Promise<LeaderboardEntry[]>;
@@ -184,11 +186,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         });
 
         // Normalize response: Supabase RPCs may return an array or a single object
-        const retryResult = Array.isArray(data)
-          ? data.length > 0
-            ? data[0]
-            : null
-          : data;
+        const retryResult = Array.isArray(data) ? (data.length > 0 ? data[0] : null) : data;
 
         // If server validation rejects it, just drop the pending description
         if (!error && retryResult && !retryResult.success) {
@@ -283,11 +281,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         }
 
         // Normalize response: Supabase RPCs may return an array or a single object
-        const result = Array.isArray(data)
-          ? data.length > 0
-            ? data[0]
-            : null
-          : data;
+        const result = Array.isArray(data) ? (data.length > 0 ? data[0] : null) : data;
 
         if (result && !result.success) {
           // Server rejected — clear pending and return user-friendly error

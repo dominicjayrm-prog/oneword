@@ -228,9 +228,7 @@ export default function HomeScreen() {
         // Also guard against accounts created today — even if total_plays is
         // somehow > 0, a user shouldn't see yesterday's winner on sign-up day.
         const hasPlayed = initialTotalPlaysRef.current !== null && initialTotalPlaysRef.current > 0;
-        const createdToday = auth.profile?.created_at
-          ? auth.profile.created_at.startsWith(gameDateStr)
-          : false;
+        const createdToday = auth.profile?.created_at ? auth.profile.created_at.startsWith(gameDateStr) : false;
         if (hasPlayed && !createdToday && d?.winner_dismissed_date !== gameDateStr) {
           const winner = await getYesterdayWinnerRef.current();
           if (!mountedRef.current) return;

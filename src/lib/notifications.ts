@@ -141,7 +141,10 @@ export async function triggerMilestoneNotification(emoji: string, streak: number
  */
 export async function triggerFriendActivityNotification(friendUsernames: string[]) {
   if (friendUsernames.length === 0) return;
-  const names = friendUsernames.slice(0, 3).map((u) => `@${u}`).join(', ');
+  const names = friendUsernames
+    .slice(0, 3)
+    .map((u) => `@${u}`)
+    .join(', ');
   const more = friendUsernames.length > 3 ? ` +${friendUsernames.length - 3} more` : '';
   await Notifications.scheduleNotificationAsync({
     content: {

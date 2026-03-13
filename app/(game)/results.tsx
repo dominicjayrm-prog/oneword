@@ -37,7 +37,7 @@ export default function ResultsScreen() {
   const router = useRouter();
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const { profile } = useAuthContext();
+  const { profile, language } = useAuthContext();
   const { showToast } = useToast();
   const { todayWord, hasSubmitted, userDescription, getLeaderboard } = useGameContext();
   const { isOnline } = useNetwork();
@@ -228,6 +228,24 @@ export default function ResultsScreen() {
             <View style={{ height: spacing.sm }} />
           </>
         )}
+        <TouchableOpacity
+          style={styles.archiveLink}
+          onPress={() => {
+            haptic.light();
+            router.push({
+              pathname: '/webview',
+              params: {
+                url: language === 'es' ? 'https://playoneword.app/es/archive' : 'https://playoneword.app/archive',
+                title: t('profile.word_archive'),
+              },
+            });
+          }}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.archiveLinkText}>
+            {'\uD83D\uDCDA'} {t('results.browse_past_words')}
+          </Text>
+        </TouchableOpacity>
       </View>
 
       {/* Share preview modal */}
@@ -317,6 +335,15 @@ const styles = StyleSheet.create({
   },
   actions: {
     paddingBottom: spacing.xl,
+  },
+  archiveLink: {
+    alignItems: 'center',
+    paddingVertical: spacing.sm,
+  },
+  archiveLinkText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#FF6B4A',
   },
   modalOverlay: {
     flex: 1,

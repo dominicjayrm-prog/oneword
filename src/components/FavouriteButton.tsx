@@ -44,13 +44,25 @@ export function FavouriteButton({ descriptionId, isFavourited, onToggle, size = 
     setFavourited(next); // optimistic
 
     try {
-      const { data, error } = await supabase.rpc('toggle_favourite', {
-        p_user_id: session.user.id,
-        p_description_id: descriptionId,
-      });
-      if (error) throw error;
+      let result: boolean;
+      if (prev) {
+        // Remove favourite via direct table delete (RLS enforces ownership)
+        const { error } = await supabase
+          .from('favourites')
+          .delete()
+          .eq('user_id', session.user.id)
+          .eq('description_id', descriptionId);
+        if (error) throw error;
+        result = false;
+      } else {
+        // Add favourite via direct table insert (RLS enforces ownership)
+        const { error } = await supabase
+          .from('favourites')
+          .insert({ user_id: session.user.id, description_id: descriptionId });
+        if (error) throw error;
+        result = true;
+      }
 
-      const result = typeof data === 'boolean' ? data : next;
       setFavourited(result);
       onToggle?.(result);
       showToast(result ? `${t('favourites.favourited')} \u2665` : t('favourites.unfavourited'), 'success');

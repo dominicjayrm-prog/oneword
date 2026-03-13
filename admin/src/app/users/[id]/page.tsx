@@ -2,6 +2,7 @@ import { redirect, notFound } from 'next/navigation';
 import Link from 'next/link';
 import { isAuthenticated } from '@/lib/auth';
 import { createAdminClient } from '@/lib/supabase';
+import { formatDescription } from '@/lib/format';
 import { NavBar } from '@/components/NavBar';
 import { shadowBanUser, removeShadowBan } from '../actions';
 
@@ -182,7 +183,7 @@ export default async function UserDetailPage({ params }: { params: Promise<{ id:
               <tbody>
                 {descriptions.map((d: any) => (
                   <tr key={d.id}>
-                    <td style={{ fontWeight: 600, maxWidth: 300 }}>&ldquo;{d.description}&rdquo;</td>
+                    <td style={{ fontWeight: 600, maxWidth: 300 }}>&ldquo;{formatDescription(d.description)}&rdquo;</td>
                     <td><span className="badge badge-muted">{d.word}</span></td>
                     <td style={{ color: 'var(--text-muted)', fontSize: 13 }}>
                       {d.wordDate ? new Date(d.wordDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '-'}

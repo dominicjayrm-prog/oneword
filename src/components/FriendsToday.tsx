@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useTheme } from '../contexts/ThemeContext';
 import { getCurrentBadge } from '../lib/badges';
 import { FavouriteButton } from './FavouriteButton';
+import { formatDescription } from '../lib/format';
 import { fontSize, spacing, borderRadius, withOpacity } from '../constants/theme';
 import type { FriendDescription } from '../lib/friends';
 
@@ -60,7 +61,7 @@ export function FriendsToday({ descriptions, wordText, userHasPlayed, favourited
             <View style={styles.descRow}>
               <Text style={[styles.description, { color: colors.text }]} numberOfLines={2}>
                 {'\u201C'}
-                {fd.description_text}
+                {formatDescription(fd.description_text)}
                 {'\u201D'}
               </Text>
               {fd.description_id && (

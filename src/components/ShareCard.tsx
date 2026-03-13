@@ -1,7 +1,7 @@
 import { forwardRef } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { getRankEmoji } from '../lib/format';
+import { getRankEmoji, formatDescription } from '../lib/format';
 import { getCurrentBadge } from '../lib/badges';
 
 interface ShareCardProps {
@@ -44,7 +44,7 @@ export const ShareCard = forwardRef<View, ShareCardProps>(({ word, description, 
         <View style={styles.descriptionBox}>
           <Text style={styles.descriptionText}>
             {'\u201C'}
-            {description}
+            {formatDescription(description)}
             {'\u201D'}
           </Text>
         </View>

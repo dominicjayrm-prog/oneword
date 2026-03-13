@@ -12,6 +12,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useTheme } from '../contexts/ThemeContext';
 import { Button } from './Button';
+import { formatDescription } from '../lib/format';
 import { fontSize, spacing, borderRadius, withOpacity } from '../constants/theme';
 import { haptic } from '../lib/haptics';
 import type { YesterdayWinner } from '../types/database';
@@ -115,7 +116,7 @@ export function YesterdayWinnerCard({ data, onDismiss }: Props) {
           >
             <Text style={styles.medal}>{'\uD83E\uDD47'}</Text>
             <Text style={[styles.descriptionText, { color: colors.text }]}>
-              &ldquo;{data.winner_description}&rdquo;
+              &ldquo;{formatDescription(data.winner_description)}&rdquo;
             </Text>
             <Text style={[styles.voteCount, { color: colors.primary }]}>
               {t('yesterday_winner.votes', { count: data.winner_votes })}
@@ -145,7 +146,7 @@ export function YesterdayWinnerCard({ data, onDismiss }: Props) {
           style={[styles.descriptionBox, { backgroundColor: colors.background, borderColor: colors.border }, descStyle]}
         >
           <Animated.Text style={[styles.medal, medalStyle]}>{'\uD83E\uDD47'}</Animated.Text>
-          <Text style={[styles.descriptionText, { color: colors.text }]}>&ldquo;{data.winner_description}&rdquo;</Text>
+          <Text style={[styles.descriptionText, { color: colors.text }]}>&ldquo;{formatDescription(data.winner_description)}&rdquo;</Text>
           <Animated.View style={userInfoStyle}>
             <Text style={[styles.winnerInfo, { color: colors.textMuted }]}>
               @{data.winner_username} {'  \u00B7  '}
@@ -161,7 +162,7 @@ export function YesterdayWinnerCard({ data, onDismiss }: Props) {
               <Text style={[styles.userRank, { color: colors.textSecondary }]}>
                 {t('yesterday_winner.your_rank', { rank: data.user_rank, total: data.total_descriptions })}
               </Text>
-              <Text style={[styles.userDesc, { color: colors.textMuted }]}>&ldquo;{data.user_description}&rdquo;</Text>
+              <Text style={[styles.userDesc, { color: colors.textMuted }]}>&ldquo;{formatDescription(data.user_description)}&rdquo;</Text>
             </>
           ) : (
             <Text style={[styles.didntPlay, { color: colors.textMuted }]}>{t('yesterday_winner.didnt_play')}</Text>

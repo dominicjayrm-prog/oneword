@@ -2,6 +2,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../contexts/ThemeContext';
 import { FavouriteButton } from './FavouriteButton';
+import { formatDescription } from '../lib/format';
 import { fontSize, spacing, borderRadius } from '../constants/theme';
 
 interface LeaderboardRowProps {
@@ -49,7 +50,7 @@ export function LeaderboardRow({
         <Text style={[styles.rankText, { color: rank <= 3 ? '#1A1A2E' : colors.text }]}>{rank}</Text>
       </View>
       <View style={styles.content}>
-        <Text style={[styles.description, { color: colors.text }]}>{description}</Text>
+        <Text style={[styles.description, { color: colors.text }]}>{formatDescription(description)}</Text>
         <Text style={[styles.username, { color: colors.textMuted }]}>
           @{username}
           {badgeEmoji ? ` ${badgeEmoji}` : ''}

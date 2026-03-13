@@ -1,7 +1,7 @@
 import { forwardRef } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { getRankEmoji } from '../lib/format';
+import { getRankEmoji, formatDescription } from '../lib/format';
 import { getCurrentBadge } from '../lib/badges';
 import type { WeeklyRecap } from '../types/database';
 
@@ -35,7 +35,7 @@ export const WeeklyRecapShareCard = forwardRef<View, Props>(({ data, dateRange }
           <Text style={styles.bestWord}>{data.best_rank_word.toUpperCase()}</Text>
           <Text style={styles.bestDesc}>
             {'\u201C'}
-            {data.best_rank_description}
+            {formatDescription(data.best_rank_description)}
             {'\u201D'}
           </Text>
           <Text style={styles.bestRank}>

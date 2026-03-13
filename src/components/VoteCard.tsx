@@ -1,5 +1,6 @@
 import { TouchableOpacity, Text, View, StyleSheet } from 'react-native';
 import { useTheme } from '../contexts/ThemeContext';
+import { formatDescription } from '../lib/format';
 import { fontSize, spacing, borderRadius } from '../constants/theme';
 
 interface VoteCardProps {
@@ -20,7 +21,7 @@ export function VoteCard({ description, onPress, onReport, disabled }: VoteCardP
         activeOpacity={0.85}
         disabled={disabled}
       >
-        <Text style={[styles.text, { color: colors.text }]}>{description}</Text>
+        <Text style={[styles.text, { color: colors.text }]}>{formatDescription(description)}</Text>
       </TouchableOpacity>
       <TouchableOpacity
         style={styles.reportButton}

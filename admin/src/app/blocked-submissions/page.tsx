@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { isAuthenticated } from '@/lib/auth';
 import { createAdminClient } from '@/lib/supabase';
+import { formatDescription } from '@/lib/format';
 import { NavBar } from '@/components/NavBar';
 
 export const dynamic = 'force-dynamic';
@@ -82,7 +83,7 @@ export default async function BlockedSubmissionsPage() {
                           <span style={{ color: 'var(--text-muted)' }}>unknown</span>
                         )}
                       </td>
-                      <td style={{ maxWidth: 300, fontWeight: 600 }}>&ldquo;{e.attempted_description}&rdquo;</td>
+                      <td style={{ maxWidth: 300, fontWeight: 600 }}>&ldquo;{formatDescription(e.attempted_description)}&rdquo;</td>
                       <td>
                         <span className="badge badge-warning">{e.rejection_reason}</span>
                       </td>

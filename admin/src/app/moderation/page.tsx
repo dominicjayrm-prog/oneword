@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import { isAuthenticated } from '@/lib/auth';
 import { createAdminClient } from '@/lib/supabase';
+import { formatDescription } from '@/lib/format';
 import { NavBar } from '@/components/NavBar';
 import { dismissReport, removeDescription, shadowBanFromReport } from './actions';
 
@@ -94,7 +95,7 @@ export default async function ModerationPage() {
               <tbody>
                 {pending.map((r) => (
                   <tr key={r.id}>
-                    <td style={{ fontWeight: 600, maxWidth: 250 }}>&ldquo;{r.descriptionText}&rdquo;</td>
+                    <td style={{ fontWeight: 600, maxWidth: 250 }}>&ldquo;{formatDescription(r.descriptionText)}&rdquo;</td>
                     <td>{r.authorUsername}</td>
                     <td><span className="badge badge-muted">{r.word}</span></td>
                     <td style={{ color: 'var(--text-muted)' }}>{r.reporterUsername}</td>
@@ -149,7 +150,7 @@ export default async function ModerationPage() {
               <tbody>
                 {resolved.map((r) => (
                   <tr key={r.id}>
-                    <td style={{ maxWidth: 300 }}>&ldquo;{r.descriptionText}&rdquo;</td>
+                    <td style={{ maxWidth: 300 }}>&ldquo;{formatDescription(r.descriptionText)}&rdquo;</td>
                     <td>{r.authorUsername}</td>
                     <td>
                       <span className={`badge ${r.status === 'removed' ? 'badge-success' : 'badge-muted'}`}>

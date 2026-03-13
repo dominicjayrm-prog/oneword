@@ -24,6 +24,7 @@ import { RetryState } from '../../src/components/RetryState';
 import { VOTE_BATCH_SIZE } from '../../src/constants/app';
 import { fontSize, spacing, borderRadius, withOpacity } from '../../src/constants/theme';
 import { haptic } from '../../src/lib/haptics';
+import { formatDescription } from '../../src/lib/format';
 import { supabase } from '../../src/lib/supabase';
 import { FavouriteButton } from '../../src/components/FavouriteButton';
 import { useFavouritedIds } from '../../src/hooks/useFavourites';
@@ -481,7 +482,7 @@ export default function VoteScreen() {
                   activeOpacity={0.85}
                   disabled={voting}
                 >
-                  <Text style={[styles.cardText, { color: colors.text }]}>{pair.desc1_text}</Text>
+                  <Text style={[styles.cardText, { color: colors.text }]}>{formatDescription(pair.desc1_text)}</Text>
                   <Text style={[styles.cardAuthor, { color: colors.textMuted }]}>
                     @{pair.desc1_username}
                     {pair.desc1_badge_emoji ? ` ${pair.desc1_badge_emoji}` : ''}
@@ -527,7 +528,7 @@ export default function VoteScreen() {
                   activeOpacity={0.85}
                   disabled={voting}
                 >
-                  <Text style={[styles.cardText, { color: colors.text }]}>{pair.desc2_text}</Text>
+                  <Text style={[styles.cardText, { color: colors.text }]}>{formatDescription(pair.desc2_text)}</Text>
                   <Text style={[styles.cardAuthor, { color: colors.textMuted }]}>
                     @{pair.desc2_username}
                     {pair.desc2_badge_emoji ? ` ${pair.desc2_badge_emoji}` : ''}

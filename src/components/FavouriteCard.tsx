@@ -1,6 +1,7 @@
 import { View, Text, StyleSheet } from 'react-native';
 import { useTheme } from '../contexts/ThemeContext';
 import { FavouriteButton } from './FavouriteButton';
+import { formatDescription } from '../lib/format';
 import { fontSize, spacing, borderRadius } from '../constants/theme';
 
 interface FavouriteCardProps {
@@ -40,7 +41,7 @@ export function FavouriteCard({
       </View>
       <Text style={[styles.description, { color: colors.text }]}>
         {'\u201C'}
-        {description}
+        {formatDescription(description)}
         {'\u201D'}
       </Text>
       <View style={styles.bottomRow}>

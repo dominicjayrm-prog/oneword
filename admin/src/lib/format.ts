@@ -1,15 +1,7 @@
 /** Auto-capitalise the first letter of a description for consistent display.
  * Only touches the first character — leaves the rest exactly as typed.
- * TODO: Replicate this function on the website (web game, archive page, etc.) */
+ * NOTE: Keep in sync with src/lib/format.ts (mobile app) */
 export function formatDescription(description: string): string {
   if (!description || description.length === 0) return description;
   return description.charAt(0).toUpperCase() + description.slice(1);
-}
-
-/** Medal emoji for ranks 1-3, chart emoji for all others */
-export function getRankEmoji(rank: number | null): string {
-  if (rank === 1) return '\u{1F947}';
-  if (rank === 2) return '\u{1F948}';
-  if (rank === 3) return '\u{1F949}';
-  return '\u{1F4CA}';
 }

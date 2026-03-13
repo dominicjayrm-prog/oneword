@@ -14,7 +14,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { Button } from './Button';
 import { WeeklyRecapShareCard } from './WeeklyRecapShareCard';
-import { getRankEmoji } from '../lib/format';
+import { getRankEmoji, formatDescription } from '../lib/format';
 import { getCurrentBadge } from '../lib/badges';
 import { fontSize, spacing, borderRadius } from '../constants/theme';
 import { haptic } from '../lib/haptics';
@@ -161,7 +161,7 @@ export function WeeklyRecapCard({ data, onDismiss }: Props) {
             </Text>
             <Animated.Text style={[styles.bestWord, bestWordStyle]}>{data.best_rank_word.toUpperCase()}</Animated.Text>
             <Animated.Text style={[styles.bestDesc, bestDescStyle]}>
-              &ldquo;{data.best_rank_description}&rdquo;
+              &ldquo;{formatDescription(data.best_rank_description)}&rdquo;
             </Animated.Text>
             <Animated.Text style={[styles.bestRank, bestRankStyle]}>
               {rankEmoji} {t('weekly_recap.rank_label', { rank: data.best_rank, total: data.best_rank_total_players })}

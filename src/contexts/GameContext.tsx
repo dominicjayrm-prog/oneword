@@ -23,7 +23,9 @@ interface GameContextType {
   loading: boolean;
   loadError: boolean;
   hasPendingDescription: boolean;
-  submitDescription: (description: string) => Promise<{ error: Error | null; oldStreak?: number }>;
+  submitDescription: (
+    description: string,
+  ) => Promise<{ error: Error | null; oldStreak?: number; savedLocally?: boolean }>;
   getVotePair: () => Promise<VotePair | null>;
   submitVote: (winnerId: string, loserId: string) => Promise<{ error: Error | null }>;
   getLeaderboard: () => Promise<LeaderboardEntry[]>;
@@ -183,8 +185,11 @@ export function GameProvider({ children }: { children: ReactNode }) {
           p_description: description,
         });
 
+        // Normalize response: Supabase RPCs may return an array or a single object
+        const retryResult = Array.isArray(data) ? (data.length > 0 ? data[0] : null) : data;
+
         // If server validation rejects it, just drop the pending description
-        if (!error && data && data.length > 0 && !data[0].success) {
+        if (!error && retryResult && !retryResult.success) {
           await AsyncStorage.removeItem(PENDING_DESCRIPTION_KEY);
           setHasPendingDescription(false);
           return;
@@ -272,10 +277,11 @@ export function GameProvider({ children }: { children: ReactNode }) {
         );
 
         if (rpcError) {
-          return { error: rpcError, oldStreak };
+          return { error: rpcError, oldStreak, savedLocally: true };
         }
 
-        const result = data && data.length > 0 ? data[0] : null;
+        // Normalize response: Supabase RPCs may return an array or a single object
+        const result = Array.isArray(data) ? (data.length > 0 ? data[0] : null) : data;
 
         if (result && !result.success) {
           // Server rejected — clear pending and return user-friendly error
@@ -310,15 +316,25 @@ export function GameProvider({ children }: { children: ReactNode }) {
         setHasSubmitted(true);
         setUserDescription(cleaned);
         await cacheData(CACHE_KEYS.MY_DESCRIPTION, cleaned);
-        await withTimeout(supabase.rpc('update_streak', { p_user_id: userId }));
-        // Refresh profile so badge fields + streak are up to date
-        await refreshProfile();
+
+        // Post-submission streak & profile updates are non-critical.
+        // Don't let failures here mask the successful submission.
+        try {
+          await withTimeout(supabase.rpc('update_streak', { p_user_id: userId }));
+          await refreshProfile();
+        } catch (postErr) {
+          console.warn('[GameContext] Post-submit update failed (non-critical):', postErr);
+        }
 
         return { error: null, oldStreak };
       } catch (err) {
         // Network failed — description is safely stored locally
-        // Return a special 'pending' state — not a hard error since data is saved
-        return { error: err instanceof Error ? err : new Error('Network error. Please try again.'), oldStreak };
+        // Return savedLocally flag so the caller can show the right message
+        return {
+          error: err instanceof Error ? err : new Error('Network error. Please try again.'),
+          oldStreak,
+          savedLocally: true,
+        };
       }
     },
     [todayWord, userId, language, authProfile?.current_streak, refreshProfile],

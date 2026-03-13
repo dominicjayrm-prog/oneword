@@ -78,6 +78,10 @@ export default {
     no_word_sub: '\u00A1Vuelve pronto!',
     day_streak: 'racha de {{count}} d\u00EDas',
     greeting: 'Hola, {{username}}',
+    next_word_in: 'Siguiente palabra en {{time}}',
+    share_description: 'Comparte tu descripci\u00F3n',
+    share_description_message:
+      'Mi descripci\u00F3n para "{{word}}" en OneWord:\n\n"{{description}}"\n\n\u00A1Juega cada d\u00EDa en playoneword.app!',
   },
 
   // Weekly Recap
@@ -126,6 +130,7 @@ export default {
     go_to_today: 'Ir a la Palabra de Hoy \u2192',
     your_pick: 'TU ELECCI\u00D3N \u2713',
     vs: 'VS',
+    skip: 'Saltar',
     report_title: 'Reportar descripci\u00F3n',
     report_message: '\u00BFMarcar esta descripci\u00F3n como inapropiada?',
     report_cancel: 'Cancelar',
@@ -389,6 +394,7 @@ export default {
     description_submitted: 'Tu descripci\u00F3n fue enviada correctamente.',
     vote_failed: 'El voto no se registr\u00F3',
     vote_try_again: 'Toca tu elecci\u00F3n de nuevo para reintentar.',
+    vote_queued: '\u00A1Voto guardado! Lo enviaremos cuando vuelvas a estar en l\u00EDnea.',
     connect_for_word: 'Con\u00E9ctate a internet para ver la palabra de hoy.',
     connect_to_vote: 'Para votar necesitas conexi\u00F3n a internet.',
     connect_for_results: 'Con\u00E9ctate para ver los resultados de hoy.',

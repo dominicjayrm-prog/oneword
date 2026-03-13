@@ -48,6 +48,7 @@ export default function VoteScreen() {
   const [voting, setVoting] = useState(false);
   const [loadError, setLoadError] = useState(false);
   const [selectedCard, setSelectedCard] = useState<1 | 2 | null>(null);
+  const [skipping, setSkipping] = useState(false);
   const { favouritedIds, checkFavourited, toggleLocal } = useFavouritedIds();
   // Total pairs voted on today (restored from server + new votes this session).
   // The batch limit is per-day across all sessions, not per-session.
@@ -177,9 +178,11 @@ export default function VoteScreen() {
 
     // Submit vote
     let voteFailed = false;
+    let voteSavedLocally = false;
     try {
-      const { error } = await submitVote(winnerId, loserId);
-      if (error) voteFailed = true;
+      const result = await submitVote(winnerId, loserId);
+      if (result.error) voteFailed = true;
+      if ('savedLocally' in result && result.savedLocally) voteSavedLocally = true;
     } catch {
       voteFailed = true;
     }
@@ -196,6 +199,10 @@ export default function VoteScreen() {
       setVoting(false);
       setSelectedCard(null);
       return;
+    }
+
+    if (voteSavedLocally) {
+      showToast(t('offline.vote_queued'), 'info');
     }
 
     setVoteCount((c) => c + 1);
@@ -258,6 +265,26 @@ export default function VoteScreen() {
       }
       loadPair();
     }
+  }
+
+  async function handleSkip() {
+    if (voting || skipping) return;
+    setSkipping(true);
+    haptic.light();
+
+    // Fade out both cards
+    card1Opacity.value = withTiming(0, { duration: 200 });
+    card2Opacity.value = withTiming(0, { duration: 200 });
+    vsOpacity.value = withTiming(0, { duration: 200 });
+
+    await new Promise((r) => setTimeout(r, 250));
+    if (!mountedRef.current) return;
+
+    // Undo the increment that loadPair will do — skips shouldn't count toward the batch limit
+    const beforeSkip = pairsShownRef.current;
+    await loadPair();
+    pairsShownRef.current = beforeSkip;
+    setSkipping(false);
   }
 
   // Animated styles
@@ -510,7 +537,19 @@ export default function VoteScreen() {
               )}
             </View>
 
-            <Animated.Text style={[styles.vs, { color: colors.textMuted }, vsStyle]}>{t('vote.vs')}</Animated.Text>
+            <View style={styles.vsRow}>
+              <Animated.Text style={[styles.vs, { color: colors.textMuted }, vsStyle]}>{t('vote.vs')}</Animated.Text>
+              <Animated.View style={vsStyle}>
+                <TouchableOpacity
+                  onPress={handleSkip}
+                  disabled={voting || skipping}
+                  hitSlop={{ top: 8, bottom: 8, left: 16, right: 16 }}
+                  activeOpacity={0.6}
+                >
+                  <Text style={[styles.skipText, { color: colors.textMuted }]}>{t('vote.skip')}</Text>
+                </TouchableOpacity>
+              </Animated.View>
+            </View>
 
             {/* Card 2 */}
             <View>
@@ -638,11 +677,22 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: 0.5,
   },
+  vsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.md,
+  },
   vs: {
     textAlign: 'center',
     fontSize: fontSize.lg,
     fontWeight: '800',
     letterSpacing: 4,
+  },
+  skipText: {
+    fontSize: fontSize.sm,
+    fontWeight: '600',
+    textDecorationLine: 'underline',
   },
   noPairs: {
     alignItems: 'center',

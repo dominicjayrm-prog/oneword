@@ -9,6 +9,7 @@ import {
   ScrollView,
   TouchableOpacity,
   RefreshControl,
+  Share,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -41,7 +42,7 @@ import {
 } from '../../src/constants/app';
 import { validateUsername } from '../../src/lib/usernameValidator';
 import { haptic } from '../../src/lib/haptics';
-import { getGameDate, getGameDay, getGameMonday } from '../../src/lib/gameDate';
+import { getGameDate, getGameDay, getGameMonday, msUntilNextWord } from '../../src/lib/gameDate';
 import { getCurrentBadge, type BadgeTier } from '../../src/lib/badges';
 import { supabase } from '../../src/lib/supabase';
 import {
@@ -109,6 +110,7 @@ export default function HomeScreen() {
   const [showFirstSubmitCelebration, setShowFirstSubmitCelebration] = useState(false);
   const [firstSubmitSubmitting, setFirstSubmitSubmitting] = useState(false);
   const [firstSubmitDescription, setFirstSubmitDescription] = useState('');
+  const [countdown, setCountdown] = useState('');
 
   const resentTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mountedRef = useRef(true);
@@ -130,6 +132,29 @@ export default function HomeScreen() {
       if (resentTimerRef.current) clearTimeout(resentTimerRef.current);
     };
   }, []);
+
+  // Live countdown to next word rollover (5am UTC)
+  useEffect(() => {
+    if (!hasSubmitted) return;
+    function tick() {
+      const ms = msUntilNextWord();
+      const totalSec = Math.floor(ms / 1000);
+      const h = Math.floor(totalSec / 3600);
+      const m = Math.floor((totalSec % 3600) / 60);
+      const s = totalSec % 60;
+      if (h > 0) {
+        setCountdown(`${h}h ${m}m`);
+      } else if (m > 0) {
+        setCountdown(`${m}m ${s}s`);
+      } else {
+        setCountdown(`${s}s`);
+      }
+    }
+    tick();
+    // Update every minute when > 1h away, every second when closer
+    const interval = setInterval(tick, 1000);
+    return () => clearInterval(interval);
+  }, [hasSubmitted]);
 
   // Fetch interstitial cards (recap + winner) once per mount when conditions are met.
   // Uses a ref guard instead of the effect cleanup's `cancelled` flag, because
@@ -203,9 +228,7 @@ export default function HomeScreen() {
         // Also guard against accounts created today — even if total_plays is
         // somehow > 0, a user shouldn't see yesterday's winner on sign-up day.
         const hasPlayed = initialTotalPlaysRef.current !== null && initialTotalPlaysRef.current > 0;
-        const createdToday = auth.profile?.created_at
-          ? auth.profile.created_at.startsWith(gameDateStr)
-          : false;
+        const createdToday = auth.profile?.created_at ? auth.profile.created_at.startsWith(gameDateStr) : false;
         if (hasPlayed && !createdToday && d?.winner_dismissed_date !== gameDateStr) {
           const winner = await getYesterdayWinnerRef.current();
           if (!mountedRef.current) return;
@@ -292,6 +315,7 @@ export default function HomeScreen() {
   }, [wordCount]);
 
   const onRefresh = useCallback(async () => {
+    haptic.medium();
     setRefreshing(true);
     await refresh();
     setRefreshing(false);
@@ -999,6 +1023,11 @@ export default function HomeScreen() {
           <View style={[styles.submittedCheck, { backgroundColor: withOpacity(colors.success, 0.125) }]}>
             <Text style={[styles.checkmark, { color: colors.success }]}>{t('game.locked_in')}</Text>
           </View>
+          {countdown ? (
+            <Text style={[styles.countdownText, { color: colors.textMuted }]}>
+              {t('game.next_word_in', { time: countdown })}
+            </Text>
+          ) : null}
         </View>
 
         <View style={styles.actions}>
@@ -1017,6 +1046,25 @@ export default function HomeScreen() {
             }}
             variant="outline"
           />
+          <TouchableOpacity
+            style={styles.shareDescLink}
+            onPress={async () => {
+              haptic.medium();
+              try {
+                await Share.share({
+                  message: t('game.share_description_message', {
+                    word: todayWord.word,
+                    description: userDescription ?? '',
+                  }),
+                });
+              } catch {
+                // User cancelled or share failed
+              }
+            }}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.shareDescText, { color: colors.primary }]}>{t('game.share_description')}</Text>
+          </TouchableOpacity>
         </View>
 
         {/* Streak Celebration Modal */}
@@ -1233,9 +1281,22 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     fontWeight: '700',
   },
+  countdownText: {
+    fontSize: fontSize.sm,
+    marginTop: spacing.md,
+    textAlign: 'center',
+  },
   actions: {
     gap: spacing.sm,
     paddingBottom: spacing.lg,
+  },
+  shareDescLink: {
+    alignItems: 'center',
+    paddingVertical: spacing.sm,
+  },
+  shareDescText: {
+    fontSize: fontSize.sm,
+    fontWeight: '600',
   },
   noWord: {
     fontSize: fontSize.xl,

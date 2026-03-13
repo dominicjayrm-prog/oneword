@@ -222,8 +222,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!userId) return;
 
+    let processing = false;
     const unsubscribe = NetInfo.addEventListener(async (state) => {
-      if (!state.isConnected) return;
+      if (!state.isConnected || processing) return;
+      processing = true;
 
       try {
         const raw = await AsyncStorage.getItem(PENDING_VOTES_KEY);
@@ -265,6 +267,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
         }
       } catch {
         // ignore
+      } finally {
+        processing = false;
       }
     });
 

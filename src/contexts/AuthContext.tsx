@@ -224,6 +224,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
 
       if (error) {
+        // Map Supabase error for duplicate email to a user-friendly message
+        if (error.message?.includes('already been registered') || error.message?.includes('User already registered')) {
+          return { error: new Error('An account already exists with that email. Please sign in instead.') };
+        }
         // If the trigger failed, try to recover by creating the profile manually
         if (error.message?.includes('Database error') && data?.user) {
           const { error: profileError } = await supabase.from('profiles').upsert(

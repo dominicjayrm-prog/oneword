@@ -252,6 +252,7 @@ export default {
     delete_type_username: 'Type your username to confirm',
     logout_confirm: 'Are you sure you want to log out?',
     max_friends: "You've reached the friend limit (50)",
+    email_already_registered: 'An account already exists with that email. Please sign in instead.',
     username_taken: 'This username is already taken',
     username_length: 'Username must be 3-20 characters',
     username_format: 'Username can only contain letters, numbers, and underscores',

@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useMemo, useRef, useState, type R
 import { Linking } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { rateLimits, resetRateLimit } from '../lib/rateLimit';
+import { isUsernameClean } from '../lib/usernameValidator';
 import { PROFILE_POLL_MAX_RETRIES, PROFILE_POLL_BASE_MS } from '../constants/app';
 import i18n from '../lib/i18n';
 import type { Session } from '@supabase/supabase-js';
@@ -212,6 +213,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   async function signUp(email: string, password: string, username: string, lang?: string) {
     if (!rateLimits.signUp()) {
       return { error: new Error('Too many attempts. Please wait a moment.') };
+    }
+
+    // Check username against profanity blocklist (defense-in-depth behind client validation)
+    if (!isUsernameClean(username)) {
+      return { error: new Error(i18n.t('username.notAvailable')) };
     }
 
     // Check if the username is already taken before creating the auth account

@@ -140,11 +140,23 @@ export default function HomeScreen() {
   // This prevents post-submission profile refreshes (total_plays 0→1) from
   // triggering the yesterday-winner interstitial for first-time users.
   const initialTotalPlaysRef = useRef<number | null>(null);
-  // Reset the guard on logout so re-login shows interstitials again
+  // Track the session user ID so we can detect account switches (not just logout).
+  const prevSessionUserRef = useRef<string | null>(null);
+  // Reset interstitial guards AND component state on logout or account switch
+  // so a new user never inherits stale yesterday-winner / recap data.
   useEffect(() => {
-    if (!auth.session) {
+    const currentUserId = auth.session?.user?.id ?? null;
+    if (currentUserId !== prevSessionUserRef.current) {
+      // User changed (logout, login as different user, or first load)
       interstitialStartedRef.current = false;
       initialTotalPlaysRef.current = null;
+      // Reset interstitial component state so a new user doesn't inherit
+      // stale yesterday-winner or recap data from the previous session.
+      setShowYesterdayWinner(false);
+      setYesterdayData(null);
+      setShowWeeklyRecap(false);
+      setRecapData(null);
+      prevSessionUserRef.current = currentUserId;
     }
   }, [auth.session]);
   useEffect(() => {
@@ -188,8 +200,13 @@ export default function HomeScreen() {
         // Use the initial total_plays snapshot so that a first-time submission
         // (which bumps total_plays 0→1 and refreshes the profile) doesn't
         // retroactively trigger the yesterday-winner card on the same day.
+        // Also guard against accounts created today — even if total_plays is
+        // somehow > 0, a user shouldn't see yesterday's winner on sign-up day.
         const hasPlayed = initialTotalPlaysRef.current !== null && initialTotalPlaysRef.current > 0;
-        if (hasPlayed && d?.winner_dismissed_date !== gameDateStr) {
+        const createdToday = auth.profile?.created_at
+          ? auth.profile.created_at.startsWith(gameDateStr)
+          : false;
+        if (hasPlayed && !createdToday && d?.winner_dismissed_date !== gameDateStr) {
           const winner = await getYesterdayWinnerRef.current();
           if (!mountedRef.current) return;
           if (__DEV__) {
@@ -288,10 +305,14 @@ export default function HomeScreen() {
     haptic.heavy();
     setSubmitting(true);
 
-    // Check if this is the user's first-ever submission BEFORE submitting
+    // Check if this is the user's first-ever submission BEFORE submitting.
+    // The key is scoped per-user so logging out and signing up as a different
+    // user on the same device still triggers the celebration correctly.
     let isFirstSubmit = false;
+    const userId = auth.session?.user?.id;
     try {
-      const celebrated = await AsyncStorage.getItem('@oneword_first_submit_celebrated');
+      const userKey = userId ? `@oneword_first_submit_celebrated_${userId}` : null;
+      const celebrated = userKey ? await AsyncStorage.getItem(userKey) : null;
       // Show celebration if never celebrated AND user has no prior plays
       // (treat missing/null profile as first-time too — profile may be auto-created server-side)
       if (!celebrated && (!auth.profile || (auth.profile.total_plays ?? 0) === 0)) {
@@ -333,7 +354,9 @@ export default function HomeScreen() {
           if (mountedRef.current) {
             setShowFirstSubmitCelebration(true);
             try {
-              await AsyncStorage.setItem('@oneword_first_submit_celebrated', 'true');
+              if (userId) {
+                await AsyncStorage.setItem(`@oneword_first_submit_celebrated_${userId}`, 'true');
+              }
             } catch {
               // non-critical
             }

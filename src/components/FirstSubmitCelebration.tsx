@@ -68,10 +68,7 @@ function ConfettiPieceView({ piece }: { piece: ConfettiPiece }) {
       piece.delay,
       withTiming(1, { duration: piece.duration, easing: Easing.in(Easing.quad) }),
     );
-    opacity.value = withDelay(
-      piece.delay + piece.duration * 0.7,
-      withTiming(0, { duration: piece.duration * 0.3 }),
-    );
+    opacity.value = withDelay(piece.delay + piece.duration * 0.7, withTiming(0, { duration: piece.duration * 0.3 }));
   }, []);
 
   const style = useAnimatedStyle(() => {
@@ -79,11 +76,7 @@ function ConfettiPieceView({ piece }: { piece: ConfettiPiece }) {
     const translateX = piece.horizontalDrift * progress.value;
     const rotate = piece.rotation * progress.value;
     return {
-      transform: [
-        { translateX },
-        { translateY },
-        { rotate: `${rotate}deg` },
-      ] as TransformWorkaround,
+      transform: [{ translateX }, { translateY }, { rotate: `${rotate}deg` }] as TransformWorkaround,
       opacity: opacity.value,
     };
   });
@@ -116,18 +109,12 @@ function PulsingDot() {
 
   useEffect(() => {
     scale.value = withRepeat(
-      withSequence(
-        withTiming(1.3, { duration: 1000 }),
-        withTiming(1, { duration: 1000 }),
-      ),
+      withSequence(withTiming(1.3, { duration: 1000 }), withTiming(1, { duration: 1000 })),
       -1,
       false,
     );
     dotOpacity.value = withRepeat(
-      withSequence(
-        withTiming(0.7, { duration: 1000 }),
-        withTiming(1, { duration: 1000 }),
-      ),
+      withSequence(withTiming(0.7, { duration: 1000 }), withTiming(1, { duration: 1000 })),
       -1,
       false,
     );
@@ -213,10 +200,7 @@ export function FirstSubmitCelebration({
   }, []);
 
   const emojiStyle = useAnimatedStyle(() => ({
-    transform: [
-      { scale: emojiScale.value },
-      { translateY: emojiTranslateY.value },
-    ] as TransformWorkaround,
+    transform: [{ scale: emojiScale.value }, { translateY: emojiTranslateY.value }] as TransformWorkaround,
   }));
 
   const titleStyle = useAnimatedStyle(() => ({
@@ -251,19 +235,13 @@ export function FirstSubmitCelebration({
       {/* Content */}
       <View style={styles.content}>
         {/* Emoji */}
-        <Animated.Text style={[styles.emoji, emojiStyle]}>
-          {'\uD83C\uDF89'}
-        </Animated.Text>
+        <Animated.Text style={[styles.emoji, emojiStyle]}>{'\uD83C\uDF89'}</Animated.Text>
 
         {/* Title */}
-        <Animated.Text style={[styles.title, titleStyle]}>
-          {t('firstSubmit.title')}
-        </Animated.Text>
+        <Animated.Text style={[styles.title, titleStyle]}>{t('firstSubmit.title')}</Animated.Text>
 
         {/* Subtitle */}
-        <Animated.Text style={[styles.subtitle, subtitleStyle]}>
-          {t('firstSubmit.subtitle')}
-        </Animated.Text>
+        <Animated.Text style={[styles.subtitle, subtitleStyle]}>{t('firstSubmit.subtitle')}</Animated.Text>
 
         {/* Description card */}
         <Animated.View style={[styles.card, cardStyle]}>
@@ -274,7 +252,9 @@ export function FirstSubmitCelebration({
             </View>
           </View>
           <Text style={styles.cardDescription}>
-            {'\u201C'}{description}{'\u201D'}
+            {'\u201C'}
+            {description}
+            {'\u201D'}
           </Text>
           <View style={styles.cardBottomRow}>
             <PulsingDot />

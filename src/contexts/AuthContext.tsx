@@ -213,6 +213,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!rateLimits.signUp()) {
       return { error: new Error('Too many attempts. Please wait a moment.') };
     }
+
+    // Check if the username is already taken before creating the auth account
+    try {
+      const { data: existingUser, error: lookupError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('username', username)
+        .maybeSingle();
+      if (!lookupError && existingUser) {
+        return { error: new Error(i18n.t('errors.username_taken')) };
+      }
+    } catch {
+      // If the check fails, proceed with signup — the DB constraint will catch it
+    }
+
     signUpInProgressRef.current = true;
     try {
       const userLang = lang || language;

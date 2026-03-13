@@ -266,76 +266,89 @@ export function GameProvider({ children }: { children: ReactNode }) {
       );
       setHasPendingDescription(true);
 
-      try {
-        // Use server-side validation + insertion function
-        const { data, error: rpcError } = await withTimeout(
-          supabase.rpc('validate_and_submit_description', {
-            p_user_id: userId,
-            p_word_id: todayWord.id,
-            p_description: cleaned,
-          }),
-        );
+      // Attempt submission with one automatic retry on network failures
+      const MAX_ATTEMPTS = 2;
+      for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+        try {
+          const { data, error: rpcError } = await withTimeout(
+            supabase.rpc('validate_and_submit_description', {
+              p_user_id: userId,
+              p_word_id: todayWord.id,
+              p_description: cleaned,
+            }),
+          );
 
-        if (rpcError) {
-          return { error: rpcError, oldStreak, savedLocally: true };
-        }
+          if (rpcError) {
+            // Server responded with an error — network is working, not an offline issue
+            await AsyncStorage.removeItem(PENDING_DESCRIPTION_KEY);
+            setHasPendingDescription(false);
+            return { error: rpcError, oldStreak };
+          }
 
-        // Normalize response: Supabase RPCs may return an array or a single object
-        const result = Array.isArray(data) ? (data.length > 0 ? data[0] : null) : data;
+          // Normalize response: Supabase RPCs may return an array or a single object
+          const result = Array.isArray(data) ? (data.length > 0 ? data[0] : null) : data;
 
-        if (result && !result.success) {
-          // Server rejected — clear pending and return user-friendly error
+          if (result && !result.success) {
+            // Server rejected — clear pending and return user-friendly error
+            await AsyncStorage.removeItem(PENDING_DESCRIPTION_KEY);
+            setHasPendingDescription(false);
+
+            // Map server error codes to i18n messages
+            let errorMessage: string;
+            switch (result.error_code) {
+              case 'DUPLICATE_DESCRIPTION':
+                errorMessage = i18n.t('validation.duplicate');
+                break;
+              case 'INVALID_WORD_LENGTH':
+              case 'GIBBERISH_DETECTED':
+                errorMessage = i18n.t('validation.gibberish');
+                break;
+              case 'TOO_MANY_REPEATS':
+                errorMessage = i18n.t('validation.too_many_repeats');
+                break;
+              case 'ALREADY_SUBMITTED':
+                errorMessage = i18n.t('errors.submit_failed');
+                break;
+              default:
+                errorMessage = result.error_message || i18n.t('errors.submit_failed');
+            }
+            return { error: new Error(errorMessage), oldStreak };
+          }
+
+          // Success — clear the pending description
           await AsyncStorage.removeItem(PENDING_DESCRIPTION_KEY);
           setHasPendingDescription(false);
+          setHasSubmitted(true);
+          setUserDescription(cleaned);
+          await cacheData(CACHE_KEYS.MY_DESCRIPTION, cleaned);
 
-          // Map server error codes to i18n messages
-          let errorMessage: string;
-          switch (result.error_code) {
-            case 'DUPLICATE_DESCRIPTION':
-              errorMessage = i18n.t('validation.duplicate');
-              break;
-            case 'INVALID_WORD_LENGTH':
-            case 'GIBBERISH_DETECTED':
-              errorMessage = i18n.t('validation.gibberish');
-              break;
-            case 'TOO_MANY_REPEATS':
-              errorMessage = i18n.t('validation.too_many_repeats');
-              break;
-            case 'ALREADY_SUBMITTED':
-              errorMessage = i18n.t('errors.submit_failed');
-              break;
-            default:
-              errorMessage = result.error_message || i18n.t('errors.submit_failed');
+          // Post-submission streak & profile updates are non-critical.
+          // Don't let failures here mask the successful submission.
+          try {
+            await withTimeout(supabase.rpc('update_streak', { p_user_id: userId }));
+            await refreshProfile();
+          } catch (postErr) {
+            console.warn('[GameContext] Post-submit update failed (non-critical):', postErr);
           }
-          return { error: new Error(errorMessage), oldStreak };
+
+          return { error: null, oldStreak };
+        } catch (err) {
+          // Network/timeout error — retry once before giving up
+          if (attempt < MAX_ATTEMPTS - 1) {
+            await new Promise((r) => setTimeout(r, 1500));
+            continue;
+          }
+          // All retries exhausted — description is safely stored locally
+          return {
+            error: err instanceof Error ? err : new Error('Network error. Please try again.'),
+            oldStreak,
+            savedLocally: true,
+          };
         }
-
-        // Success — clear the pending description
-        await AsyncStorage.removeItem(PENDING_DESCRIPTION_KEY);
-        setHasPendingDescription(false);
-        setHasSubmitted(true);
-        setUserDescription(cleaned);
-        await cacheData(CACHE_KEYS.MY_DESCRIPTION, cleaned);
-
-        // Post-submission streak & profile updates are non-critical.
-        // Don't let failures here mask the successful submission.
-        try {
-          await withTimeout(supabase.rpc('update_streak', { p_user_id: userId }));
-          await refreshProfile();
-        } catch (postErr) {
-          console.warn('[GameContext] Post-submit update failed (non-critical):', postErr);
-        }
-
-        return { error: null, oldStreak };
-      } catch (err) {
-        // Network failed — description is safely stored locally
-        // Return savedLocally flag so the caller can show the right message
-        return {
-          error: err instanceof Error ? err : new Error('Network error. Please try again.'),
-          oldStreak,
-          savedLocally: true,
-        };
       }
+
+      // Fallback (should never reach here)
+      return { error: new Error('Unexpected error'), oldStreak };
     },
     [todayWord, userId, language, authProfile?.current_streak, refreshProfile],
   );

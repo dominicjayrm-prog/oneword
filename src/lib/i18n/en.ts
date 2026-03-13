@@ -408,6 +408,16 @@ export default {
     unfavourite: 'Remove from favourites',
   },
 
+  // First submission celebration
+  firstSubmit: {
+    submitting: 'Submitting...',
+    title: "You're in!",
+    subtitle: "Your first description is live.\nThe community is voting on it now.",
+    liveStatus: 'Live — votes coming in',
+    voteOnOthers: 'Vote on others',
+    seeResults: 'See results',
+  },
+
   // Language names
   lang: {
     en: 'English',

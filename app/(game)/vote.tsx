@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
-import { View, Text, StyleSheet, Alert, Platform, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Alert, Platform, TouchableOpacity, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import Animated, {
@@ -445,7 +445,12 @@ export default function VoteScreen() {
         <Text style={[styles.instruction, { color: colors.textMuted }]}>{t('vote.tap_prefer')}</Text>
       </View>
 
-      <View style={styles.pairContainer}>
+      <ScrollView
+        style={styles.pairScroll}
+        contentContainerStyle={styles.pairContainer}
+        bounces={false}
+        showsVerticalScrollIndicator={false}
+      >
         {loading ? (
           <LoadingSpinner />
         ) : loadError ? (
@@ -551,7 +556,7 @@ export default function VoteScreen() {
             </View>
           </>
         )}
-      </View>
+      </ScrollView>
     </View>
   );
 }
@@ -580,10 +585,14 @@ const styles = StyleSheet.create({
     fontSize: fontSize.md,
     marginTop: spacing.xs,
   },
-  pairContainer: {
+  pairScroll: {
     flex: 1,
+  },
+  pairContainer: {
+    flexGrow: 1,
     justifyContent: 'center',
     gap: spacing.md,
+    paddingBottom: spacing.md,
   },
   card: {
     borderRadius: borderRadius.lg,

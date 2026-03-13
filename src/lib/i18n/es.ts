@@ -410,6 +410,16 @@ export default {
     unfavourite: 'Eliminar de favoritos',
   },
 
+  // First submission celebration
+  firstSubmit: {
+    submitting: 'Enviando...',
+    title: '\u00A1Ya est\u00E1s dentro!',
+    subtitle: 'Tu primera descripci\u00F3n est\u00E1 en vivo.\nLa comunidad est\u00E1 votando ahora.',
+    liveStatus: 'En vivo \u2014 votos llegando',
+    voteOnOthers: 'Votar por otros',
+    seeResults: 'Ver resultados',
+  },
+
   // Language names
   lang: {
     en: 'English',

@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuthContext } from '../../src/contexts/AuthContext';
 import { useGameContext } from '../../src/contexts/GameContext';
 import { useTheme } from '../../src/contexts/ThemeContext';
@@ -25,6 +26,7 @@ import { ErrorState } from '../../src/components/ErrorState';
 import { YesterdayWinnerCard } from '../../src/components/YesterdayWinnerCard';
 import { WeeklyRecapCard } from '../../src/components/WeeklyRecap';
 import { StreakCelebration } from '../../src/components/StreakCelebration';
+import { FirstSubmitCelebration } from '../../src/components/FirstSubmitCelebration';
 import { BadgePill } from '../../src/components/BadgePill';
 import { useToast } from '../../src/components/Toast';
 import { useNetwork } from '../../src/contexts/NetworkContext';
@@ -103,6 +105,9 @@ export default function HomeScreen() {
   const [celebrationBadge, setCelebrationBadge] = useState<BadgeTier | null>(null);
   const [celebrationStreak, setCelebrationStreak] = useState(0);
   const [showNotifPrompt, setShowNotifPrompt] = useState(false);
+  const [showFirstSubmitCelebration, setShowFirstSubmitCelebration] = useState(false);
+  const [firstSubmitSubmitting, setFirstSubmitSubmitting] = useState(false);
+  const [firstSubmitDescription, setFirstSubmitDescription] = useState('');
 
   const resentTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mountedRef = useRef(true);
@@ -262,15 +267,79 @@ export default function HomeScreen() {
     submitGuardRef.current = true;
     haptic.heavy();
     setSubmitting(true);
+
+    // Check if this is the user's first-ever submission BEFORE submitting
+    let isFirstSubmit = false;
+    try {
+      const celebrated = await AsyncStorage.getItem('@oneword_first_submit_celebrated');
+      if (!celebrated && auth.profile && auth.profile.total_plays === 0) {
+        isFirstSubmit = true;
+      }
+    } catch {
+      // If AsyncStorage check fails, skip celebration
+    }
+
+    // If first submission, show the submitting stage
+    if (isFirstSubmit) {
+      setFirstSubmitDescription(input.trim().split(/\s+/).filter(Boolean).join(' '));
+      setFirstSubmitSubmitting(true);
+    }
+
     try {
       const { error, oldStreak, savedLocally } = await submitDescription(input);
+
+      if (isFirstSubmit) {
+        setFirstSubmitSubmitting(false);
+      }
+
       if (error) {
+        if (isFirstSubmit) {
+          setFirstSubmitSubmitting(false);
+          setShowFirstSubmitCelebration(false);
+        }
         // If the description was saved locally (network failed after local save), show info toast
         if (savedLocally) {
           haptic.warning();
           showToast(t('offline.description_saved') + ' ' + t('offline.will_submit_when_online'), 'info');
         } else {
           showToast(error.message, 'error');
+        }
+      } else if (isFirstSubmit && oldStreak !== undefined) {
+        // Show first submission celebration
+        // Wait 800ms for the submitting stage, then show celebration
+        setTimeout(async () => {
+          if (mountedRef.current) {
+            setShowFirstSubmitCelebration(true);
+            try {
+              await AsyncStorage.setItem('@oneword_first_submit_celebrated', 'true');
+            } catch {
+              // non-critical
+            }
+          }
+        }, 800);
+
+        // Still run post-submission notification logic
+        if (Platform.OS !== 'web') {
+          (async () => {
+            try {
+              await setBadgeCount(0);
+              await cancelStreakRisk();
+              if (auth.profile?.notify_daily) {
+                const [h, m] = parseTimeString(auth.profile.notify_daily_time);
+                await scheduleDailyReminder(h, m, t('notifications.daily_title'), t('notifications.daily_body'));
+              }
+              if (auth.profile?.notify_streak_risk) {
+                await scheduleStreakRisk(
+                  20,
+                  0,
+                  t('notifications.streak_risk_title'),
+                  t('notifications.streak_risk_body'),
+                );
+              }
+            } catch (err) {
+              console.warn('[HomeScreen] Post-submit notification scheduling failed:', err);
+            }
+          })();
         }
       } else if (oldStreak !== undefined) {
         // Post-submission notification logic (non-blocking)
@@ -804,6 +873,38 @@ export default function HomeScreen() {
         <ThemeToggle />
         <EmptyState emoji={'\uD83D\uDCC5'} title={t('empty.no_word')} subtitle={t('empty.no_word_sub')} />
       </View>
+    );
+  }
+
+  // First submission celebration — submitting stage or celebration stage
+  if (firstSubmitSubmitting || showFirstSubmitCelebration) {
+    if (firstSubmitSubmitting && !showFirstSubmitCelebration) {
+      // Stage 1: Submitting spinner
+      return (
+        <View style={[styles.center, { backgroundColor: colors.background }]}>
+          <LoadingSpinner message={t('firstSubmit.submitting')} />
+        </View>
+      );
+    }
+    // Stage 2: Celebration
+    return (
+      <FirstSubmitCelebration
+        wordName={todayWord?.word ?? ''}
+        category={todayWord?.category ?? ''}
+        description={firstSubmitDescription}
+        onVote={() => {
+          setShowFirstSubmitCelebration(false);
+          setFirstSubmitSubmitting(false);
+          haptic.medium();
+          router.push('/vote');
+        }}
+        onResults={() => {
+          setShowFirstSubmitCelebration(false);
+          setFirstSubmitSubmitting(false);
+          haptic.medium();
+          router.push('/results');
+        }}
+      />
     );
   }
 

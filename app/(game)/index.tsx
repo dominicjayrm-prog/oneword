@@ -66,7 +66,6 @@ export default function HomeScreen() {
     userDescription,
     loading: gameLoading,
     loadError: gameError,
-    hasPendingDescription,
     submitDescription,
     getYesterdayWinner,
     getWeeklyRecap,
@@ -107,6 +106,9 @@ export default function HomeScreen() {
 
   const resentTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mountedRef = useRef(true);
+  // Guard against double-tap race condition (React state batching means
+  // `submitting` may not update before a second tap fires).
+  const submitGuardRef = useRef(false);
 
   // Keep stable refs to the callbacks so the interstitial effect doesn't
   // restart every time userId/language changes recreate these functions.
@@ -256,17 +258,15 @@ export default function HomeScreen() {
   const loading = auth.loading || gameLoading;
 
   async function handleSubmit() {
-    if (!isExactlyFive || submitting) return;
+    if (!isExactlyFive || submitting || submitGuardRef.current) return;
+    submitGuardRef.current = true;
     haptic.heavy();
     setSubmitting(true);
     try {
-      const { error, oldStreak } = await submitDescription(input);
+      const { error, oldStreak, savedLocally } = await submitDescription(input);
       if (error) {
-        // If this was a network error and the description was saved locally, show info toast
-        const isNetworkError =
-          hasPendingDescription &&
-          (error.message.includes('Network') || error.message.includes('timed out') || error.message.includes('fetch'));
-        if (isNetworkError) {
+        // If the description was saved locally (network failed after local save), show info toast
+        if (savedLocally) {
           haptic.warning();
           showToast(t('offline.description_saved') + ' ' + t('offline.will_submit_when_online'), 'info');
         } else {
@@ -345,6 +345,7 @@ export default function HomeScreen() {
       showToast(t('errors.submit_failed'), 'error');
     } finally {
       setSubmitting(false);
+      submitGuardRef.current = false;
     }
   }
 

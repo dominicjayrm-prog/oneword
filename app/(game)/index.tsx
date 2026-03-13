@@ -39,6 +39,7 @@ import {
   USERNAME_MAX_LENGTH,
   PASSWORD_MIN_LENGTH,
 } from '../../src/constants/app';
+import { validateUsername } from '../../src/lib/usernameValidator';
 import { haptic } from '../../src/lib/haptics';
 import { getGameDate, getGameDay, getGameMonday } from '../../src/lib/gameDate';
 import { getCurrentBadge, type BadgeTier } from '../../src/lib/badges';
@@ -444,9 +445,8 @@ export default function HomeScreen() {
     if (!emailRegex.test(email)) return t('errors.invalid_email');
     if (password.length < PASSWORD_MIN_LENGTH) return t('errors.password_short');
     if (authMode === 'signup') {
-      if (username.length < USERNAME_MIN_LENGTH || username.length > USERNAME_MAX_LENGTH)
-        return t('errors.username_length');
-      if (!/^[a-zA-Z0-9_]+$/.test(username)) return t('errors.username_format');
+      const usernameError = validateUsername(username, USERNAME_MIN_LENGTH, USERNAME_MAX_LENGTH);
+      if (usernameError) return t(usernameError);
     }
     return null;
   }

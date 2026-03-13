@@ -222,6 +222,16 @@ export default {
     friends: 'Amigos',
   },
 
+  // Username validation
+  username: {
+    notAvailable: 'Ese nombre de usuario no est\u00E1 disponible. Por favor, elige otro.',
+    tooShort: 'El nombre debe tener al menos 3 caracteres',
+    tooLong: 'El nombre debe tener 20 caracteres o menos',
+    invalidChars: 'Solo letras, n\u00FAmeros y guiones bajos',
+    mustStartWithLetter: 'Debe empezar con una letra',
+    consecutiveUnderscores: 'No se permiten guiones bajos consecutivos',
+  },
+
   // Validation
   validation: {
     word_too_short: 'Cada palabra debe tener al menos 2 caracteres',

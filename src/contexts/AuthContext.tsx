@@ -64,7 +64,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     // Handle deep links (e.g. password reset link opens app with tokens in URL)
-    const ALLOWED_SCHEMES = ['oneword://', 'com.oneword.app://'];
+    const ALLOWED_SCHEMES = ['oneword://', 'com.playoneword.app://'];
 
     function isAllowedDeepLink(url: string): boolean {
       const lower = url.toLowerCase();

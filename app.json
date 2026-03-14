@@ -15,7 +15,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.oneword.app"
+      "bundleIdentifier": "com.playoneword.app"
     },
     "android": {
       "adaptiveIcon": {
@@ -24,7 +24,7 @@
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "package": "com.oneword.app",
+      "package": "com.playoneword.app",
       "predictiveBackGestureEnabled": false
     },
     "web": {

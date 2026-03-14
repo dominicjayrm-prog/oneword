@@ -1021,7 +1021,13 @@ export default function HomeScreen() {
         <View style={[styles.center, { backgroundColor: colors.background }]}>
           <WordDisplay word={todayWord.word} category={todayWord.category} />
           <Text style={[styles.submittedLabel, { color: colors.textMuted }]}>{t('game.your_description')}</Text>
-          <Text style={[styles.submittedText, { color: colors.text }]}>{userDescription}</Text>
+          <View style={styles.submittedPillsContainer}>
+            {userDescription.split(' ').filter(Boolean).map((word, i) => (
+              <View key={i} style={styles.submittedPill}>
+                <Text style={styles.submittedPillText}>{word}</Text>
+              </View>
+            ))}
+          </View>
           <View style={[styles.submittedCheck, { backgroundColor: withOpacity(colors.success, 0.125) }]}>
             <Text style={[styles.checkmark, { color: colors.success }]}>{t('game.locked_in')}</Text>
           </View>
@@ -1247,12 +1253,27 @@ const styles = StyleSheet.create({
     letterSpacing: 3,
     marginTop: spacing.md,
   },
-  submittedText: {
-    fontSize: fontSize.lg,
-    textAlign: 'center',
-    fontWeight: '600',
+  submittedPillsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
     marginTop: spacing.sm,
     paddingHorizontal: spacing.md,
+    gap: 6,
+  },
+  submittedPill: {
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: '#FF6B4A',
+    backgroundColor: 'rgba(255,107,74,0.06)',
+  },
+  submittedPillText: {
+    color: '#FF6B4A',
+    fontSize: 13,
+    fontWeight: '600',
+    fontFamily: 'DMSans_600SemiBold',
   },
   submittedCheck: {
     marginTop: spacing.md,

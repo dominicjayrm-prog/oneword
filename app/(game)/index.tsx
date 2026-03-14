@@ -1022,11 +1022,14 @@ export default function HomeScreen() {
           <WordDisplay word={todayWord.word} category={todayWord.category} />
           <Text style={[styles.submittedLabel, { color: colors.textMuted }]}>{t('game.your_description')}</Text>
           <View style={styles.submittedPillsContainer}>
-            {userDescription.split(' ').filter(Boolean).map((word, i) => (
-              <View key={i} style={styles.submittedPill}>
-                <Text style={styles.submittedPillText}>{word}</Text>
-              </View>
-            ))}
+            {userDescription
+              .split(' ')
+              .filter(Boolean)
+              .map((word, i) => (
+                <View key={i} style={styles.submittedPill}>
+                  <Text style={styles.submittedPillText}>{word}</Text>
+                </View>
+              ))}
           </View>
           <View style={[styles.submittedCheck, { backgroundColor: withOpacity(colors.success, 0.125) }]}>
             <Text style={[styles.checkmark, { color: colors.success }]}>{t('game.locked_in')}</Text>

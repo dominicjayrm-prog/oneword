@@ -15,7 +15,10 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.playoneword.app"
+      "bundleIdentifier": "com.playoneword.app",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -25,7 +28,11 @@
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "package": "com.playoneword.app",
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png",
@@ -43,7 +50,14 @@
           "icon": "./assets/icon.png",
           "color": "#FF6B4A"
         }
-      ]
-    ]
+      ],
+      "expo-audio"
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "45e5546d-49cc-4291-a8f5-e11a01e88da6"
+      }
+    }
   }
 }

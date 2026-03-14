@@ -12,6 +12,7 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 import { haptic } from '../lib/haptics';
+import { sound } from '../lib/audio';
 import { spacing } from '../constants/theme';
 
 interface FirstSubmitCelebrationProps {
@@ -163,9 +164,10 @@ export function FirstSubmitCelebration({
   const buttonsTranslateY = useSharedValue(15);
 
   useEffect(() => {
-    // Confetti starts at 0ms — haptic
+    // Confetti starts at 0ms — haptic + sound
     const hapticTimer1 = setTimeout(() => {
       haptic.heavy();
+      sound.confetti();
     }, 0);
 
     // 🎉 Emoji at 300ms

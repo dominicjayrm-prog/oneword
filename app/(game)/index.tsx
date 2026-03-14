@@ -42,6 +42,7 @@ import {
 } from '../../src/constants/app';
 import { validateUsername } from '../../src/lib/usernameValidator';
 import { haptic } from '../../src/lib/haptics';
+import { sound } from '../../src/lib/audio';
 import { getGameDate, getGameDay, getGameMonday, msUntilNextWord } from '../../src/lib/gameDate';
 import { getCurrentBadge, type BadgeTier } from '../../src/lib/badges';
 import { supabase } from '../../src/lib/supabase';
@@ -310,6 +311,7 @@ export default function HomeScreen() {
     }
     if (wordCount === DESCRIPTION_WORD_COUNT && prevWordCount.current !== DESCRIPTION_WORD_COUNT) {
       haptic.success();
+      sound.inputDesc();
     }
     prevWordCount.current = wordCount;
   }, [wordCount]);
@@ -1046,25 +1048,6 @@ export default function HomeScreen() {
             }}
             variant="outline"
           />
-          <TouchableOpacity
-            style={styles.shareDescLink}
-            onPress={async () => {
-              haptic.medium();
-              try {
-                await Share.share({
-                  message: t('game.share_description_message', {
-                    word: todayWord.word,
-                    description: userDescription ?? '',
-                  }),
-                });
-              } catch {
-                // User cancelled or share failed
-              }
-            }}
-            activeOpacity={0.7}
-          >
-            <Text style={[styles.shareDescText, { color: colors.primary }]}>{t('game.share_description')}</Text>
-          </TouchableOpacity>
         </View>
 
         {/* Streak Celebration Modal */}
@@ -1140,7 +1123,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingHorizontal: spacing.lg,
-    paddingTop: spacing.xxl,
+    paddingTop: spacing.xxl + 12,
   },
   scrollContent: {
     flexGrow: 1,
@@ -1155,16 +1138,16 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   avatarSmall: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
     borderWidth: 2,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: spacing.xs,
   },
   avatarSmallText: {
-    fontSize: 18,
+    fontSize: 20,
   },
   greeting: {
     fontSize: fontSize.sm,

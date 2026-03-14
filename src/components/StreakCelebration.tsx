@@ -11,6 +11,7 @@ import Animated, {
   runOnJS,
 } from 'react-native-reanimated';
 import { haptic } from '../lib/haptics';
+import { sound } from '../lib/audio';
 import { getCurrentBadge, getNextBadge, getProgressToNext, type BadgeTier } from '../lib/badges';
 import { useAuthContext } from '../contexts/AuthContext';
 import { fontSize, spacing } from '../constants/theme';
@@ -172,6 +173,7 @@ export function StreakCelebration({ streak, badge, onDismiss }: StreakCelebratio
     // Phase 2: Confetti + rings at 500ms (handled by particle components)
     const t1 = setTimeout(() => {
       haptic.heavy();
+      sound.streaks();
       if (isEternal) {
         t2 = setTimeout(() => haptic.success(), 300);
       }

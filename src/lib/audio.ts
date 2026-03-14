@@ -1,4 +1,5 @@
-import { Audio } from 'expo-av';
+import { createAudioPlayer, setAudioModeAsync } from 'expo-audio';
+import type { AudioPlayer } from 'expo-audio';
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -72,8 +73,8 @@ const SOUNDS = {
 
 type SoundName = keyof typeof SOUNDS;
 
-// Cache loaded sounds using expo-av (more reliable for one-shot playback)
-const loaded: Partial<Record<SoundName, Audio.Sound>> = {};
+// Cache loaded players using expo-audio
+const loaded: Partial<Record<SoundName, AudioPlayer>> = {};
 
 async function play(name: SoundName, volume = 1.0): Promise<void> {
   // Audio not supported on web
@@ -85,19 +86,15 @@ async function play(name: SoundName, volume = 1.0): Promise<void> {
   if (CELEBRATION_SOUNDS.has(name) && !celebrationsEnabled) return;
 
   try {
-    let snd = loaded[name];
-    if (!snd) {
-      const { sound: newSound } = await Audio.Sound.createAsync(SOUNDS[name], {
-        shouldPlay: false,
-        volume,
-      });
-      snd = newSound;
-      loaded[name] = snd;
+    let player = loaded[name];
+    if (!player) {
+      player = createAudioPlayer(SOUNDS[name]);
+      loaded[name] = player;
     }
 
-    await snd.setPositionAsync(0);
-    await snd.setVolumeAsync(volume);
-    await snd.playAsync();
+    player.volume = volume;
+    player.currentTime = 0;
+    player.play();
   } catch (err) {
     // Silently fail — sounds are non-critical
     console.warn(`[audio] Failed to play "${name}":`, err);
@@ -109,10 +106,10 @@ export async function initAudio(): Promise<void> {
   if (Platform.OS === 'web') return;
   await loadSoundPrefs();
   try {
-    await Audio.setAudioModeAsync({
-      playsInSilentModeIOS: false,
-      staysActiveInBackground: false,
-      shouldDuckAndroid: true,
+    await setAudioModeAsync({
+      playsInSilentMode: false,
+      shouldPlayInBackground: false,
+      shouldRouteThroughEarpiece: false,
     });
   } catch {
     // Non-critical

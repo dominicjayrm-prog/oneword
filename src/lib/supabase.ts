@@ -7,9 +7,14 @@ const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL ?? '';
 const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '';
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.error(
-    'Missing Supabase configuration. Set EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY environment variables.',
-  );
+  const msg =
+    'Missing Supabase configuration. Set EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY environment variables (or EAS Secrets for cloud builds).';
+  console.error(msg);
+  if (Platform.OS !== 'web') {
+    // Surface the error visibly on native so it doesn't silently crash
+    const { Alert } = require('react-native');
+    Alert.alert('Configuration Error', msg);
+  }
 }
 
 // Web: use sessionStorage instead of localStorage to limit XSS exposure.

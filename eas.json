@@ -9,13 +9,13 @@
       "distribution": "internal",
       "ios": {
         "simulator": false
-      }
+      },
     },
     "preview": {
       "distribution": "internal",
       "ios": {
         "simulator": false
-      }
+      },
     },
     "production": {
       "autoIncrement": true

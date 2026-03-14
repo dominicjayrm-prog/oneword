@@ -37,7 +37,6 @@
       "expo-sharing",
       "expo-font",
       "expo-localization",
-      "@sentry/react-native",
       [
         "expo-notifications",
         {

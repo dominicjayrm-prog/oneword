@@ -1,6 +1,5 @@
 import { Component, type ReactNode } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, useColorScheme } from 'react-native';
-import { Sentry } from '../lib/sentry';
 import i18next from 'i18next';
 import { lightColors, darkColors } from '../constants/theme';
 
@@ -23,10 +22,7 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, info: React.ErrorInfo) {
-    // Only log error name/message to console — avoid leaking PII from component props.
-    // Full details go to Sentry where access is controlled.
     console.error('App crash caught by ErrorBoundary:', error.name, error.message);
-    Sentry.captureException(error, { extra: { componentStack: info.componentStack } });
   }
 
   render() {

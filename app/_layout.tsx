@@ -8,7 +8,6 @@ import { useFonts, PlayfairDisplay_400Regular, PlayfairDisplay_700Bold } from '@
 import { DMSans_400Regular, DMSans_500Medium, DMSans_700Bold } from '@expo-google-fonts/dm-sans';
 import { DMMono_400Regular, DMMono_500Medium } from '@expo-google-fonts/dm-mono';
 import '../src/lib/i18n';
-import { initSentry } from '../src/lib/sentry';
 import { ThemeProvider, useTheme } from '../src/contexts/ThemeContext';
 import { AuthProvider } from '../src/contexts/AuthContext';
 import { GameProvider } from '../src/contexts/GameContext';
@@ -17,8 +16,6 @@ import { ErrorBoundary } from '../src/components/ErrorBoundary';
 import { ToastProvider } from '../src/components/Toast';
 import { NetworkProvider } from '../src/contexts/NetworkContext';
 import { NetworkBanner } from '../src/components/NetworkBanner';
-
-initSentry();
 
 function InnerLayout() {
   const { colors, mode } = useTheme();

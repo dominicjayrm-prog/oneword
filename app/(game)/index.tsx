@@ -42,6 +42,7 @@ import {
 } from '../../src/constants/app';
 import { validateUsername } from '../../src/lib/usernameValidator';
 import { haptic } from '../../src/lib/haptics';
+import { sound } from '../../src/lib/audio';
 import { getGameDate, getGameDay, getGameMonday, msUntilNextWord } from '../../src/lib/gameDate';
 import { getCurrentBadge, type BadgeTier } from '../../src/lib/badges';
 import { supabase } from '../../src/lib/supabase';
@@ -310,6 +311,7 @@ export default function HomeScreen() {
     }
     if (wordCount === DESCRIPTION_WORD_COUNT && prevWordCount.current !== DESCRIPTION_WORD_COUNT) {
       haptic.success();
+      sound.inputDesc();
     }
     prevWordCount.current = wordCount;
   }, [wordCount]);

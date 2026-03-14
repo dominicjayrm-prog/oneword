@@ -24,6 +24,7 @@ import { RetryState } from '../../src/components/RetryState';
 import { VOTE_BATCH_SIZE } from '../../src/constants/app';
 import { fontSize, spacing, borderRadius, withOpacity } from '../../src/constants/theme';
 import { haptic } from '../../src/lib/haptics';
+import { sound } from '../../src/lib/audio';
 import { formatDescription } from '../../src/lib/format';
 import { supabase } from '../../src/lib/supabase';
 import { FavouriteButton } from '../../src/components/FavouriteButton';
@@ -161,6 +162,7 @@ export default function VoteScreen() {
   async function handleVote(winnerId: string, loserId: string, winnerIsCard1: boolean) {
     if (voting) return;
     haptic.medium();
+    sound.tapOnVote();
     setVoting(true);
     setSelectedCard(winnerIsCard1 ? 1 : 2);
 

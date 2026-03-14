@@ -15,7 +15,7 @@ import { useAuthContext } from '../../src/contexts/AuthContext';
 import { useTheme } from '../../src/contexts/ThemeContext';
 import { WordDisplay } from '../../src/components/WordDisplay';
 import { Button } from '../../src/components/Button';
-import { ThemeToggle } from '../../src/components/ThemeToggle';
+
 import { LoadingSpinner } from '../../src/components/LoadingSpinner';
 import { EmptyState } from '../../src/components/EmptyState';
 import { useToast } from '../../src/components/Toast';
@@ -339,7 +339,6 @@ export default function VoteScreen() {
   if (!isOnline && !pair) {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
-        <ThemeToggle />
         <RetryState type="offline" onRetry={loadPair} />
       </View>
     );
@@ -349,7 +348,6 @@ export default function VoteScreen() {
   if (!hasSubmitted) {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
-        <ThemeToggle />
         <View style={[styles.center, { backgroundColor: colors.background }]}>
           <Text style={styles.lockIcon}>{'\uD83D\uDD12'}</Text>
           {todayWord && <WordDisplay word={todayWord.word} category={todayWord.category} />}
@@ -373,7 +371,6 @@ export default function VoteScreen() {
     if (voteCount === 0) {
       return (
         <View style={[styles.container, { backgroundColor: colors.background }]}>
-          <ThemeToggle />
           <EmptyState
             emoji={'\uD83D\uDCDD'}
             title={t('vote.no_pairs')}
@@ -389,7 +386,6 @@ export default function VoteScreen() {
       voteCount === 1 ? t('vote.voted_on', { count: voteCount }) : t('vote.voted_on_plural', { count: voteCount });
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
-        <ThemeToggle />
         <View style={[styles.center, { backgroundColor: colors.background }]}>
           <Animated.Text style={[styles.doneEmoji, doneEmojiStyle]}>{'\u2705'}</Animated.Text>
           <Animated.View style={doneTextStyle}>
@@ -425,7 +421,6 @@ export default function VoteScreen() {
       voteCount === 1 ? t('vote.voted_on', { count: voteCount }) : t('vote.voted_on_plural', { count: voteCount });
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
-        <ThemeToggle />
         <View style={[styles.center, { backgroundColor: colors.background }]}>
           <Animated.Text style={[styles.doneEmoji, doneEmojiStyle]}>{'\uD83C\uDF1F'}</Animated.Text>
           <Animated.View style={doneTextStyle}>
@@ -457,7 +452,6 @@ export default function VoteScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <ThemeToggle />
       <View style={styles.header}>
         {todayWord && <WordDisplay word={todayWord.word} category={todayWord.category} />}
 

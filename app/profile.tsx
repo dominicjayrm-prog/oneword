@@ -15,7 +15,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuthContext } from '../src/contexts/AuthContext';
 import { useTheme } from '../src/contexts/ThemeContext';
 import { Button } from '../src/components/Button';
-import { ThemeToggle } from '../src/components/ThemeToggle';
+
 import { LoadingSpinner } from '../src/components/LoadingSpinner';
 import { BadgePill } from '../src/components/BadgePill';
 import { BadgeProgress } from '../src/components/BadgeProgress';
@@ -180,8 +180,6 @@ export default function ProfileScreen() {
       style={[styles.scrollView, { backgroundColor: colors.background }]}
       contentContainerStyle={styles.container}
     >
-      <ThemeToggle />
-
       {/* Avatar + Username */}
       <View style={styles.profileHeader}>
         <TouchableOpacity

@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuthContext } from '../../src/contexts/AuthContext';
 import { useGameContext } from '../../src/contexts/GameContext';
 import { useTheme } from '../../src/contexts/ThemeContext';
-import { ThemeToggle } from '../../src/components/ThemeToggle';
+
 import { Button } from '../../src/components/Button';
 import { FriendRequests } from '../../src/components/FriendRequests';
 import { FriendsToday } from '../../src/components/FriendsToday';
@@ -87,7 +87,9 @@ export default function FriendsScreen() {
     if (Platform.OS === 'web' || !profile?.notify_friend_activity) return;
     if (descriptions.length === 0 || loading) return;
 
-    const friendsWhoPlayed = descriptions.filter((d) => d.has_played).map((d) => d.friend_username);
+    const friendsWhoPlayed = descriptions
+      .filter((d) => d.has_played && d.description_text)
+      .map((d) => d.friend_username);
     if (friendsWhoPlayed.length === 0) return;
 
     const gameDate = getGameDate();
@@ -221,7 +223,6 @@ export default function FriendsScreen() {
   if (loadError) {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
-        <ThemeToggle />
         <RetryState type={!isOnline ? 'offline' : 'error'} onRetry={loadData} />
       </View>
     );
@@ -231,7 +232,6 @@ export default function FriendsScreen() {
   if (friends.length === 0 && requests.length === 0) {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
-        <ThemeToggle />
         <View style={styles.emptyState}>
           <Text style={styles.emptyIcon}>{'\uD83D\uDC65'}</Text>
           <Text style={[styles.emptyTitle, { color: colors.text }]}>{t('friends.empty_title')}</Text>
@@ -255,7 +255,6 @@ export default function FriendsScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <ThemeToggle />
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}

@@ -1,4 +1,4 @@
-import { TouchableOpacity, Text, StyleSheet } from 'react-native';
+import { TouchableOpacity, Text, StyleSheet, Platform } from 'react-native';
 import { useTheme } from '../contexts/ThemeContext';
 import { fontSize } from '../constants/theme';
 import { haptic } from '../lib/haptics';
@@ -23,7 +23,7 @@ export function ThemeToggle() {
 const styles = StyleSheet.create({
   toggle: {
     position: 'absolute',
-    top: 16,
+    top: Platform.OS === 'ios' ? 54 : 16,
     right: 16,
     width: 40,
     height: 40,

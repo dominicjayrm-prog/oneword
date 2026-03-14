@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Text, StyleSheet, Animated, Platform } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useNetwork } from '../contexts/NetworkContext';
@@ -7,18 +7,32 @@ import { fontSize, spacing } from '../constants/theme';
 export function NetworkBanner() {
   const { t } = useTranslation();
   const { isOnline, isReconnecting } = useNetwork();
-  const translateY = useRef(new Animated.Value(-60)).current;
+  const translateY = useRef(new Animated.Value(-100)).current;
+  const [shouldRender, setShouldRender] = useState(false);
 
   const visible = !isOnline || isReconnecting;
 
   useEffect(() => {
-    Animated.spring(translateY, {
-      toValue: visible ? 0 : -60,
-      friction: 8,
-      tension: 80,
-      useNativeDriver: true,
-    }).start();
+    if (visible) {
+      setShouldRender(true);
+      Animated.spring(translateY, {
+        toValue: 0,
+        friction: 8,
+        tension: 80,
+        useNativeDriver: true,
+      }).start();
+    } else {
+      Animated.timing(translateY, {
+        toValue: -100,
+        duration: 200,
+        useNativeDriver: true,
+      }).start(() => {
+        setShouldRender(false);
+      });
+    }
   }, [visible]);
+
+  if (!shouldRender) return null;
 
   return (
     <Animated.View

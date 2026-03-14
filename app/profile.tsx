@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
   Platform,
   TextInput,
   Linking,
+  Switch,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -23,6 +24,7 @@ import { useToast } from '../src/components/Toast';
 import { fontSize, spacing, borderRadius, withOpacity } from '../src/constants/theme';
 // FavouritePhrases is shown on its own page now (app/favourites.tsx)
 import { haptic } from '../src/lib/haptics';
+import { getSoundPrefs, setSoundPref, type SoundPrefs } from '../src/lib/audio';
 
 function confirmDialog(title: string, message: string, cancelText: string, okText: string): Promise<boolean> {
   if (Platform.OS === 'web') {
@@ -70,6 +72,13 @@ export default function ProfileScreen() {
   const [deleting, setDeleting] = useState(false);
   const [deleteUsername, setDeleteUsername] = useState('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [soundPrefs, setSoundPrefs] = useState<SoundPrefs>(getSoundPrefs);
+
+  const handleSoundToggle = useCallback(async (key: keyof SoundPrefs, value: boolean) => {
+    haptic.light();
+    setSoundPrefs((prev) => ({ ...prev, [key]: value }));
+    await setSoundPref(key, value);
+  }, []);
 
   useEffect(() => {
     if (!profile) {
@@ -335,6 +344,49 @@ export default function ProfileScreen() {
           <Text style={[styles.supportLabel, { color: colors.textSecondary }]}>{t('profile.notifications')}</Text>
           <Text style={[styles.supportValue, { color: colors.textMuted }]}>{'\u2192'}</Text>
         </TouchableOpacity>
+      </View>
+
+      {/* Sound Settings */}
+      <View style={[styles.supportSection, { borderTopColor: colors.border }]}>
+        <Text style={[styles.soundSectionTitle, { color: colors.textMuted }]}>{t('profile.sounds_title')}</Text>
+        <View style={[styles.soundCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+          <View style={styles.soundRow}>
+            <Text style={[styles.soundRowLabel, { color: colors.text }]}>{t('profile.sounds_master')}</Text>
+            <Switch
+              value={soundPrefs.master}
+              onValueChange={(v) => handleSoundToggle('master', v)}
+              trackColor={{ false: colors.border, true: withOpacity(colors.primary, 0.5) }}
+              thumbColor={soundPrefs.master ? colors.primary : colors.textMuted}
+              ios_backgroundColor={colors.border}
+            />
+          </View>
+          {soundPrefs.master && (
+            <>
+              <View style={[styles.soundDivider, { backgroundColor: colors.border }]} />
+              <View style={styles.soundRow}>
+                <Text style={[styles.soundRowLabel, { color: colors.text }]}>{t('profile.sounds_game')}</Text>
+                <Switch
+                  value={soundPrefs.game}
+                  onValueChange={(v) => handleSoundToggle('game', v)}
+                  trackColor={{ false: colors.border, true: withOpacity(colors.primary, 0.5) }}
+                  thumbColor={soundPrefs.game ? colors.primary : colors.textMuted}
+                  ios_backgroundColor={colors.border}
+                />
+              </View>
+              <View style={[styles.soundDivider, { backgroundColor: colors.border }]} />
+              <View style={styles.soundRow}>
+                <Text style={[styles.soundRowLabel, { color: colors.text }]}>{t('profile.sounds_celebrations')}</Text>
+                <Switch
+                  value={soundPrefs.celebrations}
+                  onValueChange={(v) => handleSoundToggle('celebrations', v)}
+                  trackColor={{ false: colors.border, true: withOpacity(colors.primary, 0.5) }}
+                  thumbColor={soundPrefs.celebrations ? colors.primary : colors.textMuted}
+                  ios_backgroundColor={colors.border}
+                />
+              </View>
+            </>
+          )}
+        </View>
       </View>
 
       {/* Support & Info */}
@@ -641,6 +693,35 @@ const styles = StyleSheet.create({
   favouritesLabel: {
     fontSize: fontSize.md,
     fontWeight: '700',
+  },
+  soundSectionTitle: {
+    fontSize: fontSize.xs - 1,
+    fontWeight: '700',
+    letterSpacing: 1.5,
+    textTransform: 'uppercase',
+    textAlign: 'center',
+    marginBottom: spacing.md,
+  },
+  soundCard: {
+    borderRadius: borderRadius.lg,
+    borderWidth: 1,
+    overflow: 'hidden',
+  },
+  soundRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+  },
+  soundRowLabel: {
+    fontSize: fontSize.md,
+    fontWeight: '500',
+    flex: 1,
+  },
+  soundDivider: {
+    height: 1,
+    marginHorizontal: spacing.md,
   },
   supportSection: {
     marginTop: spacing.xl,

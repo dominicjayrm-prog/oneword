@@ -32,7 +32,6 @@
       "bundler": "metro"
     },
     "plugins": [
-      "expo-av",
       "expo-router",
       "expo-secure-store",
       "expo-sharing",
@@ -44,7 +43,8 @@
           "icon": "./assets/icon.png",
           "color": "#FF6B4A"
         }
-      ]
+      ],
+      "expo-audio"
     ]
   }
 }

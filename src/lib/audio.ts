@@ -1,4 +1,4 @@
-import { Audio } from 'expo-av';
+import { createAudioPlayer, setAudioModeAsync, AudioPlayer } from 'expo-audio';
 import { Platform } from 'react-native';
 
 // Pre-mapped sound assets
@@ -11,39 +11,23 @@ const SOUNDS = {
 
 type SoundName = keyof typeof SOUNDS;
 
-// Cache loaded sounds to avoid re-loading on every play
-const loaded: Partial<Record<SoundName, Audio.Sound>> = {};
+// Cache loaded players to avoid re-creating on every play
+const loaded: Partial<Record<SoundName, AudioPlayer>> = {};
 
 async function play(name: SoundName, volume = 1.0): Promise<void> {
-  // Audio not supported on web in expo-av
+  // Audio not supported on web in expo-audio
   if (Platform.OS === 'web') return;
 
   try {
-    // Reuse cached instance if it exists
-    let sound = loaded[name];
-    if (sound) {
-      const status = await sound.getStatusAsync();
-      if (status.isLoaded) {
-        await sound.setPositionAsync(0);
-        await sound.setVolumeAsync(volume);
-        await sound.playAsync();
-        return;
-      }
-      // Sound was unloaded — fall through to re-create
+    let player = loaded[name];
+    if (!player) {
+      player = createAudioPlayer(SOUNDS[name]);
+      loaded[name] = player;
     }
 
-    const { sound: newSound } = await Audio.Sound.createAsync(SOUNDS[name], {
-      shouldPlay: true,
-      volume,
-    });
-    loaded[name] = newSound;
-
-    // Clean up when playback finishes
-    newSound.setOnPlaybackStatusUpdate((status) => {
-      if (status.isLoaded && status.didJustFinish) {
-        // Don't unload — keep cached for fast replays
-      }
-    });
+    player.volume = volume;
+    player.currentTime = 0;
+    player.play();
   } catch (err) {
     // Silently fail — sounds are non-critical
     console.warn(`[audio] Failed to play "${name}":`, err);
@@ -54,10 +38,10 @@ async function play(name: SoundName, volume = 1.0): Promise<void> {
 export async function initAudio(): Promise<void> {
   if (Platform.OS === 'web') return;
   try {
-    await Audio.setAudioModeAsync({
-      playsInSilentModeIOS: false,
-      staysActiveInBackground: false,
-      shouldDuckAndroid: true,
+    await setAudioModeAsync({
+      playsInSilentMode: false,
+      shouldPlayInBackground: false,
+      interruptionMode: 'duckOthers',
     });
   } catch {
     // Non-critical

@@ -9,6 +9,8 @@ import {
   FlatList,
   ActivityIndicator,
   Animated,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../contexts/ThemeContext';
@@ -225,7 +227,10 @@ export function AddFriendModal({ visible, onClose, currentUserId, onRequestSent 
 
   return (
     <Modal visible={visible} animationType="slide" transparent>
-      <View style={styles.overlay}>
+      <KeyboardAvoidingView
+        style={styles.overlay}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
         <View style={[styles.sheet, { backgroundColor: colors.background }]}>
           <View style={styles.sheetHeader}>
             <Text style={[styles.sheetTitle, { color: colors.text }]}>{t('friends.add_friends')}</Text>
@@ -268,7 +273,7 @@ export function AddFriendModal({ visible, onClose, currentUserId, onRequestSent 
         </View>
 
         <SuccessToast visible={!!toastUser} username={toastUser ?? ''} colors={colors} />
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
@@ -276,16 +281,16 @@ export function AddFriendModal({ visible, onClose, currentUserId, onRequestSent 
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    justifyContent: 'flex-end',
+    justifyContent: 'flex-start',
     backgroundColor: 'rgba(0,0,0,0.4)',
   },
   sheet: {
-    borderTopLeftRadius: borderRadius.xl,
-    borderTopRightRadius: borderRadius.xl,
+    borderBottomLeftRadius: borderRadius.xl,
+    borderBottomRightRadius: borderRadius.xl,
     paddingHorizontal: spacing.lg,
-    paddingTop: spacing.lg,
-    paddingBottom: spacing.xxl,
-    maxHeight: '50%',
+    paddingTop: Platform.OS === 'ios' ? 60 : spacing.xl,
+    paddingBottom: spacing.lg,
+    maxHeight: '60%',
   },
   sheetHeader: {
     flexDirection: 'row',

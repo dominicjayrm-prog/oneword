@@ -15,7 +15,7 @@ import { useAuthContext } from '../../src/contexts/AuthContext';
 import { useTheme } from '../../src/contexts/ThemeContext';
 import { WordDisplay } from '../../src/components/WordDisplay';
 import { Button } from '../../src/components/Button';
-import { ThemeToggle } from '../../src/components/ThemeToggle';
+
 import { LoadingSpinner } from '../../src/components/LoadingSpinner';
 import { EmptyState } from '../../src/components/EmptyState';
 import { useToast } from '../../src/components/Toast';
@@ -339,8 +339,7 @@ export default function VoteScreen() {
   if (!isOnline && !pair) {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
-        <ThemeToggle />
-        <RetryState type="offline" onRetry={loadPair} />
+                <RetryState type="offline" onRetry={loadPair} />
       </View>
     );
   }
@@ -349,8 +348,7 @@ export default function VoteScreen() {
   if (!hasSubmitted) {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
-        <ThemeToggle />
-        <View style={[styles.center, { backgroundColor: colors.background }]}>
+                <View style={[styles.center, { backgroundColor: colors.background }]}>
           <Text style={styles.lockIcon}>{'\uD83D\uDD12'}</Text>
           {todayWord && <WordDisplay word={todayWord.word} category={todayWord.category} />}
           <Text style={[styles.lockedMessage, { color: colors.textSecondary }]}>{t('vote.locked_message')}</Text>
@@ -373,8 +371,7 @@ export default function VoteScreen() {
     if (voteCount === 0) {
       return (
         <View style={[styles.container, { backgroundColor: colors.background }]}>
-          <ThemeToggle />
-          <EmptyState
+                    <EmptyState
             emoji={'\uD83D\uDCDD'}
             title={t('vote.no_pairs')}
             subtitle={t('vote.all_caught_up_subtitle')}
@@ -389,8 +386,7 @@ export default function VoteScreen() {
       voteCount === 1 ? t('vote.voted_on', { count: voteCount }) : t('vote.voted_on_plural', { count: voteCount });
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
-        <ThemeToggle />
-        <View style={[styles.center, { backgroundColor: colors.background }]}>
+                <View style={[styles.center, { backgroundColor: colors.background }]}>
           <Animated.Text style={[styles.doneEmoji, doneEmojiStyle]}>{'\u2705'}</Animated.Text>
           <Animated.View style={doneTextStyle}>
             <Text style={[styles.doneTitle, { color: colors.text }]}>{t('vote.all_caught_up')}</Text>
@@ -425,8 +421,7 @@ export default function VoteScreen() {
       voteCount === 1 ? t('vote.voted_on', { count: voteCount }) : t('vote.voted_on_plural', { count: voteCount });
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
-        <ThemeToggle />
-        <View style={[styles.center, { backgroundColor: colors.background }]}>
+                <View style={[styles.center, { backgroundColor: colors.background }]}>
           <Animated.Text style={[styles.doneEmoji, doneEmojiStyle]}>{'\uD83C\uDF1F'}</Animated.Text>
           <Animated.View style={doneTextStyle}>
             <Text style={[styles.doneTitle, { color: colors.text }]}>{t('vote.batch_done')}</Text>
@@ -457,8 +452,7 @@ export default function VoteScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <ThemeToggle />
-      <View style={styles.header}>
+            <View style={styles.header}>
         {todayWord && <WordDisplay word={todayWord.word} category={todayWord.category} />}
 
         {/* Vote count — informational only, not a cap */}

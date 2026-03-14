@@ -4,7 +4,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useAuthContext } from '../src/contexts/AuthContext';
 import { useTheme } from '../src/contexts/ThemeContext';
-import { ThemeToggle } from '../src/components/ThemeToggle';
+
 import { FavouriteCard } from '../src/components/FavouriteCard';
 import { LoadingSpinner } from '../src/components/LoadingSpinner';
 import { supabase } from '../src/lib/supabase';
@@ -66,8 +66,7 @@ export default function FavouritesScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <ThemeToggle />
-
+      
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>

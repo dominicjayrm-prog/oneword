@@ -168,7 +168,7 @@ export default function ResultsScreen() {
   if (!hasSubmitted) {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
-                <View style={[styles.center, { backgroundColor: colors.background }]}>
+        <View style={[styles.center, { backgroundColor: colors.background }]}>
           <Text style={styles.lockIcon}>{'\uD83D\uDD12'}</Text>
           {todayWord && <WordDisplay word={todayWord.word} category={todayWord.category} />}
           <Text style={[styles.lockedMessage, { color: colors.textSecondary }]}>{t('results.locked_message')}</Text>
@@ -188,7 +188,7 @@ export default function ResultsScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-            {todayWord && <WordDisplay word={todayWord.word} category={todayWord.category} />}
+      {todayWord && <WordDisplay word={todayWord.word} category={todayWord.category} />}
 
       {/* Global / Friends toggle */}
       <View style={[styles.segmentedControl, { backgroundColor: colors.surface, borderColor: colors.border }]}>

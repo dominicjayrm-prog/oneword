@@ -87,7 +87,9 @@ export default function FriendsScreen() {
     if (Platform.OS === 'web' || !profile?.notify_friend_activity) return;
     if (descriptions.length === 0 || loading) return;
 
-    const friendsWhoPlayed = descriptions.filter((d) => d.has_played && d.description_text).map((d) => d.friend_username);
+    const friendsWhoPlayed = descriptions
+      .filter((d) => d.has_played && d.description_text)
+      .map((d) => d.friend_username);
     if (friendsWhoPlayed.length === 0) return;
 
     const gameDate = getGameDate();
@@ -230,7 +232,6 @@ export default function FriendsScreen() {
   if (friends.length === 0 && requests.length === 0) {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
-
         <View style={styles.emptyState}>
           <Text style={styles.emptyIcon}>{'\uD83D\uDC65'}</Text>
           <Text style={[styles.emptyTitle, { color: colors.text }]}>{t('friends.empty_title')}</Text>

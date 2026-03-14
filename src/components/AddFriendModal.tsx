@@ -227,10 +227,7 @@ export function AddFriendModal({ visible, onClose, currentUserId, onRequestSent 
 
   return (
     <Modal visible={visible} animationType="slide" transparent>
-      <KeyboardAvoidingView
-        style={styles.overlay}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      >
+      <KeyboardAvoidingView style={styles.overlay} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <View style={[styles.sheet, { backgroundColor: colors.background }]}>
           <View style={styles.sheetHeader}>
             <Text style={[styles.sheetTitle, { color: colors.text }]}>{t('friends.add_friends')}</Text>

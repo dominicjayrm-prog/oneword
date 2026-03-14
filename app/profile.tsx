@@ -180,7 +180,6 @@ export default function ProfileScreen() {
       style={[styles.scrollView, { backgroundColor: colors.background }]}
       contentContainerStyle={styles.container}
     >
-      
       {/* Avatar + Username */}
       <View style={styles.profileHeader}>
         <TouchableOpacity

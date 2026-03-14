@@ -8,6 +8,7 @@ import { useFonts, PlayfairDisplay_400Regular, PlayfairDisplay_700Bold } from '@
 import { DMSans_400Regular, DMSans_500Medium, DMSans_700Bold } from '@expo-google-fonts/dm-sans';
 import { DMMono_400Regular, DMMono_500Medium } from '@expo-google-fonts/dm-mono';
 import '../src/lib/i18n';
+import { initAudio } from '../src/lib/audio';
 import { ThemeProvider, useTheme } from '../src/contexts/ThemeContext';
 import { AuthProvider } from '../src/contexts/AuthContext';
 import { GameProvider } from '../src/contexts/GameContext';
@@ -160,6 +161,10 @@ export default function RootLayout() {
     DMMono_400Regular,
     DMMono_500Medium,
   });
+
+  useEffect(() => {
+    initAudio();
+  }, []);
 
   // If fonts fail to load, render the app anyway with system font fallbacks
   // rather than blocking indefinitely on the loading spinner

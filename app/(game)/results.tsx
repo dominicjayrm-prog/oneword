@@ -33,6 +33,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { fontSize, spacing, borderRadius } from '../../src/constants/theme';
 import { haptic } from '../../src/lib/haptics';
 import { triggerFriendBeatYouNotification } from '../../src/lib/notifications';
+import { shouldShowRatePrompt, showRatePrompt } from '../../src/lib/rateApp';
 import { getGameDate } from '../../src/lib/gameDate';
 import { getFriends } from '../../src/lib/friends';
 import { useFavouritedIds } from '../../src/hooks/useFavourites';
@@ -131,6 +132,24 @@ export default function ResultsScreen() {
       }
     })();
   }, [myEntry, session?.user?.id, loading, leaderboard, profile?.notify_friend_activity]);
+
+  // Rate app prompt — after a positive result, with a 2-second delay
+  useEffect(() => {
+    if (loading || !myEntry?.rank || !profile?.total_plays) return;
+    const totalPlayers = leaderboard.length;
+
+    let timer: ReturnType<typeof setTimeout>;
+    (async () => {
+      const should = await shouldShowRatePrompt(profile.total_plays, myEntry.rank, totalPlayers);
+      if (should && mountedRef.current) {
+        timer = setTimeout(() => {
+          if (mountedRef.current) showRatePrompt();
+        }, 2000);
+      }
+    })();
+
+    return () => clearTimeout(timer);
+  }, [loading, myEntry?.rank, leaderboard.length, profile?.total_plays]);
 
   const handleSharePress = () => {
     haptic.medium();

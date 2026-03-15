@@ -258,11 +258,16 @@ export default function HomeScreen() {
         } else if (__DEV__) {
           console.log(
             '[Interstitial] Skipping yesterday winner —',
-            'totalPlays:', initialTotalPlaysRef.current,
-            'lastPlayed:', auth.profile?.last_played_date,
-            'createdToday:', createdToday,
-            'dismissed:', d?.winner_dismissed_date,
-            'gameDate:', gameDateStr,
+            'totalPlays:',
+            initialTotalPlaysRef.current,
+            'lastPlayed:',
+            auth.profile?.last_played_date,
+            'createdToday:',
+            createdToday,
+            'dismissed:',
+            d?.winner_dismissed_date,
+            'gameDate:',
+            gameDateStr,
           );
         }
       } catch (err) {

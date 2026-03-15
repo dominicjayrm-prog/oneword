@@ -1100,50 +1100,57 @@ export default function HomeScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <ThemeToggle />
-      <TouchableOpacity
-        style={styles.header}
-        onPress={() => {
-          haptic.light();
-          router.push('/profile');
-        }}
-        activeOpacity={0.7}
+      <ScrollView
+        contentContainerStyle={styles.gameScrollContent}
+        keyboardShouldPersistTaps="handled"
+        bounces={false}
+        showsVerticalScrollIndicator={false}
       >
-        <View style={[styles.avatarSmall, { backgroundColor: colors.primaryFaded, borderColor: colors.primary }]}>
-          <Text style={styles.avatarSmallText}>{auth.profile?.avatar_url || '\uD83C\uDFAD'}</Text>
+        <TouchableOpacity
+          style={styles.header}
+          onPress={() => {
+            haptic.light();
+            router.push('/profile');
+          }}
+          activeOpacity={0.7}
+        >
+          <View style={[styles.avatarSmall, { backgroundColor: colors.primaryFaded, borderColor: colors.primary }]}>
+            <Text style={styles.avatarSmallText}>{auth.profile?.avatar_url || '\uD83C\uDFAD'}</Text>
+          </View>
+          <Text style={[styles.greeting, { color: colors.textSecondary }]}>
+            {t('game.greeting', { username: auth.profile?.username ?? 'player' })}
+          </Text>
+          <Text style={[styles.todayLabel, { color: colors.textMuted }]}>{t('game.todays_word')}</Text>
+        </TouchableOpacity>
+
+        <View style={[styles.centerCompact, { backgroundColor: colors.background }]}>
+          <WordDisplay word={todayWord.word} category={todayWord.category} />
         </View>
-        <Text style={[styles.greeting, { color: colors.textSecondary }]}>
-          {t('game.greeting', { username: auth.profile?.username ?? 'player' })}
-        </Text>
-        <Text style={[styles.todayLabel, { color: colors.textMuted }]}>{t('game.todays_word')}</Text>
-      </TouchableOpacity>
 
-      <View style={[styles.center, { backgroundColor: colors.background }]}>
-        <WordDisplay word={todayWord.word} category={todayWord.category} />
-      </View>
-
-      <View style={styles.inputSection}>
-        <Text style={[styles.prompt, { color: colors.textSecondary }]}>{t('game.prompt')}</Text>
-        <TextInput
-          style={[
-            styles.descriptionInput,
-            { backgroundColor: colors.surface, color: colors.text, borderColor: colors.border },
-          ]}
-          placeholder={t('game.placeholder')}
-          placeholderTextColor={colors.textMuted}
-          value={input}
-          onChangeText={setInput}
-          multiline
-          autoFocus
-          maxLength={DESCRIPTION_MAX_LENGTH}
-        />
-        <WordCounter count={wordCount} max={DESCRIPTION_WORD_COUNT} />
-        <Button
-          title={submitting ? t('loading.submitting') : t('game.submit')}
-          onPress={handleSubmit}
-          disabled={!isExactlyFive || submitting}
-          loading={submitting}
-        />
-      </View>
+        <View style={styles.inputSection}>
+          <Text style={[styles.prompt, { color: colors.textSecondary }]}>{t('game.prompt')}</Text>
+          <TextInput
+            style={[
+              styles.descriptionInput,
+              { backgroundColor: colors.surface, color: colors.text, borderColor: colors.border },
+            ]}
+            placeholder={t('game.placeholder')}
+            placeholderTextColor={colors.textMuted}
+            value={input}
+            onChangeText={setInput}
+            multiline
+            autoFocus
+            maxLength={DESCRIPTION_MAX_LENGTH}
+          />
+          <WordCounter count={wordCount} max={DESCRIPTION_WORD_COUNT} />
+          <Button
+            title={submitting ? t('loading.submitting') : t('game.submit')}
+            onPress={handleSubmit}
+            disabled={!isExactlyFive || submitting}
+            loading={submitting}
+          />
+        </View>
+      </ScrollView>
     </KeyboardAvoidingView>
   );
 }
@@ -1157,10 +1164,19 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
   },
+  gameScrollContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
+  },
   center: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  centerCompact: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: spacing.lg,
   },
   header: {
     alignItems: 'center',

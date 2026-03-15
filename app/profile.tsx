@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -90,9 +90,14 @@ export default function ProfileScreen() {
   }, [session]);
 
   // Try to load profile if we have a session but profile is null
+  const refreshAttemptedRef = useRef(false);
   useEffect(() => {
-    if (session && !profile) {
+    if (session && !profile && !refreshAttemptedRef.current) {
+      refreshAttemptedRef.current = true;
       refreshProfile();
+    }
+    if (profile) {
+      refreshAttemptedRef.current = false;
     }
   }, [session, profile]);
 
@@ -100,16 +105,39 @@ export default function ProfileScreen() {
     return null;
   }
 
-  if (!profile) {
-    return (
-      <View style={[styles.scrollView, { backgroundColor: colors.background }]}>
-        <LoadingSpinner />
-      </View>
-    );
-  }
+  // Build a display profile: use real profile if available, otherwise fall back to session metadata
+  // so the screen always renders instead of showing an infinite spinner.
+  const displayProfile = profile ?? {
+    id: session.user.id,
+    username: session.user.user_metadata?.username || 'player',
+    avatar_url: null,
+    language: language,
+    timezone: '',
+    current_streak: 0,
+    longest_streak: 0,
+    total_plays: 0,
+    total_votes_received: 0,
+    best_rank: null,
+    streak_badge_emoji: null,
+    streak_badge_name: null,
+    last_played_date: null,
+    push_token: null,
+    notifications_enabled: false,
+    notify_daily: false,
+    notify_daily_time: '09:00',
+    notify_streak_risk: false,
+    notify_results: false,
+    notify_friend_requests: false,
+    notify_friend_activity: false,
+    notify_weekly_recap: false,
+    notify_welcome_back: false,
+    last_welcome_back_sent: null,
+    created_at: session.user.created_at ?? new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  };
 
   const locale = language === 'es' ? 'es-ES' : 'en-US';
-  const memberSince = new Date(profile.created_at).toLocaleDateString(locale, {
+  const memberSince = new Date(displayProfile.created_at).toLocaleDateString(locale, {
     month: 'long',
     year: 'numeric',
   });
@@ -174,7 +202,7 @@ export default function ProfileScreen() {
   }
 
   async function confirmDelete() {
-    if (!profile || deleteUsername !== profile.username) return;
+    if (deleteUsername !== displayProfile.username) return;
     setDeleting(true);
     try {
       const { error } = await deleteAccount();
@@ -191,11 +219,15 @@ export default function ProfileScreen() {
   }
 
   const stats = [
-    { label: t('profile.current_streak'), value: `${profile.current_streak}`, icon: '\uD83D\uDD25' },
-    { label: t('profile.best_streak'), value: `${profile.longest_streak}`, icon: '\u2B50' },
-    { label: t('profile.total_plays'), value: `${profile.total_plays}`, icon: '\uD83C\uDFAE' },
-    { label: t('profile.votes_received'), value: `${profile.total_votes_received}`, icon: '\uD83D\uDC4D' },
-    { label: t('profile.best_rank'), value: profile.best_rank ? `#${profile.best_rank}` : '-', icon: '\uD83C\uDFC6' },
+    { label: t('profile.current_streak'), value: `${displayProfile.current_streak}`, icon: '\uD83D\uDD25' },
+    { label: t('profile.best_streak'), value: `${displayProfile.longest_streak}`, icon: '\u2B50' },
+    { label: t('profile.total_plays'), value: `${displayProfile.total_plays}`, icon: '\uD83C\uDFAE' },
+    { label: t('profile.votes_received'), value: `${displayProfile.total_votes_received}`, icon: '\uD83D\uDC4D' },
+    {
+      label: t('profile.best_rank'),
+      value: displayProfile.best_rank ? `#${displayProfile.best_rank}` : '-',
+      icon: '\uD83C\uDFC6',
+    },
   ];
 
   return (
@@ -213,16 +245,16 @@ export default function ProfileScreen() {
           }}
           activeOpacity={0.7}
         >
-          <Text style={styles.avatarText}>{profile.avatar_url || '\uD83C\uDFAD'}</Text>
+          <Text style={styles.avatarText}>{displayProfile.avatar_url || '\uD83C\uDFAD'}</Text>
         </TouchableOpacity>
         <Text style={[styles.tapToChange, { color: colors.textMuted }]}>{t('profile.tap_to_change')}</Text>
 
-        <Text style={[styles.username, { color: colors.text }]}>{profile.username}</Text>
-        {profile.current_streak > 0 && (
+        <Text style={[styles.username, { color: colors.text }]}>{displayProfile.username}</Text>
+        {displayProfile.current_streak > 0 && (
           <View style={styles.badgeRow}>
-            <BadgePill streak={profile.current_streak} showName size="md" />
+            <BadgePill streak={displayProfile.current_streak} showName size="md" />
             <Text style={[styles.streakLabel, { color: colors.textSecondary }]}>
-              {t('game.day_streak', { count: profile.current_streak })}
+              {t('game.day_streak', { count: displayProfile.current_streak })}
             </Text>
           </View>
         )}
@@ -233,7 +265,7 @@ export default function ProfileScreen() {
 
       {/* Badge Progress */}
       <View style={styles.badgeProgressSection}>
-        <BadgeProgress streak={profile.current_streak} />
+        <BadgeProgress streak={displayProfile.current_streak} />
       </View>
 
       {/* Avatar Picker */}
@@ -247,7 +279,7 @@ export default function ProfileScreen() {
                 style={[
                   styles.avatarOption,
                   { backgroundColor: colors.background },
-                  profile.avatar_url === emoji && { borderColor: colors.primary, borderWidth: 2 },
+                  displayProfile.avatar_url === emoji && { borderColor: colors.primary, borderWidth: 2 },
                 ]}
                 onPress={() => handleAvatarSelect(emoji)}
               >
@@ -301,7 +333,7 @@ export default function ProfileScreen() {
             ]}
             value={deleteUsername}
             onChangeText={setDeleteUsername}
-            placeholder={profile.username}
+            placeholder={displayProfile.username}
             placeholderTextColor={colors.textMuted}
             autoCapitalize="none"
           />
@@ -309,10 +341,10 @@ export default function ProfileScreen() {
             <TouchableOpacity
               style={[
                 styles.deleteConfirmBtn,
-                { backgroundColor: colors.error, opacity: deleteUsername === profile.username ? 1 : 0.4 },
+                { backgroundColor: colors.error, opacity: deleteUsername === displayProfile.username ? 1 : 0.4 },
               ]}
               onPress={confirmDelete}
-              disabled={deleteUsername !== profile.username}
+              disabled={deleteUsername !== displayProfile.username}
             >
               <Text style={styles.deleteConfirmBtnText}>{t('profile.delete_account')}</Text>
             </TouchableOpacity>

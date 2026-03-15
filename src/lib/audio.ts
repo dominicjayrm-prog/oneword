@@ -74,7 +74,19 @@ const SOUNDS = {
 type SoundName = keyof typeof SOUNDS;
 
 // Cache loaded players using expo-audio
-const loaded: Partial<Record<SoundName, AudioPlayer>> = {};
+const players: Partial<Record<SoundName, AudioPlayer>> = {};
+
+/** Pre-create all audio players so they're loaded and ready when needed */
+function preloadPlayers(): void {
+  if (Platform.OS === 'web') return;
+  for (const name of Object.keys(SOUNDS) as SoundName[]) {
+    try {
+      players[name] = createAudioPlayer(SOUNDS[name]);
+    } catch {
+      // Non-critical — player will be created on first play
+    }
+  }
+}
 
 async function play(name: SoundName, volume = 1.0): Promise<void> {
   // Audio not supported on web
@@ -86,14 +98,25 @@ async function play(name: SoundName, volume = 1.0): Promise<void> {
   if (CELEBRATION_SOUNDS.has(name) && !celebrationsEnabled) return;
 
   try {
-    let player = loaded[name];
+    let player = players[name];
     if (!player) {
       player = createAudioPlayer(SOUNDS[name]);
-      loaded[name] = player;
+      players[name] = player;
     }
 
     player.volume = volume;
-    await player.seekTo(0);
+
+    // Seek back to start if the player has already been loaded (replay).
+    // Wrap in its own try-catch so a seekTo failure on an unloaded player
+    // doesn't prevent play() from being called.
+    if (player.isLoaded) {
+      try {
+        await player.seekTo(0);
+      } catch {
+        // seekTo can fail if player is in a transitional state — still try to play
+      }
+    }
+
     player.play();
   } catch (err) {
     // Silently fail — sounds are non-critical
@@ -107,13 +130,15 @@ export async function initAudio(): Promise<void> {
   await loadSoundPrefs();
   try {
     await setAudioModeAsync({
-      playsInSilentMode: true,
+      playsInSilentMode: false,
       shouldPlayInBackground: false,
       shouldRouteThroughEarpiece: false,
     });
   } catch {
     // Non-critical
   }
+  // Pre-create players so audio is loaded before first interaction
+  preloadPlayers();
 }
 
 /**

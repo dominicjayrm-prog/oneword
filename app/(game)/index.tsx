@@ -331,7 +331,6 @@ export default function HomeScreen() {
     }
     if (wordCount === DESCRIPTION_WORD_COUNT && prevWordCount.current !== DESCRIPTION_WORD_COUNT) {
       haptic.success();
-      sound.inputDesc();
     }
     prevWordCount.current = wordCount;
   }, [wordCount]);
@@ -349,6 +348,7 @@ export default function HomeScreen() {
     if (!isExactlyFive || submitting || submitGuardRef.current) return;
     submitGuardRef.current = true;
     haptic.heavy();
+    sound.inputDesc();
     setSubmitting(true);
 
     // Check if this is the user's first-ever submission BEFORE submitting.

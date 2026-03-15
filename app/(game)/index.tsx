@@ -222,15 +222,23 @@ export default function HomeScreen() {
         }
 
         // Always pre-fetch yesterday's winner (won't display until recap is dismissed)
-        // Don't show to brand-new users who haven't played yet.
+        // Don't show to brand-new users until they've played on at least 2 different days.
         // Use the initial total_plays snapshot so that a first-time submission
         // (which bumps total_plays 0→1 and refreshes the profile) doesn't
         // retroactively trigger the yesterday-winner card on the same day.
         // Also guard against accounts created today — even if total_plays is
         // somehow > 0, a user shouldn't see yesterday's winner on sign-up day.
-        const hasPlayed = initialTotalPlaysRef.current !== null && initialTotalPlaysRef.current > 0;
+        // Additionally, require that the user has played on a previous day
+        // (last_played_date before today) — just submitting once isn't enough,
+        // they need to have been through at least one full day cycle.
+        const hasPlayedEnough = initialTotalPlaysRef.current !== null && initialTotalPlaysRef.current >= 2;
+        const hasPlayedPreviousDay =
+          initialTotalPlaysRef.current !== null &&
+          initialTotalPlaysRef.current > 0 &&
+          auth.profile?.last_played_date != null &&
+          auth.profile.last_played_date < gameDateStr;
         const createdToday = auth.profile?.created_at ? auth.profile.created_at.startsWith(gameDateStr) : false;
-        if (hasPlayed && !createdToday && d?.winner_dismissed_date !== gameDateStr) {
+        if ((hasPlayedEnough || hasPlayedPreviousDay) && !createdToday && d?.winner_dismissed_date !== gameDateStr) {
           const winner = await getYesterdayWinnerRef.current();
           if (!mountedRef.current) return;
           if (__DEV__) {
@@ -248,7 +256,19 @@ export default function HomeScreen() {
             setShowYesterdayWinner(true);
           }
         } else if (__DEV__) {
-          console.log('[Interstitial] Yesterday winner already dismissed for', gameDateStr);
+          console.log(
+            '[Interstitial] Skipping yesterday winner —',
+            'totalPlays:',
+            initialTotalPlaysRef.current,
+            'lastPlayed:',
+            auth.profile?.last_played_date,
+            'createdToday:',
+            createdToday,
+            'dismissed:',
+            d?.winner_dismissed_date,
+            'gameDate:',
+            gameDateStr,
+          );
         }
       } catch (err) {
         // Non-critical — just skip interstitial cards.

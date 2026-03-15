@@ -93,7 +93,7 @@ async function play(name: SoundName, volume = 1.0): Promise<void> {
     }
 
     player.volume = volume;
-    player.currentTime = 0;
+    await player.seekTo(0);
     player.play();
   } catch (err) {
     // Silently fail — sounds are non-critical
@@ -107,7 +107,7 @@ export async function initAudio(): Promise<void> {
   await loadSoundPrefs();
   try {
     await setAudioModeAsync({
-      playsInSilentMode: false,
+      playsInSilentMode: true,
       shouldPlayInBackground: false,
       shouldRouteThroughEarpiece: false,
     });

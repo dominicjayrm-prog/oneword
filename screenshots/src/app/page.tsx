@@ -492,17 +492,14 @@ const esScreenshots = [
 
 export default function ScreenshotPage() {
   const [sizeIdx, setSizeIdx] = useState(0);
-  const [lang, setLang] = useState<Lang>("en");
   const [exporting, setExporting] = useState(false);
-  const enRefs = useRef<(HTMLDivElement | null)[]>([]);
   const esRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   const selectedSize = SIZES[sizeIdx];
   const scale = selectedSize.w / BASE_W;
 
-  const exportOne = async (index: number, targetLang: Lang) => {
-    const refs = targetLang === "en" ? enRefs : esRefs;
-    const el = refs.current[index];
+  const exportOne = async (index: number) => {
+    const el = esRefs.current[index];
     if (!el) return;
 
     const png = await toPng(el, {
@@ -517,42 +514,25 @@ export default function ScreenshotPage() {
       },
     });
 
-    const suffix = targetLang === "es" ? "-es" : "";
     const link = document.createElement('a');
-    link.download = `${String(index + 1).padStart(2, '0')}-oneword${suffix}-${selectedSize.w}x${selectedSize.h}.png`;
+    link.download = `${String(index + 1).padStart(2, '0')}-oneword-es-${selectedSize.w}x${selectedSize.h}.png`;
     link.href = png;
     link.click();
   };
 
-  const exportAllLang = async (targetLang: Lang) => {
+  const exportAll = async () => {
     setExporting(true);
-    const data = targetLang === "en" ? enScreenshots : esScreenshots;
-    for (let i = 0; i < data.length; i++) {
-      await exportOne(i, targetLang);
+    for (let i = 0; i < esScreenshots.length; i++) {
+      await exportOne(i);
       await new Promise(r => setTimeout(r, 500));
     }
     setExporting(false);
   };
 
-  const currentScreenshots = lang === "en" ? enScreenshots : esScreenshots;
-  const currentRefs = lang === "en" ? enRefs : esRefs;
-
   return (
     <div style={{ backgroundColor: "#070710", minHeight: "100vh", padding: "20px" }}>
       {/* Controls */}
       <div style={{ display: "flex", justifyContent: "center", gap: "12px", alignItems: "center", marginBottom: "12px", flexWrap: "wrap" }}>
-        {/* Language toggle */}
-        <div style={{ display: "flex", gap: "0", borderRadius: "8px", overflow: "hidden", border: "2px solid #333" }}>
-          {(["en", "es"] as Lang[]).map(l => (
-            <button key={l} onClick={() => setLang(l)} style={{
-              padding: "6px 18px", border: "none", cursor: "pointer",
-              backgroundColor: lang === l ? C.primary : "#1a1a2e",
-              color: lang === l ? "#FFF" : "#666",
-              fontSize: "14px", fontWeight: 700,
-            }}>{l.toUpperCase()}</button>
-          ))}
-        </div>
-
         {/* Size selector */}
         <div style={{ display: "flex", gap: "4px" }}>
           {SIZES.map((s, i) => (
@@ -565,30 +545,25 @@ export default function ScreenshotPage() {
           ))}
         </div>
 
-        {/* Export buttons */}
-        <button onClick={() => exportAllLang("en")} disabled={exporting} style={{
+        {/* Export button */}
+        <button onClick={exportAll} disabled={exporting} style={{
           padding: "8px 20px", borderRadius: "8px", border: "none", cursor: "pointer",
-          backgroundColor: "#2ECC71", color: "#FFF", fontSize: "13px", fontWeight: 700,
+          backgroundColor: C.primary, color: "#FFF", fontSize: "13px", fontWeight: 700,
           opacity: exporting ? 0.5 : 1,
-        }}>{exporting ? "Exporting..." : "Export All EN"}</button>
-        <button onClick={() => exportAllLang("es")} disabled={exporting} style={{
-          padding: "8px 20px", borderRadius: "8px", border: "none", cursor: "pointer",
-          backgroundColor: "#E67E22", color: "#FFF", fontSize: "13px", fontWeight: 700,
-          opacity: exporting ? 0.5 : 1,
-        }}>{exporting ? "Exporting..." : "Export All ES"}</button>
+        }}>{exporting ? "Exporting..." : "Export All"}</button>
       </div>
 
       {/* Size info */}
       <p style={{ textAlign: "center", color: "#666", fontSize: "12px", marginBottom: "20px" }}>
-        {lang === "en" ? "English" : "Spanish"} — Exporting at {selectedSize.w} × {selectedSize.h} — Click any screenshot to export individually
+        Spanish — Exporting at {selectedSize.w} × {selectedSize.h} — Click any screenshot to export individually
       </p>
 
       {/* Screenshots grid */}
       <div style={{ display: "flex", flexWrap: "wrap", gap: "16px", justifyContent: "center" }}>
-        {currentScreenshots.map((s, i) => (
-          <div key={`${lang}-${i}`} onClick={() => exportOne(i, lang)} style={{ cursor: "pointer" }}>
+        {esScreenshots.map((s, i) => (
+          <div key={`es-${i}`} onClick={() => exportOne(i)} style={{ cursor: "pointer" }}>
             <Shot
-              shotRef={(el: HTMLDivElement | null) => { currentRefs.current[i] = el; }}
+              shotRef={(el: HTMLDivElement | null) => { esRefs.current[i] = el; }}
               label={s.l}
               headline={s.h}
             >
@@ -598,20 +573,6 @@ export default function ScreenshotPage() {
               {i + 1}. Click to export
             </p>
           </div>
-        ))}
-      </div>
-
-      {/* Hidden off-screen refs for the non-active language so Export All works for both */}
-      <div style={{ position: "absolute", left: "-9999px", top: 0 }}>
-        {(lang === "en" ? esScreenshots : enScreenshots).map((s, i) => (
-          <Shot
-            key={`hidden-${lang === "en" ? "es" : "en"}-${i}`}
-            shotRef={(el: HTMLDivElement | null) => { (lang === "en" ? esRefs : enRefs).current[i] = el; }}
-            label={s.l}
-            headline={s.h}
-          >
-            {s.c}
-          </Shot>
         ))}
       </div>
     </div>

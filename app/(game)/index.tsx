@@ -281,6 +281,14 @@ export default function HomeScreen() {
     })();
   }, [auth.session, auth.profile, gameLoading]);
 
+  // If we have a session but profile is null (e.g. race condition during signup),
+  // try to refresh the profile so the username loads properly.
+  useEffect(() => {
+    if (auth.session && !auth.profile && !auth.loading) {
+      auth.refreshProfile();
+    }
+  }, [auth.session, auth.profile, auth.loading]);
+
   // Set/clear app badge based on whether the user has played today
   useEffect(() => {
     if (Platform.OS === 'web') return;
@@ -1026,7 +1034,9 @@ export default function HomeScreen() {
             <Text style={styles.avatarSmallText}>{auth.profile?.avatar_url || '\uD83C\uDFAD'}</Text>
           </View>
           <Text style={[styles.greeting, { color: colors.textSecondary }]}>
-            {t('game.greeting', { username: auth.profile?.username ?? 'player' })}
+            {t('game.greeting', {
+              username: auth.profile?.username || auth.session?.user?.user_metadata?.username || 'player',
+            })}
           </Text>
           {auth.profile && auth.profile.current_streak > 0 && (
             <View style={styles.streakRow}>
@@ -1118,7 +1128,9 @@ export default function HomeScreen() {
             <Text style={styles.avatarSmallText}>{auth.profile?.avatar_url || '\uD83C\uDFAD'}</Text>
           </View>
           <Text style={[styles.greeting, { color: colors.textSecondary }]}>
-            {t('game.greeting', { username: auth.profile?.username ?? 'player' })}
+            {t('game.greeting', {
+              username: auth.profile?.username || auth.session?.user?.user_metadata?.username || 'player',
+            })}
           </Text>
           <Text style={[styles.todayLabel, { color: colors.textMuted }]}>{t('game.todays_word')}</Text>
         </TouchableOpacity>

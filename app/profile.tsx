@@ -66,7 +66,8 @@ export default function ProfileScreen() {
   const router = useRouter();
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const { profile, signOut, updateAvatar, updateLanguage, deleteAccount, language } = useAuthContext();
+  const { session, profile, signOut, updateAvatar, updateLanguage, deleteAccount, refreshProfile, language } =
+    useAuthContext();
   const { showToast } = useToast();
   const [showAvatarPicker, setShowAvatarPicker] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -80,11 +81,24 @@ export default function ProfileScreen() {
     await setSoundPref(key, value);
   }, []);
 
+  // Only redirect if the user is truly logged out (no session).
+  // If session exists but profile hasn't loaded yet, show loading instead of bouncing back.
   useEffect(() => {
-    if (!profile) {
+    if (!session) {
       router.replace('/');
     }
-  }, [profile]);
+  }, [session]);
+
+  // Try to load profile if we have a session but profile is null
+  useEffect(() => {
+    if (session && !profile) {
+      refreshProfile();
+    }
+  }, [session, profile]);
+
+  if (!session) {
+    return null;
+  }
 
   if (!profile) {
     return (

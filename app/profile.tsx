@@ -66,7 +66,8 @@ export default function ProfileScreen() {
   const router = useRouter();
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const { session, profile, signOut, updateAvatar, updateLanguage, deleteAccount, refreshProfile, language } = useAuthContext();
+  const { session, profile, signOut, updateAvatar, updateLanguage, deleteAccount, refreshProfile, language } =
+    useAuthContext();
   const { showToast } = useToast();
   const [showAvatarPicker, setShowAvatarPicker] = useState(false);
   const [deleting, setDeleting] = useState(false);

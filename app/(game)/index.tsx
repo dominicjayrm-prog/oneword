@@ -1034,7 +1034,9 @@ export default function HomeScreen() {
             <Text style={styles.avatarSmallText}>{auth.profile?.avatar_url || '\uD83C\uDFAD'}</Text>
           </View>
           <Text style={[styles.greeting, { color: colors.textSecondary }]}>
-            {t('game.greeting', { username: auth.profile?.username || auth.session?.user?.user_metadata?.username || 'player' })}
+            {t('game.greeting', {
+              username: auth.profile?.username || auth.session?.user?.user_metadata?.username || 'player',
+            })}
           </Text>
           {auth.profile && auth.profile.current_streak > 0 && (
             <View style={styles.streakRow}>
@@ -1126,7 +1128,9 @@ export default function HomeScreen() {
             <Text style={styles.avatarSmallText}>{auth.profile?.avatar_url || '\uD83C\uDFAD'}</Text>
           </View>
           <Text style={[styles.greeting, { color: colors.textSecondary }]}>
-            {t('game.greeting', { username: auth.profile?.username || auth.session?.user?.user_metadata?.username || 'player' })}
+            {t('game.greeting', {
+              username: auth.profile?.username || auth.session?.user?.user_metadata?.username || 'player',
+            })}
           </Text>
           <Text style={[styles.todayLabel, { color: colors.textMuted }]}>{t('game.todays_word')}</Text>
         </TouchableOpacity>

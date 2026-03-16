@@ -92,6 +92,7 @@ export default function HomeScreen() {
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
   const [authError, setAuthError] = useState('');
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [authSubmitting, setAuthSubmitting] = useState(false);
   const [selectedLang, setSelectedLang] = useState(auth.language);
   const [resending, setResending] = useState(false);
@@ -168,11 +169,14 @@ export default function HomeScreen() {
   const initialTotalPlaysRef = useRef<number | null>(null);
   // Track the session user ID so we can detect account switches (not just logout).
   const prevSessionUserRef = useRef<string | null>(null);
+  // Stable primitive derived from auth.session — avoids re-triggering effects
+  // when Supabase emits TOKEN_REFRESHED with a new session object reference.
+  const sessionUserId = auth.session?.user?.id ?? null;
+  const hasProfile = !!auth.profile;
   // Reset interstitial guards AND component state on logout or account switch
   // so a new user never inherits stale yesterday-winner / recap data.
   useEffect(() => {
-    const currentUserId = auth.session?.user?.id ?? null;
-    if (currentUserId !== prevSessionUserRef.current) {
+    if (sessionUserId !== prevSessionUserRef.current) {
       // User changed (logout, login as different user, or first load)
       interstitialStartedRef.current = false;
       initialTotalPlaysRef.current = null;
@@ -182,27 +186,26 @@ export default function HomeScreen() {
       setYesterdayData(null);
       setShowWeeklyRecap(false);
       setRecapData(null);
-      prevSessionUserRef.current = currentUserId;
+      prevSessionUserRef.current = sessionUserId;
     }
-  }, [auth.session]);
+  }, [sessionUserId]);
   useEffect(() => {
     if (auth.profile && initialTotalPlaysRef.current === null) {
       initialTotalPlaysRef.current = auth.profile.total_plays ?? 0;
     }
   }, [auth.profile]);
   useEffect(() => {
-    if (!auth.session || !auth.profile || gameLoading) return;
+    if (!sessionUserId || !hasProfile || gameLoading) return;
     if (interstitialStartedRef.current) return;
     interstitialStartedRef.current = true;
 
-    const userId = auth.session.user.id;
     (async () => {
       try {
         const gameDateStr = getGameDate();
 
         // Fetch server-side dismissal state (works across devices)
         const { data: dismissals } = await supabase.rpc('get_dismissals', {
-          p_user_id: userId,
+          p_user_id: sessionUserId,
         });
         const d = dismissals && dismissals.length > 0 ? dismissals[0] : null;
 
@@ -279,7 +282,7 @@ export default function HomeScreen() {
         console.warn('[HomeScreen] Interstitial fetch failed:', err);
       }
     })();
-  }, [auth.session, auth.profile, gameLoading]);
+  }, [sessionUserId, hasProfile, gameLoading]);
 
   // If we have a session but profile is null (e.g. race condition during signup),
   // try to refresh the profile so the username loads properly.
@@ -298,31 +301,31 @@ export default function HomeScreen() {
 
   const dismissWeeklyRecap = useCallback(async () => {
     setShowWeeklyRecap(false);
-    if (!auth.session) return;
+    if (!sessionUserId) return;
     try {
       await supabase.rpc('set_dismissal', {
-        p_user_id: auth.session.user.id,
+        p_user_id: sessionUserId,
         p_field: 'recap_dismissed_week',
         p_value: getGameMonday(),
       });
     } catch (err) {
       console.warn('[HomeScreen] Failed to dismiss weekly recap:', err);
     }
-  }, [auth.session]);
+  }, [sessionUserId]);
 
   const dismissYesterdayWinner = useCallback(async () => {
     setShowYesterdayWinner(false);
-    if (!auth.session) return;
+    if (!sessionUserId) return;
     try {
       await supabase.rpc('set_dismissal', {
-        p_user_id: auth.session.user.id,
+        p_user_id: sessionUserId,
         p_field: 'winner_dismissed_date',
         p_value: getGameDate(),
       });
     } catch (err) {
       console.warn('[HomeScreen] Failed to dismiss yesterday winner:', err);
     }
-  }, [auth.session]);
+  }, [sessionUserId]);
 
   // Normalize Unicode whitespace (non-breaking space, em space, etc.) to regular spaces
   const wordCount = input
@@ -894,45 +897,60 @@ export default function HomeScreen() {
               title={authMode === 'signin' ? t('auth.login_button') : t('auth.signup_button')}
               onPress={handleAuth}
               loading={authSubmitting}
-              disabled={!email || !password || (authMode === 'signup' && !username)}
+              disabled={!email || !password || (authMode === 'signup' && (!username || !agreedToTerms))}
             />
             {authMode === 'signup' && (
-              <Text style={[styles.legalText, { color: colors.textMuted }]}>
-                {t('legal.agree_prefix')}
-                <Text
-                  style={{ color: colors.primary }}
-                  onPress={() =>
-                    router.push({
-                      pathname: '/webview',
-                      params: {
-                        url:
-                          selectedLang === 'es' ? 'https://playoneword.app/es/terms' : 'https://playoneword.app/terms',
-                        title: t('legal.terms_of_use'),
-                      },
-                    })
-                  }
+              <TouchableOpacity
+                style={styles.legalRow}
+                onPress={() => setAgreedToTerms((prev) => !prev)}
+                activeOpacity={0.7}
+              >
+                <View
+                  style={[
+                    styles.legalCheckbox,
+                    { borderColor: colors.textMuted },
+                    agreedToTerms && { backgroundColor: colors.primary, borderColor: colors.primary },
+                  ]}
                 >
-                  {t('legal.terms_of_use')}
+                  {agreedToTerms && <Text style={styles.legalCheckmark}>✓</Text>}
+                </View>
+                <Text style={[styles.legalText, { color: colors.textMuted }]}>
+                  {t('legal.agree_prefix')}
+                  <Text
+                    style={{ color: colors.primary }}
+                    onPress={() =>
+                      router.push({
+                        pathname: '/webview',
+                        params: {
+                          url:
+                            selectedLang === 'es' ? 'https://playoneword.app/es/terms' : 'https://playoneword.app/terms',
+                          title: t('legal.terms_of_use'),
+                        },
+                      })
+                    }
+                  >
+                    {t('legal.terms_of_use')}
+                  </Text>
+                  {t('legal.and')}
+                  <Text
+                    style={{ color: colors.primary }}
+                    onPress={() =>
+                      router.push({
+                        pathname: '/webview',
+                        params: {
+                          url:
+                            selectedLang === 'es'
+                              ? 'https://playoneword.app/es/privacy'
+                              : 'https://playoneword.app/privacy',
+                          title: t('legal.privacy_policy'),
+                        },
+                      })
+                    }
+                  >
+                    {t('legal.privacy_policy')}
+                  </Text>
                 </Text>
-                {t('legal.and')}
-                <Text
-                  style={{ color: colors.primary }}
-                  onPress={() =>
-                    router.push({
-                      pathname: '/webview',
-                      params: {
-                        url:
-                          selectedLang === 'es'
-                            ? 'https://playoneword.app/es/privacy'
-                            : 'https://playoneword.app/privacy',
-                        title: t('legal.privacy_policy'),
-                      },
-                    })
-                  }
-                >
-                  {t('legal.privacy_policy')}
-                </Text>
-              </Text>
+              </TouchableOpacity>
             )}
             {authMode === 'signin' && (
               <TouchableOpacity onPress={() => setForgotMode(true)} activeOpacity={0.7}>
@@ -1366,10 +1384,30 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontWeight: '600',
   },
+  legalRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: spacing.sm,
+  },
+  legalCheckbox: {
+    width: 20,
+    height: 20,
+    borderRadius: 4,
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 1,
+  },
+  legalCheckmark: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '700',
+    lineHeight: 16,
+  },
   legalText: {
     fontSize: fontSize.xs,
-    textAlign: 'center',
     lineHeight: fontSize.xs * 1.5,
+    flex: 1,
   },
   verifyEmoji: {
     fontSize: 64,

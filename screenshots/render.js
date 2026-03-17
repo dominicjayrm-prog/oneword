@@ -94,7 +94,7 @@ async function render() {
 
   // Stitch frames into MP4 using FFmpeg
   console.log("Stitching frames into MP4...");
-  const ffmpegCmd = `"${FFMPEG}" -y -framerate ${FPS} -i "${FRAMES_DIR}/frame_%06d.png" -c:v libx264 -preset slow -crf 18 -pix_fmt yuv420p -movflags +faststart "${OUTPUT_FILE}"`;
+  const ffmpegCmd = `"${FFMPEG}" -y -framerate ${FPS} -i "${FRAMES_DIR}/frame_%06d.png" -vf "scale=${WIDTH}:${HEIGHT}:flags=lanczos" -c:v libx264 -preset slow -crf 18 -pix_fmt yuv420p -movflags +faststart "${OUTPUT_FILE}"`;
 
   execSync(ffmpegCmd, { stdio: "inherit" });
 

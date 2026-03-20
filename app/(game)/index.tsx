@@ -923,7 +923,9 @@ export default function HomeScreen() {
                         pathname: '/webview',
                         params: {
                           url:
-                            selectedLang === 'es' ? 'https://playoneword.app/es/terms' : 'https://playoneword.app/terms',
+                            selectedLang === 'es'
+                              ? 'https://playoneword.app/es/terms'
+                              : 'https://playoneword.app/terms',
                           title: t('legal.terms_of_use'),
                         },
                       })

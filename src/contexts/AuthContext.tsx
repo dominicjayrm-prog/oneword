@@ -417,10 +417,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     // On web, redirect to the web URL so the browser can handle the auth code.
     // On native, use the custom scheme deep link.
-    const redirectTo =
-      Platform.OS === 'web'
-        ? `${window.location.origin}/reset-password`
-        : 'oneword://reset-password';
+    const redirectTo = Platform.OS === 'web' ? `${window.location.origin}/reset-password` : 'oneword://reset-password';
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo,
     });

@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { Linking } from 'react-native';
+import { Linking, Platform } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { rateLimits, resetRateLimit } from '../lib/rateLimit';
 import { isUsernameClean } from '../lib/usernameValidator';
@@ -131,7 +131,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     }
 
-    // Check if app was opened via deep link
+    // On web, Supabase's detectSessionInUrl handles the code exchange
+    // automatically. We just need to detect if this is a password reset
+    // redirect so we can flag recovery mode.
+    if (Platform.OS === 'web') {
+      if (window.location.pathname.includes('reset-password')) {
+        // The SIGNED_IN event from detectSessionInUrl may fire instead of
+        // PASSWORD_RECOVERY with PKCE, so set the flag proactively.
+        // It will be confirmed/overridden when the auth state change fires.
+        const checkSession = () => {
+          supabase.auth.getSession().then(({ data: { session: s } }) => {
+            if (s) {
+              setPasswordRecovery(true);
+            }
+          });
+        };
+        // Small delay to let detectSessionInUrl complete
+        setTimeout(checkSession, 500);
+      }
+
+      return () => {
+        subscription.unsubscribe();
+      };
+    }
+
+    // Native: check if app was opened via deep link
     Linking.getInitialURL().then((url) => {
       if (url) handleDeepLink({ url });
     });
@@ -391,8 +415,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!rateLimits.resetPassword()) {
       return { error: new Error('Too many attempts. Please wait a moment.') };
     }
+    // On web, redirect to the web URL so the browser can handle the auth code.
+    // On native, use the custom scheme deep link.
+    const redirectTo =
+      Platform.OS === 'web'
+        ? `${window.location.origin}/reset-password`
+        : 'oneword://reset-password';
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: 'oneword://reset-password',
+      redirectTo,
     });
     return { error };
   }

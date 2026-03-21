@@ -625,28 +625,9 @@ export default function HomeScreen() {
     auth.updateLanguage(lang);
   }
 
-  if (loading) {
-    return (
-      <View style={[styles.center, { backgroundColor: colors.background }]}>
-        <LoadingSpinner message={t('loading.word')} />
-      </View>
-    );
-  }
-
-  if (gameError && auth.session) {
-    return (
-      <View style={[styles.container, { backgroundColor: colors.background }]}>
-        <ThemeToggle />
-        <ErrorState
-          title={!isOnline ? t('offline.no_connection') : t('errors.load_word')}
-          message={!isOnline ? t('offline.connect_for_word') : t('errors.network_retry')}
-          onRetry={refresh}
-        />
-      </View>
-    );
-  }
-
-  // User clicked the reset link in email — show "Set new password" form
+  // User clicked the reset link in email — show "Set new password" form.
+  // This check must come before loading/error checks so the user can set
+  // their new password without being blocked by game loading state.
   if (auth.passwordRecovery) {
     return (
       <KeyboardAvoidingView
@@ -693,6 +674,27 @@ export default function HomeScreen() {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+    );
+  }
+
+  if (loading) {
+    return (
+      <View style={[styles.center, { backgroundColor: colors.background }]}>
+        <LoadingSpinner message={t('loading.word')} />
+      </View>
+    );
+  }
+
+  if (gameError && auth.session) {
+    return (
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <ThemeToggle />
+        <ErrorState
+          title={!isOnline ? t('offline.no_connection') : t('errors.load_word')}
+          message={!isOnline ? t('offline.connect_for_word') : t('errors.network_retry')}
+          onRetry={refresh}
+        />
+      </View>
     );
   }
 

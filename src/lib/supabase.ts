@@ -90,6 +90,9 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     storage: ExpoSecureStoreAdapter,
     autoRefreshToken: true,
     persistSession: true,
-    detectSessionInUrl: false,
+    // On web, allow Supabase to detect auth tokens/codes in the URL
+    // (e.g. after password reset redirect). On native, deep links are
+    // handled manually in AuthContext.
+    detectSessionInUrl: Platform.OS === 'web',
   },
 });

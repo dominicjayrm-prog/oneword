@@ -415,9 +415,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!rateLimits.resetPassword()) {
       return { error: new Error('Too many attempts. Please wait a moment.') };
     }
-    // On web, redirect to the web URL so the browser can handle the auth code.
-    // On native, use the custom scheme deep link.
-    const redirectTo = Platform.OS === 'web' ? `${window.location.origin}/reset-password` : 'oneword://reset-password';
+    // On web, redirect to the production web URL so the email link always
+    // works regardless of where the reset was triggered (localhost vs prod).
+    // On native, use the custom scheme deep link so iOS/Android opens the app.
+    const siteUrl = process.env.EXPO_PUBLIC_SITE_URL || (Platform.OS === 'web' ? window.location.origin : '');
+    const redirectTo = Platform.OS === 'web' ? `${siteUrl}/reset-password` : 'oneword://reset-password';
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo,
     });

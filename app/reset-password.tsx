@@ -1,30 +1,56 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useTheme } from '../src/contexts/ThemeContext';
 import { useAuthContext } from '../src/contexts/AuthContext';
+import { supabase } from '../src/lib/supabase';
 
 /**
- * This route catches the `oneword://reset-password` deep link from the
- * password-reset email. The auth-code exchange and passwordRecovery flag
- * are handled by AuthContext's deep link listener. We wait for the exchange
- * to complete (passwordRecovery becomes true) before redirecting to the
- * game screen, which renders the "Set new password" form.
+ * This route catches the `oneword://reset-password?code=AUTH_CODE` deep link
+ * from the password-reset email. On iOS, the Linking API may not deliver the
+ * URL to AuthContext's deep link handler (Expo Router consumes the deep link
+ * for routing), so we handle the code exchange directly here using the query
+ * params provided by Expo Router.
  */
 export default function ResetPasswordRedirect() {
   const router = useRouter();
   const { colors } = useTheme();
-  const { passwordRecovery } = useAuthContext();
+  const { passwordRecovery, markPasswordRecovery } = useAuthContext();
+  const params = useLocalSearchParams<{ code?: string }>();
+  const exchangeAttempted = useRef(false);
 
-  // Redirect once the code exchange has completed and recovery mode is set
+  // Exchange the auth code for a session and flag recovery mode
+  useEffect(() => {
+    const code = params.code;
+    if (!code || exchangeAttempted.current) return;
+    exchangeAttempted.current = true;
+
+    supabase.auth
+      .exchangeCodeForSession(code)
+      .then(({ error }) => {
+        if (error) {
+          console.error('Reset password code exchange failed:', error.message);
+          // Even on error, redirect to game — the user might already have a
+          // session and the deep link handler in AuthContext may have handled it.
+          router.replace('/(game)');
+          return;
+        }
+        markPasswordRecovery();
+      })
+      .catch((err) => {
+        console.error('Reset password code exchange threw:', err);
+        router.replace('/(game)');
+      });
+  }, [params.code]);
+
+  // Redirect once recovery mode is confirmed
   useEffect(() => {
     if (passwordRecovery) {
       router.replace('/(game)');
     }
   }, [passwordRecovery]);
 
-  // Safety fallback: if the exchange takes too long or fails, redirect
-  // after 10 seconds so the user isn't stuck on a blank spinner forever
+  // Safety fallback: if everything fails, don't strand the user on a spinner
   useEffect(() => {
     const timer = setTimeout(() => {
       router.replace('/(game)');

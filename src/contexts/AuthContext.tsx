@@ -436,6 +436,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function signOut() {
+    setPasswordRecovery(false);
     await supabase.auth.signOut();
   }
 

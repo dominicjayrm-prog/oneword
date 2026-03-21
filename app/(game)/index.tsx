@@ -612,6 +612,7 @@ export default function HomeScreen() {
       } else {
         setNewPassword('');
         setConfirmPassword('');
+        showToast(t('auth.password_updated'), 'success');
       }
     } catch {
       setResetError(t('errors.network_retry'));

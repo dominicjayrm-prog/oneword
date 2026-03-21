@@ -15,7 +15,7 @@ import { supabase } from '../src/lib/supabase';
 export default function ResetPasswordRedirect() {
   const router = useRouter();
   const { colors } = useTheme();
-  const { passwordRecovery, markPasswordRecovery } = useAuthContext();
+  const { passwordRecovery, markPasswordRecovery, signOut } = useAuthContext();
   const params = useLocalSearchParams<{ code?: string }>();
   const exchangeAttempted = useRef(false);
 
@@ -30,16 +30,16 @@ export default function ResetPasswordRedirect() {
       .then(({ error }) => {
         if (error) {
           console.error('Reset password code exchange failed:', error.message);
-          // Even on error, redirect to game — the user might already have a
-          // session and the deep link handler in AuthContext may have handled it.
-          router.replace('/(game)');
+          // Exchange failed — no recovery session exists. Sign out any stale
+          // session so the user lands on the login screen, not inside the game.
+          signOut().then(() => router.replace('/(game)'));
           return;
         }
         markPasswordRecovery();
       })
       .catch((err) => {
         console.error('Reset password code exchange threw:', err);
-        router.replace('/(game)');
+        signOut().then(() => router.replace('/(game)'));
       });
   }, [params.code]);
 
@@ -50,13 +50,17 @@ export default function ResetPasswordRedirect() {
     }
   }, [passwordRecovery]);
 
-  // Safety fallback: if everything fails, don't strand the user on a spinner
+  // Safety fallback: if the exchange hangs or something unexpected happens,
+  // sign out and redirect so the user isn't stranded on a blank spinner.
+  // They'll land on the login screen and can request a new reset link.
   useEffect(() => {
     const timer = setTimeout(() => {
-      router.replace('/(game)');
+      if (!passwordRecovery) {
+        signOut().then(() => router.replace('/(game)'));
+      }
     }, 10000);
     return () => clearTimeout(timer);
-  }, []);
+  }, [passwordRecovery]);
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>

@@ -679,11 +679,12 @@ const styles = StyleSheet.create({
   },
   deleteButton: {
     alignItems: 'center',
-    paddingVertical: spacing.sm,
+    paddingVertical: spacing.md,
+    marginTop: spacing.lg,
   },
   deleteText: {
-    fontSize: fontSize.sm,
-    fontWeight: '500',
+    fontSize: fontSize.md,
+    fontWeight: '600',
   },
   deleteConfirmBox: {
     borderRadius: borderRadius.lg,

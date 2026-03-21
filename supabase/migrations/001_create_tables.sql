@@ -7,23 +7,23 @@ CREATE TABLE daily_words (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Seed the 15 launch words with fixed dates (March 20 – April 3, 2026)
+-- Seed the 15 launch words with fixed dates (March 21 – April 4, 2026)
 INSERT INTO daily_words (word, date, category) VALUES
-  ('RAIN',      '2026-03-20', 'nature'),
-  ('MONDAY',    '2026-03-21', 'life'),
-  ('SILENCE',   '2026-03-22', 'abstract'),
-  ('PIZZA',     '2026-03-23', 'food'),
-  ('JEALOUSY',  '2026-03-24', 'emotion'),
-  ('KEYS',      '2026-03-25', 'objects'),
-  ('CHILDHOOD', '2026-03-26', 'abstract'),
-  ('WIFI',      '2026-03-27', 'modern'),
-  ('GRAVITY',   '2026-03-28', 'science'),
-  ('FRIDAY',    '2026-03-29', 'life'),
-  ('OCEAN',     '2026-03-30', 'nature'),
-  ('COFFEE',    '2026-03-31', 'food'),
-  ('REGRET',    '2026-04-01', 'emotion'),
-  ('MIRROR',    '2026-04-02', 'objects'),
-  ('HOME',      '2026-04-03', 'abstract');
+  ('RAIN',      '2026-03-21', 'nature'),
+  ('MONDAY',    '2026-03-22', 'life'),
+  ('SILENCE',   '2026-03-23', 'abstract'),
+  ('PIZZA',     '2026-03-24', 'food'),
+  ('JEALOUSY',  '2026-03-25', 'emotion'),
+  ('KEYS',      '2026-03-26', 'objects'),
+  ('CHILDHOOD', '2026-03-27', 'abstract'),
+  ('WIFI',      '2026-03-28', 'modern'),
+  ('GRAVITY',   '2026-03-29', 'science'),
+  ('FRIDAY',    '2026-03-30', 'life'),
+  ('OCEAN',     '2026-03-31', 'nature'),
+  ('COFFEE',    '2026-04-01', 'food'),
+  ('REGRET',    '2026-04-02', 'emotion'),
+  ('MIRROR',    '2026-04-03', 'objects'),
+  ('HOME',      '2026-04-04', 'abstract');
 
 -- User profiles (extends Supabase auth)
 CREATE TABLE profiles (

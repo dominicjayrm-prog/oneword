@@ -159,6 +159,13 @@ function InnerLayout() {
             animation: 'slide_from_bottom',
           }}
         />
+        <Stack.Screen
+          name="reset-password"
+          options={{
+            headerShown: false,
+            animation: 'none',
+          }}
+        />
       </Stack>
       <NetworkBanner />
     </MobileContainer>

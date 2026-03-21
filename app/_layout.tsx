@@ -43,6 +43,11 @@ function InnerLayout() {
     if (!onboardingChecked) return;
 
     const inOnboarding = segments[0] === '(onboarding)';
+    const inResetPassword = segments[0] === 'reset-password';
+
+    // Don't redirect away from the reset-password route — it needs to
+    // complete the auth code exchange before navigating elsewhere.
+    if (inResetPassword) return;
 
     // Re-read the flag from storage to catch writes from the onboarding screen,
     // which updates AsyncStorage directly without being able to set this component's state.

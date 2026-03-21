@@ -26,6 +26,7 @@ interface AuthContextType {
   clearPendingVerification: () => void;
   resetPassword: (email: string) => Promise<{ error: Error | null }>;
   updatePassword: (newPassword: string) => Promise<{ error: Error | null }>;
+  markPasswordRecovery: () => void;
 }
 
 // Strict default: throws if used outside <AuthProvider>.
@@ -97,20 +98,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           console.error('Deep link contained invalid auth code');
           return;
         }
-        // Detect if this deep link is from a password reset email.
-        // With PKCE, exchangeCodeForSession may fire SIGNED_IN instead of
-        // PASSWORD_RECOVERY, so we manually flag recovery mode.
+        // Skip exchange for password-reset deep links — the reset-password
+        // route component handles the exchange itself using Expo Router's
+        // search params (which are more reliable on iOS than Linking API).
         const isPasswordReset = url.toLowerCase().includes('reset-password');
-        supabase.auth
-          .exchangeCodeForSession(code)
-          .then(() => {
-            if (isPasswordReset) {
-              setPasswordRecovery(true);
-            }
-          })
-          .catch((err) => {
-            console.error('Failed to exchange code for session:', err);
-          });
+        if (isPasswordReset) {
+          return;
+        }
+        supabase.auth.exchangeCodeForSession(code).catch((err) => {
+          console.error('Failed to exchange code for session:', err);
+        });
         return;
       }
 
@@ -434,6 +431,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error };
   }
 
+  function markPasswordRecovery() {
+    setPasswordRecovery(true);
+  }
+
   async function signOut() {
     setPasswordRecovery(false);
     await supabase.auth.signOut();
@@ -458,6 +459,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       clearPendingVerification,
       resetPassword,
       updatePassword,
+      markPasswordRecovery,
     }),
     [
       session,
@@ -477,6 +479,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       clearPendingVerification,
       resetPassword,
       updatePassword,
+      markPasswordRecovery,
     ],
   );
 

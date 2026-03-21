@@ -2,23 +2,33 @@ import { useEffect } from 'react';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTheme } from '../src/contexts/ThemeContext';
+import { useAuthContext } from '../src/contexts/AuthContext';
 
 /**
- * This route exists solely to catch the `oneword://reset-password` deep link
- * that Supabase sends in the password-reset email. The actual auth-code
- * exchange and PASSWORD_RECOVERY event are handled by AuthContext's Linking
- * listener, so all we need to do here is redirect to the game screen where
- * the "Set new password" UI is rendered when `auth.passwordRecovery` is true.
+ * This route catches the `oneword://reset-password` deep link from the
+ * password-reset email. The auth-code exchange and passwordRecovery flag
+ * are handled by AuthContext's deep link listener. We wait for the exchange
+ * to complete (passwordRecovery becomes true) before redirecting to the
+ * game screen, which renders the "Set new password" form.
  */
 export default function ResetPasswordRedirect() {
   const router = useRouter();
   const { colors } = useTheme();
+  const { passwordRecovery } = useAuthContext();
 
+  // Redirect once the code exchange has completed and recovery mode is set
   useEffect(() => {
-    // Small delay to let AuthContext process the deep link code first
+    if (passwordRecovery) {
+      router.replace('/(game)');
+    }
+  }, [passwordRecovery]);
+
+  // Safety fallback: if the exchange takes too long or fails, redirect
+  // after 10 seconds so the user isn't stuck on a blank spinner forever
+  useEffect(() => {
     const timer = setTimeout(() => {
       router.replace('/(game)');
-    }, 100);
+    }, 10000);
     return () => clearTimeout(timer);
   }, []);
 

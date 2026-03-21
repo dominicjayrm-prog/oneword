@@ -97,9 +97,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           console.error('Deep link contained invalid auth code');
           return;
         }
-        supabase.auth.exchangeCodeForSession(code).catch((err) => {
-          console.error('Failed to exchange code for session:', err);
-        });
+        // Detect if this deep link is from a password reset email.
+        // With PKCE, exchangeCodeForSession may fire SIGNED_IN instead of
+        // PASSWORD_RECOVERY, so we manually flag recovery mode.
+        const isPasswordReset = url.toLowerCase().includes('reset-password');
+        supabase.auth
+          .exchangeCodeForSession(code)
+          .then(() => {
+            if (isPasswordReset) {
+              setPasswordRecovery(true);
+            }
+          })
+          .catch((err) => {
+            console.error('Failed to exchange code for session:', err);
+          });
         return;
       }
 

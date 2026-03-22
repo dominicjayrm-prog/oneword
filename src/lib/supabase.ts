@@ -90,6 +90,12 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     storage: ExpoSecureStoreAdapter,
     autoRefreshToken: true,
     persistSession: true,
+    // Use implicit flow so email-based auth (password reset, magic links)
+    // returns tokens directly in the URL hash fragment instead of a PKCE
+    // authorization code. This avoids code_verifier storage/retrieval issues
+    // on native platforms where the app may be killed between requesting the
+    // reset and clicking the email link.
+    flowType: 'implicit',
     // On web, allow Supabase to detect auth tokens/codes in the URL
     // (e.g. after password reset redirect). On native, deep links are
     // handled manually in AuthContext.

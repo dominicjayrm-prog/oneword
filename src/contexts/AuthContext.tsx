@@ -98,17 +98,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           console.error('Deep link contained invalid auth code');
           return;
         }
-        const isPasswordReset = url.toLowerCase().includes('reset-password');
-        supabase.auth
-          .exchangeCodeForSession(code)
-          .then(({ error }) => {
-            if (!error && isPasswordReset) {
-              setPasswordRecovery(true);
-            }
-          })
-          .catch((err) => {
-            console.error('Failed to exchange code for session:', err);
-          });
+        // PKCE fallback: exchange code if we somehow still receive one
+        supabase.auth.exchangeCodeForSession(code).catch((err) => {
+          console.error('Failed to exchange code for session:', err);
+        });
         return;
       }
 
@@ -123,9 +116,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           console.error('Deep link contained invalid tokens');
           return;
         }
-        supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken }).catch((err) => {
-          console.error('Failed to set session from hash fragment:', err);
-        });
+        const tokenType = params.get('type');
+        supabase.auth
+          .setSession({ access_token: accessToken, refresh_token: refreshToken })
+          .then(({ error }) => {
+            if (!error && tokenType === 'recovery') {
+              setPasswordRecovery(true);
+            }
+          })
+          .catch((err) => {
+            console.error('Failed to set session from hash fragment:', err);
+          });
       }
     }
 

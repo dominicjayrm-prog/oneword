@@ -2,7 +2,7 @@
   "expo": {
     "name": "OneWord",
     "slug": "oneword",
-    "version": "1.0.0",
+    "version": "1.1",
     "orientation": "portrait",
     "scheme": "oneword",
     "icon": "./assets/icon.png",
@@ -16,6 +16,7 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.playoneword.app",
+      "buildNumber": "19",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
         "UIBackgroundModes": []

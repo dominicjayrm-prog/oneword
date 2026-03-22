@@ -98,16 +98,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           console.error('Deep link contained invalid auth code');
           return;
         }
-        // Skip exchange for password-reset deep links — the reset-password
-        // route component handles the exchange itself using Expo Router's
-        // search params (which are more reliable on iOS than Linking API).
         const isPasswordReset = url.toLowerCase().includes('reset-password');
-        if (isPasswordReset) {
-          return;
-        }
-        supabase.auth.exchangeCodeForSession(code).catch((err) => {
-          console.error('Failed to exchange code for session:', err);
-        });
+        supabase.auth
+          .exchangeCodeForSession(code)
+          .then(({ error }) => {
+            if (!error && isPasswordReset) {
+              setPasswordRecovery(true);
+            }
+          })
+          .catch((err) => {
+            console.error('Failed to exchange code for session:', err);
+          });
         return;
       }
 

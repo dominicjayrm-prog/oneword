@@ -1,87 +1,65 @@
 import { useEffect, useRef } from 'react';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useRouter } from 'expo-router';
 import * as Linking from 'expo-linking';
 import { useTheme } from '../src/contexts/ThemeContext';
 import { useAuthContext } from '../src/contexts/AuthContext';
 import { supabase } from '../src/lib/supabase';
 
 /**
- * This route catches the `oneword://reset-password?code=AUTH_CODE` deep link
- * from the password-reset email. On iOS, Expo Router may not always deliver
- * query params via useLocalSearchParams for custom URL scheme deep links, so
- * we also try reading the code directly from the Linking API as a fallback.
+ * This route catches the `oneword://reset-password#access_token=...&type=recovery`
+ * deep link from the password-reset email (implicit flow). The AuthContext deep link
+ * handler may also process the URL — this route acts as a fallback and waits for the
+ * passwordRecovery flag before redirecting to the game screen.
  */
 export default function ResetPasswordRedirect() {
   const router = useRouter();
   const { colors } = useTheme();
   const { passwordRecovery, markPasswordRecovery, signOut } = useAuthContext();
-  const params = useLocalSearchParams<{ code?: string }>();
-  const exchangeAttempted = useRef(false);
+  const sessionAttempted = useRef(false);
 
-  // Extract an auth code from a URL string
-  function extractCode(url: string): string | null {
-    const match = url.match(/[?&]code=([^&#]+)/);
-    return match ? decodeURIComponent(match[1]) : null;
-  }
-
-  // Perform the PKCE code-for-session exchange
-  async function doExchange(code: string) {
-    if (exchangeAttempted.current) return;
-    exchangeAttempted.current = true;
-
-    try {
-      const { error } = await supabase.auth.exchangeCodeForSession(code);
-      if (error) {
-        console.error('Reset password code exchange failed:', error.message);
-        await signOut();
-        router.replace('/(game)');
-        return;
-      }
-      markPasswordRecovery();
-    } catch (err) {
-      console.error('Reset password code exchange threw:', err);
-      await signOut();
-      router.replace('/(game)');
-    }
-  }
-
-  // Try to get the auth code from Expo Router params first, then from the
-  // Linking API as a fallback (Expo Router sometimes strips query params on
-  // iOS for custom URL scheme deep links).
+  // Fallback: if handleDeepLink in AuthContext didn't fire (Expo Router can
+  // consume the deep link before the Linking API delivers it), try to extract
+  // tokens from the URL ourselves.
   useEffect(() => {
-    if (exchangeAttempted.current) return;
+    if (sessionAttempted.current || passwordRecovery) return;
 
-    // 1. Try Expo Router search params
-    if (params.code) {
-      doExchange(params.code);
-      return;
-    }
+    async function trySetSessionFromURL(url: string) {
+      if (sessionAttempted.current) return;
+      const hashIndex = url.indexOf('#');
+      if (hashIndex === -1) return;
 
-    // 2. Fallback: read the deep link URL directly via Linking API
-    Linking.getInitialURL().then((url) => {
-      if (exchangeAttempted.current) return;
-      if (url) {
-        const code = extractCode(url);
-        if (code) {
-          doExchange(code);
-          return;
+      const params = new URLSearchParams(url.substring(hashIndex + 1));
+      const accessToken = params.get('access_token');
+      const refreshToken = params.get('refresh_token');
+      const type = params.get('type');
+
+      if (accessToken && refreshToken) {
+        sessionAttempted.current = true;
+        const { error } = await supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken,
+        });
+        if (!error && type === 'recovery') {
+          markPasswordRecovery();
+        } else if (error) {
+          console.error('Reset password setSession failed:', error.message);
         }
       }
-      console.warn('Reset password: no auth code found in params or initial URL');
+    }
+
+    // Try initial URL (cold start)
+    Linking.getInitialURL().then((url) => {
+      if (url) trySetSessionFromURL(url);
     });
 
-    // 3. Also listen for incoming URLs (app was already open / foreground)
+    // Listen for URL events (app was already open)
     const sub = Linking.addEventListener('url', (event) => {
-      if (exchangeAttempted.current) return;
-      const code = extractCode(event.url);
-      if (code) {
-        doExchange(code);
-      }
+      trySetSessionFromURL(event.url);
     });
 
     return () => sub.remove();
-  }, [params.code]);
+  }, [passwordRecovery]);
 
   // Redirect once recovery mode is confirmed
   useEffect(() => {
@@ -90,12 +68,11 @@ export default function ResetPasswordRedirect() {
     }
   }, [passwordRecovery]);
 
-  // Safety fallback: if the exchange hangs or something unexpected happens,
-  // sign out and redirect so the user isn't stranded on a blank spinner.
+  // Safety fallback: if nothing worked after 15s, redirect to login.
   useEffect(() => {
     const timer = setTimeout(() => {
       if (!passwordRecovery) {
-        console.warn('Reset password: timed out waiting for code exchange');
+        console.warn('Reset password: timed out waiting for session');
         signOut().then(() => router.replace('/(game)'));
       }
     }, 15000);

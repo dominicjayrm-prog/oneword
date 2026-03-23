@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useMemo } from 'react';
 import { View, Text, StyleSheet, Animated } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -29,6 +29,14 @@ export function OnboardingScreen2({ isActive }: Props) {
   const progressOpacity = useRef(new Animated.Value(0)).current;
   const progressWidth = useRef(new Animated.Value(0)).current;
 
+  // Memoize Animated.multiply so it doesn't create a new native node on every render
+  const card2CombinedOpacity = useMemo(
+    () => Animated.multiply(card2Opacity, card2Fade),
+    [card2Opacity, card2Fade]
+  );
+
+  const animationRef = useRef<Animated.CompositeAnimation | null>(null);
+
   useEffect(() => {
     if (isActive) {
       labelOpacity.setValue(0);
@@ -46,7 +54,7 @@ export function OnboardingScreen2({ isActive }: Props) {
       progressOpacity.setValue(0);
       progressWidth.setValue(0);
 
-      Animated.sequence([
+      const animation = Animated.sequence([
         Animated.parallel([
           Animated.timing(labelOpacity, { toValue: 1, duration: 400, useNativeDriver: true }),
           Animated.timing(titleOpacity, { toValue: 1, duration: 400, delay: 100, useNativeDriver: true }),
@@ -73,7 +81,9 @@ export function OnboardingScreen2({ isActive }: Props) {
           Animated.timing(card2Fade, { toValue: 0.4, duration: 300, useNativeDriver: true }),
           Animated.spring(badgeScale, { toValue: 1, damping: 8, stiffness: 200, useNativeDriver: true }),
         ]),
-      ]).start();
+      ]);
+      animationRef.current = animation;
+      animation.start();
     } else {
       labelOpacity.setValue(0);
       titleOpacity.setValue(0);
@@ -90,6 +100,13 @@ export function OnboardingScreen2({ isActive }: Props) {
       progressOpacity.setValue(0);
       progressWidth.setValue(0);
     }
+
+    return () => {
+      if (animationRef.current) {
+        animationRef.current.stop();
+        animationRef.current = null;
+      }
+    };
   }, [isActive]);
 
   const card1BorderColor = card1Selected.interpolate({
@@ -155,7 +172,7 @@ export function OnboardingScreen2({ isActive }: Props) {
           {
             backgroundColor: colors.surface,
             borderColor: colors.border,
-            opacity: Animated.multiply(card2Opacity, card2Fade),
+            opacity: card2CombinedOpacity,
             transform: [{ translateX: card2TranslateX }, { scale: card2Scale }],
           },
         ]}

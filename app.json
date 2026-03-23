@@ -2,7 +2,7 @@
   "expo": {
     "name": "OneWord",
     "slug": "oneword",
-    "version": "1.1",
+    "version": "1.1.0",
     "orientation": "portrait",
     "scheme": "oneword",
     "icon": "./assets/icon.png",

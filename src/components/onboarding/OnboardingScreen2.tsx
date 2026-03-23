@@ -30,10 +30,7 @@ export function OnboardingScreen2({ isActive }: Props) {
   const progressWidth = useRef(new Animated.Value(0)).current;
 
   // Memoize Animated.multiply so it doesn't create a new native node on every render
-  const card2CombinedOpacity = useMemo(
-    () => Animated.multiply(card2Opacity, card2Fade),
-    [card2Opacity, card2Fade]
-  );
+  const card2CombinedOpacity = useMemo(() => Animated.multiply(card2Opacity, card2Fade), [card2Opacity, card2Fade]);
 
   const animationRef = useRef<Animated.CompositeAnimation | null>(null);
 

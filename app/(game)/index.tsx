@@ -87,7 +87,7 @@ export default function HomeScreen() {
   const [showYesterdayWinner, setShowYesterdayWinner] = useState(false);
   const [yesterdayData, setYesterdayData] = useState<YesterdayWinner | null>(null);
   const [showAuth, setShowAuth] = useState(false);
-  const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
+  const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signup');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');

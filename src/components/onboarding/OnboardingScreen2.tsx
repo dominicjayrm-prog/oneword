@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useMemo } from 'react';
 import { View, Text, StyleSheet, Animated } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -29,6 +29,11 @@ export function OnboardingScreen2({ isActive }: Props) {
   const progressOpacity = useRef(new Animated.Value(0)).current;
   const progressWidth = useRef(new Animated.Value(0)).current;
 
+  // Memoize Animated.multiply so it doesn't create a new native node on every render
+  const card2CombinedOpacity = useMemo(() => Animated.multiply(card2Opacity, card2Fade), [card2Opacity, card2Fade]);
+
+  const animationRef = useRef<Animated.CompositeAnimation | null>(null);
+
   useEffect(() => {
     if (isActive) {
       labelOpacity.setValue(0);
@@ -46,34 +51,36 @@ export function OnboardingScreen2({ isActive }: Props) {
       progressOpacity.setValue(0);
       progressWidth.setValue(0);
 
-      Animated.sequence([
+      const animation = Animated.sequence([
         Animated.parallel([
-          Animated.timing(labelOpacity, { toValue: 1, duration: 400, useNativeDriver: true }),
-          Animated.timing(titleOpacity, { toValue: 1, duration: 400, delay: 100, useNativeDriver: true }),
-          Animated.timing(subtitleOpacity, { toValue: 1, duration: 400, delay: 200, useNativeDriver: true }),
+          Animated.timing(labelOpacity, { toValue: 1, duration: 280, useNativeDriver: true }),
+          Animated.timing(titleOpacity, { toValue: 1, duration: 280, delay: 70, useNativeDriver: true }),
+          Animated.timing(subtitleOpacity, { toValue: 1, duration: 280, delay: 140, useNativeDriver: true }),
         ]),
         Animated.parallel([
-          Animated.timing(card1Opacity, { toValue: 1, duration: 400, useNativeDriver: true }),
-          Animated.spring(card1TranslateX, { toValue: 0, damping: 15, stiffness: 120, useNativeDriver: true }),
+          Animated.timing(card1Opacity, { toValue: 1, duration: 280, useNativeDriver: true }),
+          Animated.spring(card1TranslateX, { toValue: 0, damping: 15, stiffness: 180, useNativeDriver: true }),
         ]),
-        Animated.delay(200),
+        Animated.delay(120),
         Animated.parallel([
-          Animated.timing(card2Opacity, { toValue: 1, duration: 400, useNativeDriver: true }),
-          Animated.spring(card2TranslateX, { toValue: 0, damping: 15, stiffness: 120, useNativeDriver: true }),
+          Animated.timing(card2Opacity, { toValue: 1, duration: 280, useNativeDriver: true }),
+          Animated.spring(card2TranslateX, { toValue: 0, damping: 15, stiffness: 180, useNativeDriver: true }),
         ]),
         Animated.parallel([
-          Animated.timing(progressOpacity, { toValue: 1, duration: 300, useNativeDriver: true }),
-          Animated.timing(progressWidth, { toValue: 27, duration: 600, useNativeDriver: false }),
+          Animated.timing(progressOpacity, { toValue: 1, duration: 200, useNativeDriver: true }),
+          Animated.timing(progressWidth, { toValue: 27, duration: 420, useNativeDriver: false }),
         ]),
-        Animated.delay(800),
+        Animated.delay(500),
         Animated.parallel([
-          Animated.spring(card1Scale, { toValue: 1.02, damping: 10, stiffness: 150, useNativeDriver: true }),
-          Animated.timing(card1Selected, { toValue: 1, duration: 300, useNativeDriver: false }),
-          Animated.spring(card2Scale, { toValue: 0.97, damping: 10, stiffness: 150, useNativeDriver: true }),
-          Animated.timing(card2Fade, { toValue: 0.4, duration: 300, useNativeDriver: true }),
-          Animated.spring(badgeScale, { toValue: 1, damping: 8, stiffness: 200, useNativeDriver: true }),
+          Animated.spring(card1Scale, { toValue: 1.02, damping: 10, stiffness: 200, useNativeDriver: true }),
+          Animated.timing(card1Selected, { toValue: 1, duration: 200, useNativeDriver: false }),
+          Animated.spring(card2Scale, { toValue: 0.97, damping: 10, stiffness: 200, useNativeDriver: true }),
+          Animated.timing(card2Fade, { toValue: 0.4, duration: 200, useNativeDriver: true }),
+          Animated.spring(badgeScale, { toValue: 1, damping: 8, stiffness: 260, useNativeDriver: true }),
         ]),
-      ]).start();
+      ]);
+      animationRef.current = animation;
+      animation.start();
     } else {
       labelOpacity.setValue(0);
       titleOpacity.setValue(0);
@@ -90,6 +97,13 @@ export function OnboardingScreen2({ isActive }: Props) {
       progressOpacity.setValue(0);
       progressWidth.setValue(0);
     }
+
+    return () => {
+      if (animationRef.current) {
+        animationRef.current.stop();
+        animationRef.current = null;
+      }
+    };
   }, [isActive]);
 
   const card1BorderColor = card1Selected.interpolate({
@@ -155,7 +169,7 @@ export function OnboardingScreen2({ isActive }: Props) {
           {
             backgroundColor: colors.surface,
             borderColor: colors.border,
-            opacity: Animated.multiply(card2Opacity, card2Fade),
+            opacity: card2CombinedOpacity,
             transform: [{ translateX: card2TranslateX }, { scale: card2Scale }],
           },
         ]}

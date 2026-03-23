@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { View, ActivityIndicator, StyleSheet, Platform, AppState } from 'react-native';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import * as SplashScreen from 'expo-splash-screen';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
 import { setBadgeCount } from '../src/lib/notifications';
@@ -177,6 +178,9 @@ function InnerLayout() {
   );
 }
 
+// Keep the splash screen visible while we load fonts/resources
+SplashScreen.preventAutoHideAsync();
+
 export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({
     PlayfairDisplay_400Regular,
@@ -192,6 +196,12 @@ export default function RootLayout() {
     initAudio();
   }, []);
 
+  useEffect(() => {
+    if (fontsLoaded || fontError) {
+      SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded, fontError]);
+
   // If fonts fail to load, render the app anyway with system font fallbacks
   // rather than blocking indefinitely on the loading spinner
   if (fontError) {
@@ -199,11 +209,7 @@ export default function RootLayout() {
   }
 
   if (!fontsLoaded && !fontError) {
-    return (
-      <View style={styles.loading}>
-        <ActivityIndicator color="#FF6B4A" />
-      </View>
-    );
+    return null;
   }
 
   return (

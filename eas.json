@@ -8,21 +8,14 @@
       "developmentClient": true,
       "distribution": "internal",
       "ios": {
-        "simulator": false,
-        "image": "sdk-55"
+        "simulator": false
       }
     },
     "preview": {
-      "distribution": "store",
-      "ios": {
-        "image": "sdk-55"
-      }
+      "distribution": "store"
     },
     "production": {
-      "autoIncrement": true,
-      "ios": {
-        "image": "sdk-55"
-      }
+      "autoIncrement": true
     }
   },
   "submit": {

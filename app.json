@@ -7,7 +7,6 @@
     "scheme": "oneword",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
-    "privacyPolicyUrl": "https://oneword.app/privacy",
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
@@ -51,11 +50,15 @@
           "color": "#FF6B4A"
         }
       ],
-      ["expo-audio", {
-        "enableBackgroundPlayback": false,
-        "microphonePermission": false,
-        "recordAudioAndroid": false
-      }]
+      [
+        "expo-audio",
+        {
+          "enableBackgroundPlayback": false,
+          "microphonePermission": false,
+          "recordAudioAndroid": false
+        }
+      ],
+      "expo-asset"
     ],
     "extra": {
       "router": {},

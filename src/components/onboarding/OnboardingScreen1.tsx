@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import { View, Text, StyleSheet, Animated } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -20,61 +20,70 @@ export function OnboardingScreen1({ isActive }: Props) {
   const counterOpacity = useRef(new Animated.Value(0)).current;
   const pillOpacities = useRef(words.map(() => new Animated.Value(0))).current;
   const pillScales = useRef(words.map(() => new Animated.Value(0))).current;
+  const animationRef = useRef<Animated.CompositeAnimation | null>(null);
 
   useEffect(() => {
-    if (isActive) {
-      labelOpacity.setValue(0);
-      wordOpacity.setValue(0);
-      wordScale.setValue(0.9);
-      subtitleOpacity.setValue(0);
-      promptOpacity.setValue(0);
-      counterOpacity.setValue(0);
-      pillOpacities.forEach((v) => v.setValue(0));
-      pillScales.forEach((v) => v.setValue(0));
-
-      const pillAnimations = words.map((_, i) =>
-        Animated.parallel([
-          Animated.spring(pillScales[i], {
-            toValue: 1,
-            damping: 8,
-            stiffness: 150,
-            mass: 0.6,
-            useNativeDriver: true,
-          }),
-          Animated.timing(pillOpacities[i], {
-            toValue: 1,
-            duration: 200,
-            useNativeDriver: true,
-          }),
-        ]),
-      );
-
-      Animated.sequence([
-        Animated.timing(labelOpacity, { toValue: 1, duration: 500, useNativeDriver: true }),
-        Animated.delay(100),
-        Animated.parallel([
-          Animated.timing(wordOpacity, { toValue: 1, duration: 600, useNativeDriver: true }),
-          Animated.spring(wordScale, { toValue: 1, damping: 12, stiffness: 100, useNativeDriver: true }),
-        ]),
-        Animated.delay(200),
-        Animated.timing(subtitleOpacity, { toValue: 1, duration: 400, useNativeDriver: true }),
-        Animated.delay(400),
-        Animated.timing(promptOpacity, { toValue: 1, duration: 400, useNativeDriver: true }),
-        Animated.delay(300),
-        Animated.stagger(300, pillAnimations),
-        Animated.delay(200),
-        Animated.timing(counterOpacity, { toValue: 1, duration: 400, useNativeDriver: true }),
-      ]).start();
-    } else {
-      labelOpacity.setValue(0);
-      wordOpacity.setValue(0);
-      wordScale.setValue(0.9);
-      subtitleOpacity.setValue(0);
-      promptOpacity.setValue(0);
-      counterOpacity.setValue(0);
-      pillOpacities.forEach((v) => v.setValue(0));
-      pillScales.forEach((v) => v.setValue(0));
+    if (animationRef.current) {
+      animationRef.current.stop();
+      animationRef.current = null;
     }
+
+    labelOpacity.setValue(0);
+    wordOpacity.setValue(0);
+    wordScale.setValue(0.9);
+    subtitleOpacity.setValue(0);
+    promptOpacity.setValue(0);
+    counterOpacity.setValue(0);
+    pillOpacities.forEach((v) => v.setValue(0));
+    pillScales.forEach((v) => v.setValue(0));
+
+    if (!isActive) return;
+
+    const pillAnimations = words.map((_, i) =>
+      Animated.parallel([
+        Animated.spring(pillScales[i], {
+          toValue: 1,
+          damping: 8,
+          stiffness: 150,
+          mass: 0.6,
+          useNativeDriver: true,
+        }),
+        Animated.timing(pillOpacities[i], {
+          toValue: 1,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+      ]),
+    );
+
+    const animation = Animated.sequence([
+      Animated.timing(labelOpacity, { toValue: 1, duration: 500, useNativeDriver: true }),
+      Animated.delay(100),
+      Animated.parallel([
+        Animated.timing(wordOpacity, { toValue: 1, duration: 600, useNativeDriver: true }),
+        Animated.spring(wordScale, { toValue: 1, damping: 12, stiffness: 100, useNativeDriver: true }),
+      ]),
+      Animated.delay(200),
+      Animated.timing(subtitleOpacity, { toValue: 1, duration: 400, useNativeDriver: true }),
+      Animated.delay(400),
+      Animated.timing(promptOpacity, { toValue: 1, duration: 400, useNativeDriver: true }),
+      Animated.delay(300),
+      Animated.stagger(300, pillAnimations),
+      Animated.delay(200),
+      Animated.timing(counterOpacity, { toValue: 1, duration: 400, useNativeDriver: true }),
+    ]);
+
+    animationRef.current = animation;
+    animation.start(() => {
+      animationRef.current = null;
+    });
+
+    return () => {
+      if (animationRef.current) {
+        animationRef.current.stop();
+        animationRef.current = null;
+      }
+    };
   }, [isActive]);
 
   return (

@@ -33,47 +33,57 @@ export function OnboardingScreen3({ isActive }: Props) {
 
   const statsOpacity = useRef(new Animated.Value(0)).current;
   const statsTranslateY = useRef(new Animated.Value(20)).current;
+  const animationRef = useRef<Animated.CompositeAnimation | null>(null);
 
   useEffect(() => {
-    if (isActive) {
-      labelOpacity.setValue(0);
-      titleOpacity.setValue(0);
-      subtitleOpacity.setValue(0);
-      entryOpacities.forEach((v) => v.setValue(0));
-      entryTranslateYs.forEach((v) => v.setValue(30));
-      statsOpacity.setValue(0);
-      statsTranslateY.setValue(20);
-
-      const entryAnimations = entries.map((_, i) =>
-        Animated.parallel([
-          Animated.timing(entryOpacities[i], { toValue: 1, duration: 400, useNativeDriver: true }),
-          Animated.spring(entryTranslateYs[i], { toValue: 0, damping: 14, stiffness: 120, useNativeDriver: true }),
-        ]),
-      );
-
-      Animated.sequence([
-        Animated.parallel([
-          Animated.timing(labelOpacity, { toValue: 1, duration: 400, useNativeDriver: true }),
-          Animated.timing(titleOpacity, { toValue: 1, duration: 400, delay: 100, useNativeDriver: true }),
-          Animated.timing(subtitleOpacity, { toValue: 1, duration: 400, delay: 200, useNativeDriver: true }),
-        ]),
-        Animated.delay(100),
-        Animated.stagger(500, entryAnimations),
-        Animated.delay(300),
-        Animated.parallel([
-          Animated.timing(statsOpacity, { toValue: 1, duration: 500, useNativeDriver: true }),
-          Animated.spring(statsTranslateY, { toValue: 0, damping: 14, stiffness: 120, useNativeDriver: true }),
-        ]),
-      ]).start();
-    } else {
-      labelOpacity.setValue(0);
-      titleOpacity.setValue(0);
-      subtitleOpacity.setValue(0);
-      entryOpacities.forEach((v) => v.setValue(0));
-      entryTranslateYs.forEach((v) => v.setValue(30));
-      statsOpacity.setValue(0);
-      statsTranslateY.setValue(20);
+    if (animationRef.current) {
+      animationRef.current.stop();
+      animationRef.current = null;
     }
+
+    labelOpacity.setValue(0);
+    titleOpacity.setValue(0);
+    subtitleOpacity.setValue(0);
+    entryOpacities.forEach((v) => v.setValue(0));
+    entryTranslateYs.forEach((v) => v.setValue(30));
+    statsOpacity.setValue(0);
+    statsTranslateY.setValue(20);
+
+    if (!isActive) return;
+
+    const entryAnimations = entries.map((_, i) =>
+      Animated.parallel([
+        Animated.timing(entryOpacities[i], { toValue: 1, duration: 400, useNativeDriver: true }),
+        Animated.spring(entryTranslateYs[i], { toValue: 0, damping: 14, stiffness: 120, useNativeDriver: true }),
+      ]),
+    );
+
+    const animation = Animated.sequence([
+      Animated.parallel([
+        Animated.timing(labelOpacity, { toValue: 1, duration: 400, useNativeDriver: true }),
+        Animated.timing(titleOpacity, { toValue: 1, duration: 400, delay: 100, useNativeDriver: true }),
+        Animated.timing(subtitleOpacity, { toValue: 1, duration: 400, delay: 200, useNativeDriver: true }),
+      ]),
+      Animated.delay(100),
+      Animated.stagger(500, entryAnimations),
+      Animated.delay(300),
+      Animated.parallel([
+        Animated.timing(statsOpacity, { toValue: 1, duration: 500, useNativeDriver: true }),
+        Animated.spring(statsTranslateY, { toValue: 0, damping: 14, stiffness: 120, useNativeDriver: true }),
+      ]),
+    ]);
+
+    animationRef.current = animation;
+    animation.start(() => {
+      animationRef.current = null;
+    });
+
+    return () => {
+      if (animationRef.current) {
+        animationRef.current.stop();
+        animationRef.current = null;
+      }
+    };
   }, [isActive]);
 
   return (

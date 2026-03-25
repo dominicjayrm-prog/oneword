@@ -106,15 +106,32 @@ export function OnboardingScreen2({ isActive }: Props) {
     };
   }, [isActive]);
 
-  const card1BorderColor = card1Selected.interpolate({
-    inputRange: [0, 1],
-    outputRange: [colors.border, colors.primary],
-  });
+  const card1BorderColor = useMemo(
+    () =>
+      card1Selected.interpolate({
+        inputRange: [0, 1],
+        outputRange: [colors.border, colors.primary],
+      }),
+    [card1Selected, colors.border, colors.primary],
+  );
 
-  const card1Bg = card1Selected.interpolate({
-    inputRange: [0, 1],
-    outputRange: [colors.surface, colors.primaryLight],
-  });
+  const card1Bg = useMemo(
+    () =>
+      card1Selected.interpolate({
+        inputRange: [0, 1],
+        outputRange: [colors.surface, colors.primaryLight],
+      }),
+    [card1Selected, colors.surface, colors.primaryLight],
+  );
+
+  const progressWidthInterpolated = useMemo(
+    () =>
+      progressWidth.interpolate({
+        inputRange: [0, 100],
+        outputRange: ['0%', '100%'],
+      }),
+    [progressWidth],
+  );
 
   return (
     <View style={styles.container}>
@@ -190,10 +207,7 @@ export function OnboardingScreen2({ isActive }: Props) {
               styles.progressFill,
               {
                 backgroundColor: colors.primary,
-                width: progressWidth.interpolate({
-                  inputRange: [0, 100],
-                  outputRange: ['0%', '100%'],
-                }),
+                width: progressWidthInterpolated,
               },
             ]}
           />

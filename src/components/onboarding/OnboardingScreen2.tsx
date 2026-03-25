@@ -1,4 +1,4 @@
-import { useEffect, useRef, useMemo } from 'react';
+import { useEffect, useRef, useMemo, useState } from 'react';
 import { View, Text, StyleSheet, Animated } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -11,7 +11,10 @@ export function OnboardingScreen2({ isActive }: Props) {
   const { t } = useTranslation();
   const { colors } = useTheme();
 
-  // All animated values stored in refs so they persist across renders
+  // Use state for card selection colors instead of Animated.interpolate
+  // because interpolating between hex colors with different formats (e.g. #RRGGBB vs #RRGGBBAA) crashes on iOS
+  const [cardSelected, setCardSelected] = useState(false);
+
   const labelOpacity = useRef(new Animated.Value(0)).current;
   const titleOpacity = useRef(new Animated.Value(0)).current;
   const subtitleOpacity = useRef(new Animated.Value(0)).current;
@@ -22,7 +25,6 @@ export function OnboardingScreen2({ isActive }: Props) {
   const card2TranslateX = useRef(new Animated.Value(60)).current;
 
   const card1Scale = useRef(new Animated.Value(1)).current;
-  const card1Selected = useRef(new Animated.Value(0)).current;
   const card2Scale = useRef(new Animated.Value(1)).current;
   const card2Fade = useRef(new Animated.Value(1)).current;
   const badgeScale = useRef(new Animated.Value(0)).current;
@@ -32,24 +34,6 @@ export function OnboardingScreen2({ isActive }: Props) {
 
   // Memoize derived animated nodes so they don't leak on re-render
   const card2CombinedOpacity = useMemo(() => Animated.multiply(card2Opacity, card2Fade), [card2Opacity, card2Fade]);
-
-  const card1BorderColor = useMemo(
-    () =>
-      card1Selected.interpolate({
-        inputRange: [0, 1],
-        outputRange: [colors.border, colors.primary],
-      }),
-    [card1Selected, colors.border, colors.primary],
-  );
-
-  const card1Bg = useMemo(
-    () =>
-      card1Selected.interpolate({
-        inputRange: [0, 1],
-        outputRange: [colors.surface, colors.primaryLight],
-      }),
-    [card1Selected, colors.surface, colors.primaryLight],
-  );
 
   const progressWidthInterpolated = useMemo(
     () =>
@@ -61,8 +45,21 @@ export function OnboardingScreen2({ isActive }: Props) {
   );
 
   const animationRef = useRef<Animated.CompositeAnimation | null>(null);
+  const selectionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const resetValues = () => {
+  useEffect(() => {
+    // Always stop any running animation first
+    if (animationRef.current) {
+      animationRef.current.stop();
+      animationRef.current = null;
+    }
+    if (selectionTimerRef.current) {
+      clearTimeout(selectionTimerRef.current);
+      selectionTimerRef.current = null;
+    }
+
+    // Reset all values
+    setCardSelected(false);
     labelOpacity.setValue(0);
     titleOpacity.setValue(0);
     subtitleOpacity.setValue(0);
@@ -71,70 +68,63 @@ export function OnboardingScreen2({ isActive }: Props) {
     card2Opacity.setValue(0);
     card2TranslateX.setValue(60);
     card1Scale.setValue(1);
-    card1Selected.setValue(0);
     card2Scale.setValue(1);
     card2Fade.setValue(1);
     badgeScale.setValue(0);
     progressOpacity.setValue(0);
     progressWidth.setValue(0);
-  };
-
-  useEffect(() => {
-    // Always stop any running animation first
-    if (animationRef.current) {
-      animationRef.current.stop();
-      animationRef.current = null;
-    }
-
-    resetValues();
 
     if (!isActive) return;
 
-    // Split native-driven and JS-driven animations into separate groups
-    // to avoid mixing useNativeDriver values in the same parallel call
+    // All animations use useNativeDriver: true except progressWidth (which animates width %)
     const animation = Animated.sequence([
-      // Step 1: Fade in labels (native)
+      // Step 1: Fade in labels
       Animated.parallel([
         Animated.timing(labelOpacity, { toValue: 1, duration: 280, useNativeDriver: true }),
         Animated.timing(titleOpacity, { toValue: 1, duration: 280, delay: 70, useNativeDriver: true }),
         Animated.timing(subtitleOpacity, { toValue: 1, duration: 280, delay: 140, useNativeDriver: true }),
       ]),
-      // Step 2: Slide in card 1 (native)
+      // Step 2: Slide in card 1
       Animated.parallel([
         Animated.timing(card1Opacity, { toValue: 1, duration: 280, useNativeDriver: true }),
         Animated.spring(card1TranslateX, { toValue: 0, damping: 15, stiffness: 180, useNativeDriver: true }),
       ]),
       Animated.delay(120),
-      // Step 3: Slide in card 2 (native)
+      // Step 3: Slide in card 2
       Animated.parallel([
         Animated.timing(card2Opacity, { toValue: 1, duration: 280, useNativeDriver: true }),
         Animated.spring(card2TranslateX, { toValue: 0, damping: 15, stiffness: 180, useNativeDriver: true }),
       ]),
-      // Step 4: Progress bar - run native and JS animations separately
+      // Step 4: Progress bar opacity (native), then width (JS)
       Animated.timing(progressOpacity, { toValue: 1, duration: 200, useNativeDriver: true }),
       Animated.timing(progressWidth, { toValue: 27, duration: 420, useNativeDriver: false }),
       Animated.delay(500),
-      // Step 5: Card selection - native-driven transforms first
+      // Step 5: Card selection transforms + badge
       Animated.parallel([
         Animated.spring(card1Scale, { toValue: 1.02, damping: 10, stiffness: 200, useNativeDriver: true }),
         Animated.spring(card2Scale, { toValue: 0.97, damping: 10, stiffness: 200, useNativeDriver: true }),
         Animated.timing(card2Fade, { toValue: 0.4, duration: 200, useNativeDriver: true }),
         Animated.spring(badgeScale, { toValue: 1, damping: 8, stiffness: 260, useNativeDriver: true }),
       ]),
-      // Step 6: Card selection color change (JS-driven, separate from native)
-      Animated.timing(card1Selected, { toValue: 1, duration: 200, useNativeDriver: false }),
     ]);
 
     animationRef.current = animation;
-    animation.start(() => {
-      // Animation complete - clear ref
+    animation.start(({ finished }) => {
       animationRef.current = null;
+      // Flip card colors via state instead of animated interpolation
+      if (finished) {
+        setCardSelected(true);
+      }
     });
 
     return () => {
       if (animationRef.current) {
         animationRef.current.stop();
         animationRef.current = null;
+      }
+      if (selectionTimerRef.current) {
+        clearTimeout(selectionTimerRef.current);
+        selectionTimerRef.current = null;
       }
     };
   }, [isActive]);
@@ -157,8 +147,8 @@ export function OnboardingScreen2({ isActive }: Props) {
           style={[
             styles.card,
             {
-              backgroundColor: card1Bg,
-              borderColor: card1BorderColor,
+              backgroundColor: cardSelected ? colors.primaryLight : colors.surface,
+              borderColor: cardSelected ? colors.primary : colors.border,
               opacity: card1Opacity,
               transform: [{ translateX: card1TranslateX }, { scale: card1Scale }],
             },

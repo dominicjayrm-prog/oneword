@@ -149,6 +149,8 @@ export function AddFriendModal({ visible, onClose, currentUserId, onRequestSent 
         return;
       }
       setSentIds((prev) => new Set(prev).add(userId));
+      haptic.success();
+      showToast(t('success.friend_sent'), 'success');
     } finally {
       setSendingIds((prev) => {
         const next = new Set(prev);
@@ -156,10 +158,9 @@ export function AddFriendModal({ visible, onClose, currentUserId, onRequestSent 
         return next;
       });
     }
-    setToastUser(username);
-    if (toastTimer.current) clearTimeout(toastTimer.current);
-    toastTimer.current = setTimeout(() => setToastUser(null), 2500);
     onRequestSent();
+    // Close the modal after successfully sending a request
+    handleClose();
   }
 
   function handleClose() {

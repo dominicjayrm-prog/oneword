@@ -218,14 +218,16 @@ export default function FriendsScreen() {
   const unifiedFriends = useMemo(() => {
     return friends.map((f) => {
       const desc = descriptions.find((d) => d.friend_id === f.friend_id);
+      // Only count as "played" if they actually have a description text
+      const actuallyPlayed = (desc?.has_played ?? false) && !!desc?.description_text;
       return {
         ...f,
-        has_played: desc?.has_played ?? false,
+        has_played: actuallyPlayed,
         description_text: desc?.description_text ?? null,
         description_id: desc?.description_id ?? null,
         vote_count: desc?.vote_count ?? null,
         elo_rating: desc?.elo_rating ?? null,
-        today_rank: null as number | null, // Will be computed below
+        today_rank: null as number | null,
       };
     });
   }, [friends, descriptions]);

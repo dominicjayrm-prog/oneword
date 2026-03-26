@@ -159,6 +159,8 @@ export function AddFriendModal({ visible, onClose, currentUserId, onRequestSent 
       });
     }
     onRequestSent();
+    // Close the modal after successfully sending a request
+    handleClose();
   }
 
   function handleClose() {

@@ -203,10 +203,10 @@ export default {
   friends: {
     tab_title: 'Amigos',
     requests: 'Solicitudes de amistad',
-    today_title: 'C\u00F3mo lo describieron tus amigos',
+    today_title: 'Mira c\u00F3mo lo describieron tus amigos',
     play_first: 'Juega la palabra de hoy para ver las descripciones de tus amigos',
     locked: 'Juega primero para revelar',
-    hasnt_played: 'A\u00FAn no ha jugado hoy',
+    hasnt_played: 'A\u00FAn no ha jugado',
     your_friends: 'Tus Amigos',
     add: 'A\u00F1adir',
     add_friends: 'A\u00F1adir Amigos',
@@ -222,7 +222,14 @@ export default {
     empty_subtitle: 'Compara descripciones y compite con tu c\u00EDrculo',
     no_requests: 'No hay solicitudes pendientes',
     max_friends: 'Puedes tener hasta 50 amigos',
-    today_word: 'Hoy: {{word}}',
+    today_word: 'PALABRA DE HOY',
+    friend_count: '{{count}} amigos',
+    friend_count_one: '1 amigo',
+    played_today: 'JUGARON HOY',
+    played_count: '{{played}} / {{total}}',
+    ranked_today: 'Puesto #{{rank}} hoy',
+    streak_leaderboard: 'TABLA DE RACHAS',
+    you_label: 'T\u00DA',
   },
 
   // Results tabs

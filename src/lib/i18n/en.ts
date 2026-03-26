@@ -202,10 +202,10 @@ export default {
   friends: {
     tab_title: 'Friends',
     requests: 'Friend Requests',
-    today_title: 'How your friends described it',
+    today_title: 'See how your friends described it',
     play_first: "Play today's word to see your friends' descriptions",
     locked: 'Play first to reveal',
-    hasnt_played: "Hasn't played yet today",
+    hasnt_played: "Hasn't played yet",
     your_friends: 'Your Friends',
     add: 'Add',
     add_friends: 'Add Friends',
@@ -221,7 +221,14 @@ export default {
     empty_subtitle: 'Compare descriptions and compete with your inner circle',
     no_requests: 'No pending requests',
     max_friends: 'You can have up to 50 friends',
-    today_word: 'Today: {{word}}',
+    today_word: "TODAY'S WORD",
+    friend_count: '{{count}} friends',
+    friend_count_one: '1 friend',
+    played_today: 'PLAYED TODAY',
+    played_count: '{{played}} / {{total}}',
+    ranked_today: 'Ranked #{{rank}} today',
+    streak_leaderboard: 'STREAK LEADERBOARD',
+    you_label: 'YOU',
   },
 
   // Results tabs

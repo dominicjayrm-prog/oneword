@@ -14,7 +14,7 @@ export const TOAST_DURATION_MS = 3_000;
 export const VOTE_BATCH_SIZE = 15;
 
 /** Leaderboard */
-export const LEADERBOARD_LIMIT = 20;
+export const LEADERBOARD_LIMIT = 50;
 
 /** Description validation */
 export const DESCRIPTION_WORD_COUNT = 5;

@@ -9,9 +9,9 @@ export default {
     screen1_example: ['Piscina', 'infinita', 'sin', 'cloro', 'gratis'],
     screen2_label: 'EL MUNDO VOTA',
     screen2_title: '\u00BFCu\u00E1l es mejor?',
-    screen2_subtitle: 'Toca para votar. Las mejores suben arriba.',
+    screen2_subtitle: 'Selecciona para votar. Las mejores suben arriba.',
     screen2_pick: 'TU ELECCI\u00D3N \u2713',
-    screen2_progress: 'Toca el que prefieras',
+    screen2_progress: 'Selecciona el que prefieras',
     screen2_desc1: 'Piscina infinita sin cloro gratis',
     screen2_desc2: 'Dios llenó la bañera entera',
     screen3_label: 'SUBE EN EL RANKING',
@@ -115,7 +115,7 @@ export default {
   // Voting
   vote: {
     pair_count: '{{current}} de {{total}}',
-    tap_prefer: 'Toca el que prefieras',
+    tap_prefer: 'Selecciona el que prefieras',
     all_caught_up: '\u00A1Todo al d\u00EDa!',
     all_caught_up_subtitle: 'Vuelve m\u00E1s tarde cuando m\u00E1s jugadores env\u00EDen.',
     batch_done: '\u00A1Buena sesi\u00F3n de votos!',

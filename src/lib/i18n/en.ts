@@ -446,6 +446,22 @@ export default {
     seeResults: 'See results',
   },
 
+  // Review prompt
+  review: {
+    title: 'Enjoying OneWord?',
+    subtitle: "You've played 3 days! We'd love to know how you're finding it.",
+    tap_hint: 'Tap a star to rate',
+    positive_title: "You're amazing!",
+    positive_subtitle: 'Mind leaving us a review? It helps more people discover OneWord.',
+    positive_cta: 'Rate on the App Store',
+    positive_later: 'Maybe later',
+    negative_title: 'Thanks for your honesty',
+    negative_subtitle: 'What could we do better? We read every message.',
+    negative_placeholder: 'Tell us what we can improve...',
+    negative_cta: 'Send feedback',
+    negative_skip: 'Skip',
+  },
+
   // Language names
   lang: {
     en: 'English',

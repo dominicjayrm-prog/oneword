@@ -73,10 +73,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
           if (desc) {
             setHasSubmitted(true);
             setUserDescription(desc.description);
-            await cacheData(CACHE_KEYS.MY_DESCRIPTION, desc.description);
+            await cacheData(CACHE_KEYS.MY_DESCRIPTION, { text: desc.description, wordId: data[0].id });
           } else {
             setHasSubmitted(false);
             setUserDescription(null);
+            // Clear stale description cache when user hasn't submitted for current word
+            await cacheData(CACHE_KEYS.MY_DESCRIPTION, { text: null, wordId: data[0].id });
           }
         }
       } else {
@@ -90,10 +92,14 @@ export function GameProvider({ children }: { children: ReactNode }) {
       const cachedWord = await getCachedData<DailyWord>(CACHE_KEYS.TODAY_WORD, 24);
       if (cachedWord) {
         setTodayWord(cachedWord);
-        const cachedDesc = await getCachedData<string>(CACHE_KEYS.MY_DESCRIPTION, 24);
-        if (cachedDesc) {
+        const cachedDesc = await getCachedData<{ text: string | null; wordId: string }>(CACHE_KEYS.MY_DESCRIPTION, 24);
+        // Only use cached description if it matches the cached word
+        if (cachedDesc?.text && cachedDesc.wordId === cachedWord.id) {
           setHasSubmitted(true);
-          setUserDescription(cachedDesc);
+          setUserDescription(cachedDesc.text);
+        } else {
+          setHasSubmitted(false);
+          setUserDescription(null);
         }
       } else {
         setLoadError(true);
@@ -201,7 +207,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
           setHasPendingDescription(false);
           setHasSubmitted(true);
           setUserDescription(description);
-          await cacheData(CACHE_KEYS.MY_DESCRIPTION, description);
+          if (todayWord) {
+            await cacheData(CACHE_KEYS.MY_DESCRIPTION, { text: description, wordId: todayWord.id });
+          }
           // Try to update streak too
           try {
             await supabase.rpc('update_streak', { p_user_id: userId });
@@ -378,7 +386,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
           setHasPendingDescription(false);
           setHasSubmitted(true);
           setUserDescription(cleaned);
-          await cacheData(CACHE_KEYS.MY_DESCRIPTION, cleaned);
+          if (todayWord) {
+            await cacheData(CACHE_KEYS.MY_DESCRIPTION, { text: cleaned, wordId: todayWord.id });
+          }
 
           // Post-submission streak & profile updates are non-critical.
           // Don't let failures here mask the successful submission.

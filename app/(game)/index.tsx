@@ -28,6 +28,7 @@ import { YesterdayWinnerCard } from '../../src/components/YesterdayWinnerCard';
 import { WeeklyRecapCard } from '../../src/components/WeeklyRecap';
 import { StreakCelebration } from '../../src/components/StreakCelebration';
 import { FirstSubmitCelebration } from '../../src/components/FirstSubmitCelebration';
+import { ReviewPromptModal } from '../../src/components/ReviewPromptModal';
 import { BadgePill } from '../../src/components/BadgePill';
 import { useToast } from '../../src/components/Toast';
 import { useNetwork } from '../../src/contexts/NetworkContext';
@@ -113,6 +114,7 @@ export default function HomeScreen() {
   const [firstSubmitSubmitting, setFirstSubmitSubmitting] = useState(false);
   const [firstSubmitDescription, setFirstSubmitDescription] = useState('');
   const [countdown, setCountdown] = useState('');
+  const [showReviewModal, setShowReviewModal] = useState(false);
 
   const resentTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mountedRef = useRef(true);
@@ -510,6 +512,23 @@ export default function HomeScreen() {
               if (mountedRef.current) setShowNotifPrompt(true);
             }, 1500);
           }
+        }
+
+        // Review prompt: show after 3rd unique word played (once ever)
+        try {
+          const wordsPlayed = await AsyncStorage.getItem('oneword_words_played_count');
+          const count = wordsPlayed ? parseInt(wordsPlayed, 10) + 1 : 1;
+          await AsyncStorage.setItem('oneword_words_played_count', count.toString());
+
+          const reviewShown = await AsyncStorage.getItem('oneword_review_prompt_shown');
+          if (count >= 3 && !reviewShown) {
+            await AsyncStorage.setItem('oneword_review_prompt_shown', 'true');
+            setTimeout(() => {
+              if (mountedRef.current) setShowReviewModal(true);
+            }, 1500);
+          }
+        } catch {
+          // non-critical
         }
       }
     } catch {
@@ -1123,6 +1142,9 @@ export default function HomeScreen() {
 
         {/* Notification Permission Prompt */}
         <NotificationPermissionPrompt visible={showNotifPrompt} onDismiss={() => setShowNotifPrompt(false)} />
+
+        {/* Review Prompt */}
+        <ReviewPromptModal visible={showReviewModal} onClose={() => setShowReviewModal(false)} />
       </ScrollView>
     );
   }

@@ -448,6 +448,23 @@ export default {
     seeResults: 'Ver resultados',
   },
 
+  // Review prompt
+  review: {
+    title: '\u00BFTe gusta OneWord?',
+    subtitle: '\u00A1Has jugado 3 d\u00EDas! Nos encantar\u00EDa saber qu\u00E9 te parece.',
+    tap_hint: 'Toca una estrella para valorar',
+    positive_title: '\u00A1Eres incre\u00EDble!',
+    positive_subtitle:
+      '\u00BFTe importar\u00EDa dejarnos una rese\u00F1a? Ayuda a m\u00E1s personas a descubrir OneWord.',
+    positive_cta: 'Valorar en la App Store',
+    positive_later: 'Quiz\u00E1s luego',
+    negative_title: 'Gracias por tu sinceridad',
+    negative_subtitle: '\u00BFQu\u00E9 podr\u00EDamos mejorar? Leemos cada mensaje.',
+    negative_placeholder: 'Cu\u00E9ntanos qu\u00E9 podemos mejorar...',
+    negative_cta: 'Enviar comentario',
+    negative_skip: 'Omitir',
+  },
+
   // Language names
   lang: {
     en: 'English',

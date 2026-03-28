@@ -389,6 +389,11 @@ export default {
     daily_body: 'Dilo en cinco. \uD83C\uDFAF',
     streak_risk_title: '\u00A1Tu racha est\u00E1 en riesgo!',
     streak_risk_body: 'No has jugado hoy. No dejes que tu racha se acabe. \u23F0',
+    section_voting: 'VOTACI\u00D3N',
+    vote_reminder: 'Recordatorio de votos',
+    vote_reminder_title: '\u00A1Hay pares esperando! \uD83D\uDDF3\uFE0F',
+    vote_reminder_body:
+      'Ya enviaste tu palabra \u2014 ahora vota por otras descripciones y ayuda a elegir al ganador de hoy.',
   },
 
   // Offline

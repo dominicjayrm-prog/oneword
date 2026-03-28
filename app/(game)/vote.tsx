@@ -22,6 +22,7 @@ import { useToast } from '../../src/components/Toast';
 import { useNetwork } from '../../src/contexts/NetworkContext';
 import { RetryState } from '../../src/components/RetryState';
 import { VOTE_BATCH_SIZE } from '../../src/constants/app';
+import { cancelVoteReminder } from '../../src/lib/notifications';
 import { fontSize, spacing, borderRadius, withOpacity } from '../../src/constants/theme';
 import { haptic } from '../../src/lib/haptics';
 import { sound } from '../../src/lib/audio';
@@ -367,6 +368,13 @@ export default function VoteScreen() {
       </View>
     );
   }
+
+  // Cancel vote reminder when user has voted on all available pairs
+  useEffect(() => {
+    if (noMorePairs) {
+      cancelVoteReminder();
+    }
+  }, [noMorePairs]);
 
   // "No pairs available" screen — server returned no more unseen pairs
   if (noMorePairs) {

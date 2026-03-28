@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { View, Text, StyleSheet, ScrollView, Switch, TouchableOpacity, Platform, Modal } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useAuthContext } from '../src/contexts/AuthContext';
@@ -11,6 +12,8 @@ import {
   scheduleStreakRisk,
   cancelDailyReminder,
   cancelStreakRisk,
+  scheduleVoteReminder,
+  cancelVoteReminder,
   normalizeTimeString,
   parseTimeString,
 } from '../src/lib/notifications';
@@ -22,6 +25,7 @@ interface NotificationPrefs {
   notify_daily_time: string;
   notify_streak_risk: boolean;
   notify_results: boolean;
+  notify_vote_reminder: boolean;
   notify_friend_requests: boolean;
   notify_friend_activity: boolean;
   notify_weekly_recap: boolean;
@@ -33,6 +37,7 @@ const DEFAULT_PREFS: NotificationPrefs = {
   notify_daily_time: '09:00',
   notify_streak_risk: true,
   notify_results: true,
+  notify_vote_reminder: true,
   notify_friend_requests: true,
   notify_friend_activity: true,
   notify_weekly_recap: true,
@@ -62,12 +67,14 @@ export default function NotificationsScreen() {
           )
           .eq('id', session.user.id)
           .single();
+        const voteReminderPref = await AsyncStorage.getItem('oneword_vote_reminder');
         if (data) {
           setPrefs({
             notify_daily: data.notify_daily ?? true,
             notify_daily_time: normalizeTimeString(data.notify_daily_time),
             notify_streak_risk: data.notify_streak_risk ?? true,
             notify_results: data.notify_results ?? true,
+            notify_vote_reminder: voteReminderPref !== 'false',
             notify_friend_requests: data.notify_friend_requests ?? true,
             notify_friend_activity: data.notify_friend_activity ?? true,
             notify_weekly_recap: data.notify_weekly_recap ?? true,
@@ -124,6 +131,13 @@ export default function NotificationsScreen() {
         } else {
           await cancelStreakRisk();
         }
+      }
+      if (field === 'notify_vote_reminder') {
+        await AsyncStorage.setItem('oneword_vote_reminder', value ? 'true' : 'false');
+        if (!value) {
+          await cancelVoteReminder();
+        }
+        return; // Don't save to DB — stored in AsyncStorage
       }
     },
     [prefs.notify_daily_time, saveField, t],
@@ -211,6 +225,17 @@ export default function NotificationsScreen() {
           label={t('notifications.results_ready')}
           value={prefs.notify_results}
           onToggle={(v) => handleToggle('notify_results', v)}
+          colors={colors}
+        />
+      </View>
+
+      {/* Voting */}
+      <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>{t('notifications.section_voting')}</Text>
+      <View style={[styles.section, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+        <ToggleRow
+          label={t('notifications.vote_reminder')}
+          value={prefs.notify_vote_reminder}
+          onToggle={(v) => handleToggle('notify_vote_reminder', v)}
           colors={colors}
         />
       </View>

@@ -11,7 +11,12 @@ import { rateLimits } from '../lib/rateLimit';
 import { getGameDate, hasWordRolledOver } from '../lib/gameDate';
 import { DESCRIPTION_WORD_COUNT, LEADERBOARD_LIMIT } from '../constants/app';
 import { cacheData, getCachedData, CACHE_KEYS } from '../lib/cache';
-import { cancelDailyReminder, scheduleDailyReminder } from '../lib/notifications';
+import {
+  cancelDailyReminder,
+  scheduleDailyReminder,
+  scheduleVoteReminder,
+  cancelVoteReminder,
+} from '../lib/notifications';
 import { useAuthContext } from './AuthContext';
 import type { DailyWord, VotePair, LeaderboardEntry, YesterdayWinner, WeeklyRecap } from '../types/database';
 
@@ -418,6 +423,14 @@ export function GameProvider({ children }: { children: ReactNode }) {
             await refreshProfile();
             // Cancel today's daily reminder since user already played
             await cancelDailyReminder();
+            // Schedule vote reminder (2 hours from now) if enabled
+            const voteReminderPref = await AsyncStorage.getItem('oneword_vote_reminder');
+            if (voteReminderPref !== 'false') {
+              await scheduleVoteReminder(
+                i18n.t('notifications.vote_reminder_title'),
+                i18n.t('notifications.vote_reminder_body'),
+              );
+            }
           } catch (postErr) {
             console.warn('[GameContext] Post-submit update failed (non-critical):', postErr);
           }

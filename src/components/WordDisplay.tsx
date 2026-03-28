@@ -13,7 +13,9 @@ export function WordDisplay({ word, category }: WordDisplayProps) {
   return (
     <View style={styles.container}>
       {category && <Text style={[styles.category, { color: colors.primary }]}>{category.toUpperCase()}</Text>}
-      <Text style={[styles.word, { color: colors.text }]}>{word}</Text>
+      <Text style={[styles.word, { color: colors.text }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.5}>
+        {word}
+      </Text>
       <View style={[styles.underline, { backgroundColor: colors.primary }]} />
     </View>
   );
@@ -23,6 +25,7 @@ const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
     paddingVertical: spacing.md,
+    paddingHorizontal: spacing.md,
   },
   category: {
     fontSize: fontSize.xs,

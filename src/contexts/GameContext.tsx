@@ -11,6 +11,7 @@ import { rateLimits } from '../lib/rateLimit';
 import { getGameDate, hasWordRolledOver } from '../lib/gameDate';
 import { DESCRIPTION_WORD_COUNT, LEADERBOARD_LIMIT } from '../constants/app';
 import { cacheData, getCachedData, CACHE_KEYS } from '../lib/cache';
+import { cancelDailyReminder, scheduleDailyReminder } from '../lib/notifications';
 import { useAuthContext } from './AuthContext';
 import type { DailyWord, VotePair, LeaderboardEntry, YesterdayWinner, WeeklyRecap } from '../types/database';
 
@@ -79,6 +80,25 @@ export function GameProvider({ children }: { children: ReactNode }) {
             setUserDescription(null);
             // Clear stale description cache when user hasn't submitted for current word
             await cacheData(CACHE_KEYS.MY_DESCRIPTION, { text: null, wordId: data[0].id });
+            // Re-schedule daily reminder if user hasn't played yet today
+            try {
+              const { data: prefs } = await supabase
+                .from('profiles')
+                .select('notify_daily, notify_daily_time')
+                .eq('id', userId)
+                .single();
+              if (prefs?.notify_daily && prefs.notify_daily_time) {
+                const [rh, rm] = prefs.notify_daily_time.split(':').map(Number);
+                await scheduleDailyReminder(
+                  rh,
+                  rm,
+                  i18n.t('notifications.daily_title'),
+                  i18n.t('notifications.daily_body'),
+                );
+              }
+            } catch {
+              // non-critical
+            }
           }
         }
       } else {
@@ -214,6 +234,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
           try {
             await supabase.rpc('update_streak', { p_user_id: userId });
             await refreshProfile();
+            await cancelDailyReminder();
           } catch {
             // non-critical
           }
@@ -395,6 +416,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
           try {
             await withTimeout(supabase.rpc('update_streak', { p_user_id: userId }));
             await refreshProfile();
+            // Cancel today's daily reminder since user already played
+            await cancelDailyReminder();
           } catch (postErr) {
             console.warn('[GameContext] Post-submit update failed (non-critical):', postErr);
           }

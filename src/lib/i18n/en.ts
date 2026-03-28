@@ -387,6 +387,10 @@ export default {
     daily_body: 'Say it in five. \uD83C\uDFAF',
     streak_risk_title: 'Your streak is at risk!',
     streak_risk_body: "You haven't played today. Don't let your streak end. \u23F0",
+    section_voting: 'VOTING',
+    vote_reminder: 'Vote reminder',
+    vote_reminder_title: 'Pairs are waiting! \uD83D\uDDF3\uFE0F',
+    vote_reminder_body: "You've submitted your word — now vote on other descriptions and help pick today's winner!",
   },
 
   // Offline

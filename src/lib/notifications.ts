@@ -117,6 +117,31 @@ export async function cancelStreakRisk() {
   await Notifications.cancelScheduledNotificationAsync('streak-risk').catch(() => {});
 }
 
+/**
+ * Schedule a vote reminder notification 2 hours from now.
+ * Fires once to remind the user to vote on remaining pairs.
+ */
+export async function scheduleVoteReminder(title: string, body: string) {
+  await Notifications.cancelScheduledNotificationAsync('vote-reminder').catch(() => {});
+  await Notifications.scheduleNotificationAsync({
+    content: {
+      title,
+      body,
+      sound: true,
+      data: { type: 'daily_reminder' },
+    },
+    trigger: {
+      type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+      seconds: 2 * 60 * 60, // 2 hours
+    },
+    identifier: 'vote-reminder',
+  });
+}
+
+export async function cancelVoteReminder() {
+  await Notifications.cancelScheduledNotificationAsync('vote-reminder').catch(() => {});
+}
+
 export async function cancelAllNotifications() {
   await Notifications.cancelAllScheduledNotificationsAsync();
 }

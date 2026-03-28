@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from 'react';
-import { View, Text, StyleSheet, TouchableWithoutFeedback, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, TouchableWithoutFeedback, Dimensions, StatusBar } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import Animated, {
   useSharedValue,
@@ -255,7 +255,8 @@ export function StreakCelebration({ streak, badge, onDismiss }: StreakCelebratio
   return (
     <TouchableWithoutFeedback onPress={handleDismiss}>
       <Animated.View style={[styles.container, bgStyle]}>
-        {/* Background gradient layers */}
+        <StatusBar barStyle="light-content" />
+        {/* Background gradient layers — cover entire screen */}
         <View style={[styles.bgBase, { backgroundColor: badge.bgGrad[0] }]} />
         <View style={[styles.bgOverlay, { backgroundColor: badge.bgGrad[1] }]} />
 
@@ -341,8 +342,13 @@ export function StreakCelebration({ streak, badge, onDismiss }: StreakCelebratio
 
 const styles = StyleSheet.create({
   container: {
-    ...StyleSheet.absoluteFillObject,
+    position: 'absolute',
+    top: -50,
+    left: 0,
+    right: 0,
+    bottom: -50,
     zIndex: 999,
+    elevation: 999,
   },
   bgBase: {
     ...StyleSheet.absoluteFillObject,
@@ -356,13 +362,15 @@ const styles = StyleSheet.create({
     width: 300,
     height: 300,
     borderRadius: 150,
-    top: SCREEN_HEIGHT / 2 - 150,
-    left: SCREEN_WIDTH / 2 - 150,
+    top: '50%',
+    left: '50%',
+    marginTop: -150,
+    marginLeft: -150,
   },
   centerAbsolute: {
     position: 'absolute',
-    top: SCREEN_HEIGHT * 0.35,
-    left: SCREEN_WIDTH / 2,
+    top: '42%',
+    left: '50%',
     alignItems: 'center',
     justifyContent: 'center',
   },

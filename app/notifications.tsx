@@ -1,5 +1,6 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { View, Text, StyleSheet, ScrollView, Switch, TouchableOpacity, Platform, Modal } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useAuthContext } from '../src/contexts/AuthContext';
@@ -11,6 +12,8 @@ import {
   scheduleStreakRisk,
   cancelDailyReminder,
   cancelStreakRisk,
+  scheduleVoteReminder,
+  cancelVoteReminder,
   normalizeTimeString,
   parseTimeString,
 } from '../src/lib/notifications';
@@ -22,6 +25,7 @@ interface NotificationPrefs {
   notify_daily_time: string;
   notify_streak_risk: boolean;
   notify_results: boolean;
+  notify_vote_reminder: boolean;
   notify_friend_requests: boolean;
   notify_friend_activity: boolean;
   notify_weekly_recap: boolean;
@@ -33,6 +37,7 @@ const DEFAULT_PREFS: NotificationPrefs = {
   notify_daily_time: '09:00',
   notify_streak_risk: true,
   notify_results: true,
+  notify_vote_reminder: true,
   notify_friend_requests: true,
   notify_friend_activity: true,
   notify_weekly_recap: true,
@@ -62,12 +67,14 @@ export default function NotificationsScreen() {
           )
           .eq('id', session.user.id)
           .single();
+        const voteReminderPref = await AsyncStorage.getItem('oneword_vote_reminder');
         if (data) {
           setPrefs({
             notify_daily: data.notify_daily ?? true,
             notify_daily_time: normalizeTimeString(data.notify_daily_time),
             notify_streak_risk: data.notify_streak_risk ?? true,
             notify_results: data.notify_results ?? true,
+            notify_vote_reminder: voteReminderPref !== 'false',
             notify_friend_requests: data.notify_friend_requests ?? true,
             notify_friend_activity: data.notify_friend_activity ?? true,
             notify_weekly_recap: data.notify_weekly_recap ?? true,
@@ -124,6 +131,13 @@ export default function NotificationsScreen() {
         } else {
           await cancelStreakRisk();
         }
+      }
+      if (field === 'notify_vote_reminder') {
+        await AsyncStorage.setItem('oneword_vote_reminder', value ? 'true' : 'false');
+        if (!value) {
+          await cancelVoteReminder();
+        }
+        return; // Don't save to DB — stored in AsyncStorage
       }
     },
     [prefs.notify_daily_time, saveField, t],
@@ -215,6 +229,17 @@ export default function NotificationsScreen() {
         />
       </View>
 
+      {/* Voting */}
+      <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>{t('notifications.section_voting')}</Text>
+      <View style={[styles.section, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+        <ToggleRow
+          label={t('notifications.vote_reminder')}
+          value={prefs.notify_vote_reminder}
+          onToggle={(v) => handleToggle('notify_vote_reminder', v)}
+          colors={colors}
+        />
+      </View>
+
       {/* Social */}
       <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>{t('notifications.section_social')}</Text>
       <View style={[styles.section, { backgroundColor: colors.surface, borderColor: colors.border }]}>
@@ -255,7 +280,7 @@ export default function NotificationsScreen() {
         />
       </View>
 
-      {/* Time Picker Modal */}
+      {/* Time Picker Modal — scroll wheel style */}
       <Modal visible={showTimePicker} transparent animationType="fade" statusBarTranslucent>
         <TouchableOpacity style={styles.pickerOverlay} activeOpacity={1} onPress={() => setShowTimePicker(false)}>
           <TouchableOpacity
@@ -263,34 +288,137 @@ export default function NotificationsScreen() {
             style={[styles.pickerCard, { backgroundColor: colors.background, borderColor: colors.border }]}
           >
             <Text style={[styles.pickerTitle, { color: colors.text }]}>{t('notifications.daily_time')}</Text>
-            <ScrollView style={styles.pickerScroll} contentContainerStyle={styles.pickerGrid}>
-              {HOURS.map((h) =>
-                MINUTES.map((m) => {
-                  const timeStr = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
-                  const isSelected = timeStr === prefs.notify_daily_time;
-                  return (
-                    <TouchableOpacity
-                      key={timeStr}
-                      style={[
-                        styles.pickerItem,
-                        { borderColor: colors.border },
-                        isSelected && { backgroundColor: colors.primary, borderColor: colors.primary },
-                      ]}
-                      onPress={() => handleTimeSelect(h, m)}
-                      activeOpacity={0.7}
-                    >
-                      <Text style={[styles.pickerItemText, { color: colors.text }, isSelected && { color: '#FFFFFF' }]}>
-                        {formatTime(timeStr)}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                }),
-              )}
-            </ScrollView>
+            <TimeScrollPicker initialTime={prefs.notify_daily_time} onSelect={handleTimeSelect} colors={colors} />
           </TouchableOpacity>
         </TouchableOpacity>
       </Modal>
     </ScrollView>
+  );
+}
+
+const ITEM_HEIGHT = 44;
+const VISIBLE_ITEMS = 5;
+const PICKER_HEIGHT = ITEM_HEIGHT * VISIBLE_ITEMS;
+
+function TimeScrollPicker({
+  initialTime,
+  onSelect,
+  colors,
+}: {
+  initialTime: string;
+  onSelect: (hour: number, minute: number) => void;
+  colors: any;
+}) {
+  const { t } = useTranslation();
+  const [h, m] = parseTimeString(initialTime);
+  const [selectedHour, setSelectedHour] = useState(h);
+  const [selectedMinute, setSelectedMinute] = useState(MINUTES.indexOf(m) >= 0 ? MINUTES.indexOf(m) : 0);
+
+  const hourRef = useRef<ScrollView>(null);
+  const minuteRef = useRef<ScrollView>(null);
+
+  useEffect(() => {
+    setTimeout(() => {
+      hourRef.current?.scrollTo({ y: selectedHour * ITEM_HEIGHT, animated: false });
+      minuteRef.current?.scrollTo({ y: selectedMinute * ITEM_HEIGHT, animated: false });
+    }, 50);
+  }, []);
+
+  const handleHourScroll = useCallback((e: any) => {
+    const y = e.nativeEvent.contentOffset.y;
+    const index = Math.round(y / ITEM_HEIGHT);
+    if (index >= 0 && index < 24) setSelectedHour(index);
+  }, []);
+
+  const handleMinuteScroll = useCallback((e: any) => {
+    const y = e.nativeEvent.contentOffset.y;
+    const index = Math.round(y / ITEM_HEIGHT);
+    if (index >= 0 && index < MINUTES.length) setSelectedMinute(index);
+  }, []);
+
+  const formatHour = (hour: number) => {
+    const ampm = hour >= 12 ? 'PM' : 'AM';
+    const h12 = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+    return `${h12} ${ampm}`;
+  };
+
+  const formatMin = (min: number) => {
+    return `:${String(min).padStart(2, '0')}`;
+  };
+
+  return (
+    <View>
+      <View style={styles.wheelContainer}>
+        {/* Selection highlight band */}
+        <View
+          style={[
+            styles.selectionBand,
+            { backgroundColor: withOpacity(colors.primary, 0.08), borderColor: withOpacity(colors.primary, 0.2) },
+          ]}
+        />
+
+        {/* Hour wheel */}
+        <ScrollView
+          ref={hourRef}
+          style={styles.wheelColumn}
+          contentContainerStyle={{ paddingVertical: ITEM_HEIGHT * 2 }}
+          showsVerticalScrollIndicator={false}
+          snapToInterval={ITEM_HEIGHT}
+          decelerationRate="fast"
+          onMomentumScrollEnd={handleHourScroll}
+          onScrollEndDrag={handleHourScroll}
+        >
+          {HOURS.map((hour) => (
+            <View key={hour} style={styles.wheelItem}>
+              <Text
+                style={[
+                  styles.wheelText,
+                  { color: hour === selectedHour ? colors.text : withOpacity(colors.textMuted, 0.4) },
+                  hour === selectedHour && styles.wheelTextSelected,
+                ]}
+              >
+                {formatHour(hour)}
+              </Text>
+            </View>
+          ))}
+        </ScrollView>
+
+        {/* Minute wheel */}
+        <ScrollView
+          ref={minuteRef}
+          style={styles.wheelColumn}
+          contentContainerStyle={{ paddingVertical: ITEM_HEIGHT * 2 }}
+          showsVerticalScrollIndicator={false}
+          snapToInterval={ITEM_HEIGHT}
+          decelerationRate="fast"
+          onMomentumScrollEnd={handleMinuteScroll}
+          onScrollEndDrag={handleMinuteScroll}
+        >
+          {MINUTES.map((min, i) => (
+            <View key={min} style={styles.wheelItem}>
+              <Text
+                style={[
+                  styles.wheelText,
+                  { color: i === selectedMinute ? colors.text : withOpacity(colors.textMuted, 0.4) },
+                  i === selectedMinute && styles.wheelTextSelected,
+                ]}
+              >
+                {formatMin(min)}
+              </Text>
+            </View>
+          ))}
+        </ScrollView>
+      </View>
+
+      {/* Confirm button */}
+      <TouchableOpacity
+        style={[styles.confirmBtn, { backgroundColor: colors.primary }]}
+        onPress={() => onSelect(selectedHour, MINUTES[selectedMinute])}
+        activeOpacity={0.8}
+      >
+        <Text style={styles.confirmBtnText}>{t('common.ok')}</Text>
+      </TouchableOpacity>
+    </View>
   );
 }
 
@@ -394,8 +522,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     padding: spacing.lg,
     width: '100%',
-    maxWidth: 360,
-    maxHeight: 400,
+    maxWidth: 300,
   },
   pickerTitle: {
     fontSize: fontSize.lg,
@@ -403,23 +530,49 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: spacing.md,
   },
-  pickerScroll: {
-    maxHeight: 320,
-  },
-  pickerGrid: {
+  wheelContainer: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.sm,
-    justifyContent: 'center',
+    height: PICKER_HEIGHT,
+    overflow: 'hidden',
+    position: 'relative',
   },
-  pickerItem: {
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
+  selectionBand: {
+    position: 'absolute',
+    top: ITEM_HEIGHT * 2,
+    left: 0,
+    right: 0,
+    height: ITEM_HEIGHT,
     borderRadius: borderRadius.md,
     borderWidth: 1,
+    zIndex: 1,
+    pointerEvents: 'none',
   },
-  pickerItemText: {
-    fontSize: fontSize.sm,
-    fontWeight: '600',
+  wheelColumn: {
+    flex: 1,
+  },
+  wheelItem: {
+    height: ITEM_HEIGHT,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  wheelText: {
+    fontSize: 18,
+    fontFamily: 'DMMono_400Regular',
+    fontWeight: '400',
+  },
+  wheelTextSelected: {
+    fontWeight: '700',
+    fontSize: 20,
+  },
+  confirmBtn: {
+    borderRadius: borderRadius.md,
+    paddingVertical: 14,
+    alignItems: 'center',
+    marginTop: spacing.md,
+  },
+  confirmBtnText: {
+    color: '#FFFFFF',
+    fontSize: fontSize.md,
+    fontWeight: '700',
   },
 });

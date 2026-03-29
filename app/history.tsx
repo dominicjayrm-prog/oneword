@@ -94,7 +94,9 @@ export default function HistoryScreen() {
 
   useEffect(() => {
     if (!userId) return;
-    getAllTimeBestRank(userId).then(setAllTimeBest);
+    getAllTimeBestRank(userId)
+      .then(setAllTimeBest)
+      .catch(() => setAllTimeBest(null));
   }, [userId]);
 
   const handleRefresh = useCallback(async () => {
@@ -131,9 +133,14 @@ export default function HistoryScreen() {
     }
   }
 
+  const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  const yesterdayDate = new Date(now);
+  yesterdayDate.setDate(yesterdayDate.getDate() - 1);
+  const yesterdayStr = `${yesterdayDate.getFullYear()}-${String(yesterdayDate.getMonth() + 1).padStart(2, '0')}-${String(yesterdayDate.getDate()).padStart(2, '0')}`;
+
   function scrollToCard(date: string) {
     const yPos = cardRefs.current.get(date);
-    if (yPos != null && scrollRef.current) {
+    if (yPos != null && yPos >= 0 && scrollRef.current) {
       haptic.light();
       scrollRef.current.scrollTo({ y: yPos - 200, animated: true });
     }
@@ -143,7 +150,6 @@ export default function HistoryScreen() {
   const calendarDays = useMemo(() => {
     const firstDay = new Date(year, month - 1, 1).getDay(); // 0=Sun
     const daysInMonth = new Date(year, month, 0).getDate();
-    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 
     const cells: Array<{ day: number | null; dateStr: string; played: boolean; isToday: boolean; isFuture: boolean }> =
       [];
@@ -168,17 +174,13 @@ export default function HistoryScreen() {
   }, [year, month, playedDates]);
 
   const formatDatePill = (dateStr: string) => {
-    const d = new Date(dateStr + 'T12:00:00');
+    // Parse date parts directly to avoid timezone issues
+    const [y, m, day] = dateStr.split('-').map(Number);
     const monthShort = isEs
-      ? ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'][d.getMonth()]
-      : ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][d.getMonth()];
-    return `${monthShort} ${d.getDate()}`;
+      ? ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'][m - 1]
+      : ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][m - 1];
+    return `${monthShort} ${day}`;
   };
-
-  const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-  const yesterdayDate = new Date(now);
-  yesterdayDate.setDate(yesterdayDate.getDate() - 1);
-  const yesterdayStr = `${yesterdayDate.getFullYear()}-${String(yesterdayDate.getMonth() + 1).padStart(2, '0')}-${String(yesterdayDate.getDate()).padStart(2, '0')}`;
 
   if (loading) {
     return (
@@ -449,13 +451,14 @@ const styles = StyleSheet.create({
     color: '#8B8697',
     fontWeight: '500',
   },
-  calendarGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 4 },
+  calendarGrid: { flexDirection: 'row', flexWrap: 'wrap' },
   calendarCell: {
-    width: '13.28%',
+    width: `${100 / 7}%`,
     aspectRatio: 1,
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
+    padding: 2,
   },
   calendarDayText: { fontSize: 11 },
 

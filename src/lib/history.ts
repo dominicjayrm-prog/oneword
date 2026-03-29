@@ -28,7 +28,7 @@ export async function getMonthHistory(
   language: string,
 ): Promise<HistoryEntry[]> {
   const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
-  const endDay = new Date(year, month, 0).getDate(); // last day of month
+  const endDay = new Date(year, month, 0).getDate();
   const endDate = `${year}-${String(month).padStart(2, '0')}-${String(endDay).padStart(2, '0')}`;
 
   // Get user's descriptions with the daily word info
@@ -54,7 +54,26 @@ export async function getMonthHistory(
     .lte('daily_words.date', endDate)
     .eq('daily_words.language', language);
 
-  if (descError || !userDescs) return [];
+  if (descError || !userDescs || userDescs.length === 0) return [];
+
+  // Batch fetch all descriptions for the word IDs the user played (avoids N+1)
+  const wordIds = userDescs.map((d) => (d as any).daily_words?.id).filter(Boolean);
+  const uniqueWordIds = [...new Set(wordIds)];
+
+  const { data: allDescsData } = await supabase
+    .from('descriptions')
+    .select('id, user_id, description, vote_count, word_id')
+    .in('word_id', uniqueWordIds)
+    .order('vote_count', { ascending: false })
+    .order('created_at', { ascending: true });
+
+  // Group descriptions by word_id
+  const descsByWord = new Map<string, typeof allDescsData>();
+  for (const d of allDescsData ?? []) {
+    const existing = descsByWord.get(d.word_id) ?? [];
+    existing.push(d);
+    descsByWord.set(d.word_id, existing);
+  }
 
   const entries: HistoryEntry[] = [];
 
@@ -62,19 +81,10 @@ export async function getMonthHistory(
     const dw = (desc as any).daily_words;
     if (!dw) continue;
 
-    const wordId = dw.id;
-
-    // Get total players and all descriptions for this word to compute rank
-    const { data: allDescs } = await supabase
-      .from('descriptions')
-      .select('id, user_id, description, vote_count')
-      .eq('word_id', wordId)
-      .order('vote_count', { ascending: false })
-      .order('created_at', { ascending: true });
-
-    const totalPlayers = allDescs?.length ?? 0;
-    const userRank = allDescs ? allDescs.findIndex((d) => d.id === desc.id) + 1 : 0;
-    const winner = allDescs?.[0] ?? null;
+    const wordDescs = descsByWord.get(dw.id) ?? [];
+    const totalPlayers = wordDescs.length;
+    const userRank = wordDescs.findIndex((d) => d.id === desc.id) + 1;
+    const winner = wordDescs[0] ?? null;
 
     entries.push({
       date: dw.date,
@@ -113,7 +123,6 @@ export function computeMonthStats(entries: HistoryEntry[]): MonthStats {
  */
 export async function getAllTimeBestRank(userId: string): Promise<number | null> {
   const { data } = await supabase.from('profiles').select('best_rank').eq('id', userId).single();
-
   return data?.best_rank ?? null;
 }
 

@@ -188,6 +188,27 @@ export default {
     privacy_policy: 'Pol\u00EDtica de Privacidad',
     terms_of_use: 'T\u00E9rminos de Uso',
     word_archive: 'Archivo de Palabras',
+    my_history: 'Mi historial',
+  },
+
+  // History
+  history: {
+    title: 'Mi historial',
+    words_played: 'Palabras jugadas',
+    best_rank: 'Mejor posici\u00F3n',
+    avg_rank: 'Pos. media',
+    recent_words: 'PALABRAS RECIENTES',
+    top_percent: 'Top {{n}}%',
+    personal_best: '\u00A1R\u00E9cord personal!',
+    players_count: '{{n}} jugadores',
+    winner_label: 'Ganador:',
+    you_won: '\u00A1Ganaste!',
+    empty_no_words: 'No jugaste ninguna palabra este mes',
+    empty_words_appear: 'Las palabras que juegues aparecer\u00E1n aqu\u00ED',
+    empty_play_today: 'Jugar la palabra de hoy',
+    empty_first_title: 'Tu historial empieza aqu\u00ED',
+    empty_first_sub: 'Juega tu primera palabra y mira c\u00F3mo quedas',
+    empty_play_now: 'Jugar ahora',
   },
 
   // Share card

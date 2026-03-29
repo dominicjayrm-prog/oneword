@@ -187,6 +187,27 @@ export default {
     privacy_policy: 'Privacy Policy',
     terms_of_use: 'Terms of Use',
     word_archive: 'Word Archive',
+    my_history: 'My History',
+  },
+
+  // History
+  history: {
+    title: 'My History',
+    words_played: 'Words played',
+    best_rank: 'Best rank',
+    avg_rank: 'Avg. rank',
+    recent_words: 'RECENT WORDS',
+    top_percent: 'Top {{n}}%',
+    personal_best: 'Personal best!',
+    players_count: '{{n}} players',
+    winner_label: 'Winner:',
+    you_won: 'You won!',
+    empty_no_words: "You didn't play any words this month",
+    empty_words_appear: 'Words you play will appear here',
+    empty_play_today: "Play today's word",
+    empty_first_title: 'Your history starts here',
+    empty_first_sub: 'Play your first word and see how you rank',
+    empty_play_now: 'Play now',
   },
 
   // Share card

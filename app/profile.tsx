@@ -377,6 +377,23 @@ export default function ProfileScreen() {
         </TouchableOpacity>
       </View>
 
+      {/* My History */}
+      <View style={[styles.favouritesSection, { borderTopColor: colors.border }]}>
+        <TouchableOpacity
+          style={styles.favouritesRow}
+          onPress={() => {
+            haptic.medium();
+            router.push('/history');
+          }}
+          activeOpacity={0.7}
+        >
+          <Text style={[styles.favouritesLabel, { color: colors.text }]}>
+            {'\uD83D\uDCCA'} {t('profile.my_history')}
+          </Text>
+          <Text style={[styles.supportValue, { color: colors.textMuted }]}>{'\u2192'}</Text>
+        </TouchableOpacity>
+      </View>
+
       {/* Notifications */}
       <View style={[styles.supportSection, { borderTopColor: colors.border }]}>
         <TouchableOpacity

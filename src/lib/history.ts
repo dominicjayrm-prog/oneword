@@ -57,6 +57,7 @@ export async function getMonthHistory(
   if (descError || !userDescs || userDescs.length === 0) return [];
 
   // Batch fetch all descriptions for the word IDs the user played (avoids N+1)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const wordIds = userDescs.map((d) => (d as any).daily_words?.id).filter(Boolean);
   const uniqueWordIds = [...new Set(wordIds)];
 
@@ -78,6 +79,7 @@ export async function getMonthHistory(
   const entries: HistoryEntry[] = [];
 
   for (const desc of userDescs) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const dw = (desc as any).daily_words;
     if (!dw) continue;
 

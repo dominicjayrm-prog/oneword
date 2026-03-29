@@ -89,8 +89,22 @@ export default function HistoryScreen() {
   );
 
   useEffect(() => {
-    loadMonth();
-  }, [loadMonth]);
+    let active = true;
+    (async () => {
+      if (!userId) return;
+      try {
+        const data = await getMonthHistory(userId, year, month, language);
+        if (active) {
+          setEntries(data);
+          setStats(computeMonthStats(data));
+        }
+      } catch (err) {
+        console.warn('[HistoryScreen] Failed to load:', err);
+      }
+      if (active) setLoading(false);
+    })();
+    return () => { active = false; };
+  }, [userId, year, month, language]);
 
   useEffect(() => {
     if (!userId) return;

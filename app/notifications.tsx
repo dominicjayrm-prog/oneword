@@ -310,31 +310,37 @@ function TimeScrollPicker({
   colors: any;
 }) {
   const { t } = useTranslation();
-  const [h, m] = parseTimeString(initialTime);
-  const [selectedHour, setSelectedHour] = useState(h);
-  const [selectedMinute, setSelectedMinute] = useState(MINUTES.indexOf(m) >= 0 ? MINUTES.indexOf(m) : 0);
+  const [initHour, initMinute] = parseTimeString(initialTime);
+  const [selectedHour, setSelectedHour] = useState(initHour);
+  const [selectedMinute, setSelectedMinute] = useState(
+    MINUTES.indexOf(initMinute) >= 0 ? MINUTES.indexOf(initMinute) : 0,
+  );
 
   const hourRef = useRef<ScrollView>(null);
   const minuteRef = useRef<ScrollView>(null);
 
   useEffect(() => {
+    const h = initHour;
+    const m = initMinute;
     setTimeout(() => {
-      hourRef.current?.scrollTo({ y: selectedHour * ITEM_HEIGHT, animated: false });
-      minuteRef.current?.scrollTo({ y: selectedMinute * ITEM_HEIGHT, animated: false });
+      hourRef.current?.scrollTo({ y: h * ITEM_HEIGHT, animated: false });
+      minuteRef.current?.scrollTo({ y: m * ITEM_HEIGHT, animated: false });
     }, 50);
+    // Only run on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleHourScroll = useCallback((e: any) => {
+  function handleHourScroll(e: { nativeEvent: { contentOffset: { y: number } } }) {
     const y = e.nativeEvent.contentOffset.y;
     const index = Math.round(y / ITEM_HEIGHT);
     if (index >= 0 && index < 24) setSelectedHour(index);
-  }, []);
+  }
 
-  const handleMinuteScroll = useCallback((e: any) => {
+  function handleMinuteScroll(e: { nativeEvent: { contentOffset: { y: number } } }) {
     const y = e.nativeEvent.contentOffset.y;
     const index = Math.round(y / ITEM_HEIGHT);
     if (index >= 0 && index < MINUTES.length) setSelectedMinute(index);
-  }, []);
+  }
 
   const formatHour = (hour: number) => {
     const ampm = hour >= 12 ? 'PM' : 'AM';

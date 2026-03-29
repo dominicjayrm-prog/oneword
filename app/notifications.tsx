@@ -328,13 +328,13 @@ function TimeScrollPicker({
     const y = e.nativeEvent.contentOffset.y;
     const index = Math.round(y / ITEM_HEIGHT);
     if (index >= 0 && index < 24) setSelectedHour(index);
-  }, []);
+  }, [setSelectedHour]);
 
   const handleMinuteScroll = useCallback((e: any) => {
     const y = e.nativeEvent.contentOffset.y;
     const index = Math.round(y / ITEM_HEIGHT);
     if (index >= 0 && index < MINUTES.length) setSelectedMinute(index);
-  }, []);
+  }, [setSelectedMinute]);
 
   const formatHour = (hour: number) => {
     const ampm = hour >= 12 ? 'PM' : 'AM';

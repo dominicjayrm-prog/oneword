@@ -338,6 +338,13 @@ export default function VoteScreen() {
     }
   }, [noMorePairs, batchExhausted]);
 
+  // Cancel vote reminder when user has voted on all available pairs
+  useEffect(() => {
+    if (noMorePairs) {
+      cancelVoteReminder();
+    }
+  }, [noMorePairs]);
+
   // Offline state — voting requires an internet connection
   if (!isOnline && !pair) {
     return (
@@ -368,13 +375,6 @@ export default function VoteScreen() {
       </View>
     );
   }
-
-  // Cancel vote reminder when user has voted on all available pairs
-  useEffect(() => {
-    if (noMorePairs) {
-      cancelVoteReminder();
-    }
-  }, [noMorePairs]);
 
   // "No pairs available" screen — server returned no more unseen pairs
   if (noMorePairs) {

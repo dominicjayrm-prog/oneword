@@ -54,7 +54,7 @@ export default function HistoryScreen() {
   const router = useRouter();
   const { t, i18n } = useTranslation();
   const { colors } = useTheme();
-  const { session, profile, language } = useAuthContext();
+  const { session, language } = useAuthContext();
   const userId = session?.user?.id;
   const isEs = i18n.language === 'es';
 
@@ -72,25 +72,26 @@ export default function HistoryScreen() {
   const monthNames = isEs ? MONTH_NAMES_ES : MONTH_NAMES_EN;
   const dayHeaders = isEs ? DAY_HEADERS_ES : DAY_HEADERS;
 
-  const loadMonth = useCallback(
-    async (showLoading = true) => {
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
       if (!userId) return;
-      if (showLoading) setLoading(true);
+      setLoading(true);
       try {
         const data = await getMonthHistory(userId, year, month, language);
-        setEntries(data);
-        setStats(computeMonthStats(data));
+        if (!cancelled) {
+          setEntries(data);
+          setStats(computeMonthStats(data));
+        }
       } catch (err) {
         console.warn('[HistoryScreen] Failed to load:', err);
       }
-      if (showLoading) setLoading(false);
-    },
-    [userId, year, month, language],
-  );
-
-  useEffect(() => {
-    loadMonth();
-  }, [loadMonth]);
+      if (!cancelled) setLoading(false);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [userId, year, month, language]);
 
   useEffect(() => {
     if (!userId) return;
@@ -100,11 +101,18 @@ export default function HistoryScreen() {
   }, [userId]);
 
   const handleRefresh = useCallback(async () => {
+    if (!userId) return;
     haptic.medium();
     setRefreshing(true);
-    await loadMonth(false);
+    try {
+      const data = await getMonthHistory(userId, year, month, language);
+      setEntries(data);
+      setStats(computeMonthStats(data));
+    } catch (err) {
+      console.warn('[HistoryScreen] Refresh failed:', err);
+    }
     setRefreshing(false);
-  }, [loadMonth]);
+  }, [userId, year, month, language]);
 
   const playedDates = useMemo(() => getPlayedDates(entries), [entries]);
 

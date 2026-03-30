@@ -11,12 +11,7 @@ import { rateLimits } from '../lib/rateLimit';
 import { getGameDate, hasWordRolledOver } from '../lib/gameDate';
 import { DESCRIPTION_WORD_COUNT, LEADERBOARD_LIMIT } from '../constants/app';
 import { cacheData, getCachedData, CACHE_KEYS } from '../lib/cache';
-import {
-  cancelDailyReminder,
-  scheduleDailyReminder,
-  scheduleVoteReminder,
-  cancelVoteReminder,
-} from '../lib/notifications';
+import { cancelDailyReminder, scheduleDailyReminder, scheduleVoteReminder } from '../lib/notifications';
 import { useAuthContext } from './AuthContext';
 import type { DailyWord, VotePair, LeaderboardEntry, YesterdayWinner, WeeklyRecap } from '../types/database';
 
